@@ -26,24 +26,19 @@ const navLinks: NavLink[] = [
   { name: "Product", to: "#product", type: "scroll" },
   { name: "Testimonials", to: "#testimonials", type: "scroll" },
   { name: "News", to: "#news", type: "scroll" },
-  { name: "About Us", to: "/about", type: "route" },
+  { name: "About Us", to: "/About", type: "route" },
 ];
 
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const loading = false;
   const router = useRouter();
   const pathname = usePathname();
-<<<<<<< Updated upstream
-    const { user, logout, loading } = useAuth(); 
-  console.log("user:", user); // Debugging line to check user state
- // Assuming `logout` exists
-=======
   const { user, logout } = useAuth();
   // console.log("user:", user); // Debugging line to check user state
   // Assuming `logout` exists
->>>>>>> Stashed changes
 
   const isHome = pathname === "/";
 
@@ -128,12 +123,7 @@ const Navbar = () => {
             ))}
 
             {/* If user logged in → Profile dropdown, else → Sign Up */}
-<<<<<<< Updated upstream
-            {user.name === undefined ? (
-
-=======
             {user === null ? (
->>>>>>> Stashed changes
               <button
                 onClick={() => router.push("/Signup")}
                 className="px-4 py-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition duration-300"
