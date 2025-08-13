@@ -33,7 +33,7 @@ const Navbar = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
-  const { user, logout } = useAuth();
+    const { user, logout, loading } = useAuth(); 
   console.log("user:", user); // Debugging line to check user state
  // Assuming `logout` exists
 
@@ -74,6 +74,16 @@ const Navbar = () => {
       : "bg-white text-gray-900 shadow-md"
   }`;
 
+    if (loading) {
+    return (
+      <div className="fixed w-full top-0 z-50 bg-white shadow-md">
+        <div className="max-w-7xl mx-auto px-4 py-3 flex justify-center">
+          <div className="animate-pulse">Loading...</div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <>
       <nav className={navClasses}>
@@ -102,7 +112,7 @@ const Navbar = () => {
             ))}
 
             {/* If user logged in → Profile dropdown, else → Sign Up */}
-            {user === null ? (
+            {user.name === undefined ? (
 
               <button
                 onClick={() => router.push("/Signup")}
