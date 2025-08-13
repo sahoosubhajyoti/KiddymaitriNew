@@ -12,6 +12,7 @@ import { TbLogout } from "react-icons/tb";
 import { useAuth } from "../context/Authcontext"; // Make sure this exists
 
 import KMLogo from "../assets/KM.png"; // Your logo
+import dummyAvatar from "../assets/avatar.png"; // dumy avatar
 
 interface NavLink {
   name: string;
@@ -31,11 +32,18 @@ const navLinks: NavLink[] = [
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
+<<<<<<< Updated upstream
     const { user, logout, loading } = useAuth(); 
   console.log("user:", user); // Debugging line to check user state
  // Assuming `logout` exists
+=======
+  const { user, logout } = useAuth();
+  // console.log("user:", user); // Debugging line to check user state
+  // Assuming `logout` exists
+>>>>>>> Stashed changes
 
   const isHome = pathname === "/";
 
@@ -68,7 +76,7 @@ const Navbar = () => {
     setSidebarOpen(false);
   };
 
-  const navClasses = `fixed w-full top-0 z-50 transition-all duration-300 ${
+  const navClasses = `fixed w-full top-0  z-50 transition-all duration-300 ${
     isHome && !isScrolled
       ? "bg-transparent text-white"
       : "bg-white text-gray-900 shadow-md"
@@ -87,15 +95,23 @@ const Navbar = () => {
   return (
     <>
       <nav className={navClasses}>
-        <div className="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
+        <div className="max-w-7xl mx-auto  px-4 py-3 flex justify-between items-center">
           {/* Logo */}
           <Link
             href="/"
             onClick={() =>
-              handleScrollOrRedirect({ name: "Home", to: "#home", type: "scroll" })
+              handleScrollOrRedirect({
+                name: "Home",
+                to: "#home",
+                type: "scroll",
+              })
             }
           >
-            <Image src={KMLogo} alt="Logo" className="h-10 w-auto cursor-pointer" />
+            <Image
+              src={KMLogo}
+              alt="Logo"
+              className="h-10 w-auto cursor-pointer"
+            />
           </Link>
 
           {/* Desktop nav */}
@@ -112,8 +128,12 @@ const Navbar = () => {
             ))}
 
             {/* If user logged in → Profile dropdown, else → Sign Up */}
+<<<<<<< Updated upstream
             {user.name === undefined ? (
 
+=======
+            {user === null ? (
+>>>>>>> Stashed changes
               <button
                 onClick={() => router.push("/Signup")}
                 className="px-4 py-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition duration-300"
@@ -121,10 +141,13 @@ const Navbar = () => {
                 Sign Up
               </button>
             ) : (
-              <div className="relative group">
-                <div className="flex items-center gap-2 cursor-pointer">
+              <div className="relative">
+                <div
+                  className="flex items-center gap-2 cursor-pointer"
+                  onClick={() => setIsUserMenuOpen((prev) => !prev)}
+                >
                   <Image
-                    src={user.image || "/default-avatar.png"}
+                    src={user.image || dummyAvatar}
                     alt="user"
                     width={32}
                     height={32}
@@ -132,51 +155,67 @@ const Navbar = () => {
                   />
                   <span className="text-sm font-medium">{user.name}</span>
                 </div>
-                {/* Dropdown */}
-                <div className="absolute right-0 top-full mt-2 bg-white shadow-lg rounded-md w-44 opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto flex-col transition-all duration-200 z-50 flex">
-                  <ul className="flex flex-col text-sm text-gray-700 p-2">
-                    <li
-                      className="flex items-center gap-2 px-3 py-2 hover:bg-gray-100 rounded cursor-pointer"
-                      onClick={() => router.push("/home")}
-                    >
-                      <IoHome />
-                      <span>Home</span>
-                    </li>
-                    <li
-                      className="flex items-center gap-2 px-3 py-2 hover:bg-gray-100 rounded cursor-pointer"
-                      onClick={() => router.push("/exercise")}
-                    >
-                      <IoMdAdd />
-                      <span>Add Exercise</span>
-                    </li>
-                    <li
-                      className="flex items-center gap-2 px-3 py-2 hover:bg-gray-100 rounded cursor-pointer"
-                      onClick={() => router.push("/progress")}
-                    >
-                      <GiProgression />
-                      <span>Progress</span>
-                    </li>
-                    <li
-                      className="flex items-center gap-2 px-3 py-2 hover:bg-gray-100 rounded cursor-pointer"
-                      onClick={() => router.push("/settings")}
-                    >
-                      <IoMdSettings />
-                      <span>Settings</span>
-                    </li>
-                    <li className="flex items-center gap-2 px-3 py-2 hover:bg-gray-100 rounded">
-                      <TbLogout />
-                      <button
+
+                {isUserMenuOpen && (
+                  <div className="absolute right-4  top-full mt-4 bg-white shadow-lg rounded-md w-46 flex-col transition-all duration-200 z-50 flex">
+                    <ul className="flex flex-col text-base text-gray-700 p-3">
+                      <li
+                        className="flex items-center gap-3 px-4 py-3 hover:bg-gray-100 rounded cursor-pointer"
                         onClick={() => {
-                          logout();
-                          router.push("/login");
+                          router.push("/#home");
+                          setIsUserMenuOpen(false);
                         }}
-                        className="text-left w-full"
                       >
-                        Logout
-                      </button>
-                    </li>
-                  </ul>
-                </div>
+                        <IoHome size={20} />
+                        <span>Home</span>
+                      </li>
+                      <li
+                        className="flex items-center gap-3 px-4 py-3 hover:bg-gray-100 rounded cursor-pointer"
+                        onClick={() => {
+                          router.push("/exercise");
+                          setIsUserMenuOpen(false);
+                        }}
+                      >
+                        <IoMdAdd size={20} />
+                        <span>Add Exercise</span>
+                      </li>
+                      <li
+                        className="flex items-center gap-3 px-4 py-3 hover:bg-gray-100 rounded cursor-pointer"
+                        onClick={() => {
+                          router.push("/Progress");
+                          setIsUserMenuOpen(false);
+                        }}
+                      >
+                        <GiProgression size={20} />
+                        <span>Progress</span>
+                      </li>
+                      <li
+                        className="flex items-center gap-3 px-4 py-3 hover:bg-gray-100 rounded cursor-pointer"
+                        onClick={() => {
+                          router.push("/Setting");
+                          setIsUserMenuOpen(false);
+                        }}
+                      >
+                        <IoMdSettings size={20} />
+                        <span>Setting</span>
+                      </li>
+                      <li className="flex items-center gap-3 px-4 py-3 hover:bg-gray-100 rounded">
+                        <TbLogout size={20} />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            logout();
+                            router.push("/Login");
+                            setIsUserMenuOpen(false);
+                          }}
+                          className="text-left w-full"
+                        >
+                          Logout
+                        </button>
+                      </li>
+                    </ul>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -224,7 +263,7 @@ const Navbar = () => {
             <button
               onClick={() => {
                 setSidebarOpen(false);
-                router.push("/signup");
+                router.push("/Signup");
               }}
               className="px-6 py-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition duration-300"
             >
@@ -234,7 +273,7 @@ const Navbar = () => {
             <>
               <div className="flex flex-col items-center gap-2">
                 <Image
-                  src={user.image || "/default-avatar.png"}
+                  src={user.image || dummyAvatar}
                   alt="user"
                   width={40}
                   height={40}
@@ -245,7 +284,7 @@ const Navbar = () => {
               <button
                 onClick={() => {
                   logout();
-                  router.push("/login");
+                  router.push("/Login");
                 }}
                 className="px-6 py-2 bg-gray-300 rounded-full hover:bg-gray-400 transition duration-300"
               >

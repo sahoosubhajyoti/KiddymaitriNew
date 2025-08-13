@@ -66,7 +66,7 @@ const handleStart = () => {
 };
 
   return (
-    <div className="min-h-screen flex flex-col items-center bg-gray-50 p-6">
+    <div className="min-h-screen mt-10 flex flex-col items-center bg-gray-50 p-6">
       <div className="bg-white p-6 rounded-lg shadow-md w-full max-w-4xl">
         <h1 className="text-2xl font-bold mb-6">Welcome, 👋</h1>
       </div>
