@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-//import { useAuth } from "@/context/AuthContext";
+import { useAuth } from "../../context/Authcontext";
 import ExerciseCard from "../../components/ExerciseCard";
 
 interface ApiData {
@@ -12,7 +12,7 @@ interface ApiData {
 }
 
 export default function Dashboard() {
-  //const { user } = useAuth();
+  const { user,loading } = useAuth();
   const router = useRouter();
    const [apiData, setApiData] = useState<ApiData | null>(null);
   const [selections, setSelections] = useState<
@@ -20,6 +20,9 @@ export default function Dashboard() {
   >([]);
 
   useEffect(() => {
+    if (user?.type === "admin"){
+      return;
+    }
     const fetchDashboardData = async () => {
       try {
         const res = await fetch(
@@ -64,7 +67,20 @@ const handleStart = () => {
     `/startexercise?data=${encodeURIComponent(JSON.stringify(selections))}`
   );
 };
+ if (loading) {
+  // You can return a loading spinner or message here
+  return <div>Loading...</div>;
+ }
 
+ if (user?.type === "admin") {
+  return (
+   <div className="min-h-screen mt-10 flex flex-col items-center p-6 bg-gray-50">
+    <div className="bg-white p-6 rounded-lg shadow-md w-full max-w-4xl">
+     <h1 className="text-2xl font-bold mb-6">Welcome, Admin 👋</h1>
+    </div>
+   </div>
+  );
+ }
   return (
     <div className="min-h-screen mt-10 flex flex-col items-center bg-gray-50 p-6">
       <div className="bg-white p-6 rounded-lg shadow-md w-full max-w-4xl">
