@@ -122,7 +122,7 @@ export default function Signup() {
 
       if (res.ok) {
         // Redirect to login after successful verification
-        window.location.href = "/login?signup=success";
+        window.location.href = "/Login?signup=success";
       } else {
         const data = await res.json();
         setError(data?.message || "OTP verification failed. Try again.");
