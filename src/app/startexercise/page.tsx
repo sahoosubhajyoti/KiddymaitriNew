@@ -5,6 +5,10 @@ import { useEffect, useState, useRef, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
+import { IoMdSkipForward } from "react-icons/io";
+import { FaPause, FaStop } from "react-icons/fa";
+import { BsFillSignStopFill } from "react-icons/bs";
+import { GrResume } from "react-icons/gr";
 
 // Interfaces remain the same
 interface Question {
@@ -92,7 +96,7 @@ function StartExercise() {
         const console_played_entered = 1;
 
         // The initial fetch to start the session
-        await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/exercise/`, {
+        await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/start-session/`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             credentials: "include",
@@ -208,7 +212,7 @@ function StartExercise() {
   return (
     // The JSX for rendering your component remains the same
     <div className="min-h-screen bg-gray-100 p-6 flex justify-center items-center">
-      <div className="bg-white p-6 rounded-lg shadow-md w-full max-w-xl">
+      <div className="relative bg-white p-6 rounded-lg shadow-md w-full max-w-xl">
         <h1 className="text-2xl font-bold mb-4">Start Exercise</h1>
 
         {loading && <p>Loading your session...</p>}
@@ -216,13 +220,19 @@ function StartExercise() {
 
         {!loading && !error && question && (
           <div className="space-y-4">
-            <div className="text-right text-sm text-gray-600 font-mono">⏱ {formatTime(timer)}</div>
-            <p className="font-semibold">Q: <InlineMath math={question.question || question.text || ''}/></p>
+            <div className="text-right text-sm text-gray-600 font-mono">
+              ⏱ {formatTime(timer)}
+            </div>
+            <p className="font-semibold">
+              Q: <InlineMath math={question.question || question.text || ""} />
+            </p>
 
             {question.options && (
               <ul className="space-y-2">
                 {question.options.map((opt: string, idx: number) => (
-                  <li key={idx} className="bg-gray-100 p-2 rounded">{opt}</li>
+                  <li key={idx} className="bg-gray-100 p-2 rounded">
+                    {opt}
+                  </li>
                 ))}
               </ul>
             )}
@@ -235,34 +245,48 @@ function StartExercise() {
               onChange={(e) => setAnswer(e.target.value)}
             />
 
-            <div className="flex flex-wrap gap-3 mt-4">
+            <div className="flex flex-wrap items-center justify-center cursor-pointer gap-3 mt-4">
               <button
                 onClick={handleSubmit}
-                className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+                className="px-4 py-2 cursor-pointer hover:scale-110 transition duration-300 bg-gradient-to-r from-green-500 to-green-700 text-white rounded hover:bg-green-700"
               >
                 Submit
-              </button>
-              <button
-                onClick={handlePauseToggle}
-                className="px-4 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600"
-              >
-                {isPaused ? "Resume" : "Pause"}
-              </button>
-              <button
-                onClick={handleSkip}
-                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-              >
-                Skip
-              </button>
-              <button
-                onClick={handleStop}
-                className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
-              >
-                Stop
               </button>
             </div>
           </div>
         )}
+
+        {/* Right-bottom control buttons */}
+        <div
+          className=" absolute 
+  -bottom-14 left-1/2 -translate-x-1/2 
+  sm:bottom-2 sm:-right-14 sm:left-auto sm:translate-x-0 
+  flex gap-3 
+  flex-row sm:flex-col"
+        >
+          <button
+            onClick={handlePauseToggle}
+            className="group flex items-center cursor-pointer justify-center h-12 w-12 rounded-full shadow-lg hover:scale-110 transition-all duration-200"
+          >
+            {isPaused ? (
+              <GrResume className="text-black text-2xl   transition-transform duration-400" />
+            ) : (
+              <FaPause className="text-black text-xl  transition-transform duration-400" />
+            )}
+          </button>
+          <button
+            onClick={handleSkip}
+            className="group flex items-center cursor-pointer justify-center h-12 w-12 rounded-full  shadow-lg  hover:scale-110 transition-all duration-200"
+          >
+            <IoMdSkipForward className="text-black text-xl transition-transform duration-600" />
+          </button>
+          <button
+            onClick={handleStop}
+            className="group flex items-center cursor-pointer justify-center h-12 w-12 rounded-full  shadow-lg hover:scale-110 transition-all duration-200"
+          >
+            <FaStop className="text-black text-xl  transition-transform duration-400" />
+          </button>
+        </div>
       </div>
     </div>
   );

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
@@ -37,6 +37,7 @@ const Navbar = () => {
   const router = useRouter();
   const pathname = usePathname();
   const { user, logout } = useAuth();
+    const menuRef = useRef(null);
   // console.log("user:", user); // Debugging line to check user state
   // Assuming `logout` exists
 
@@ -54,6 +55,23 @@ const Navbar = () => {
 
     return () => window.removeEventListener("scroll", handleScroll);
   }, [isHome]);
+
+ useEffect(() => {
+   function handleClickOutside(event) {
+     // If clicked outside menu and the menu button
+     if (menuRef.current && !menuRef.current.contains(event.target)) {
+       setIsUserMenuOpen(false);
+     }
+   }
+
+   // Listen for clicks
+   document.addEventListener("mousedown", handleClickOutside);
+
+   // Cleanup
+   return () => {
+     document.removeEventListener("mousedown", handleClickOutside);
+   };
+ }, []);
 
   const handleScrollOrRedirect = (link: NavLink) => {
     if (link.type === "scroll") {
@@ -110,7 +128,7 @@ const Navbar = () => {
           </Link>
 
           {/* Desktop nav */}
-          <div className="hidden md:flex items-center space-x-6">
+          <div className="hidden md:flex  items-center space-x-6">
             {navLinks.map((link) => (
               <span
                 key={link.name}
@@ -131,7 +149,20 @@ const Navbar = () => {
                 Sign Up
               </button>
             ) : (
-              <div className="relative">
+              <div className="relative flex items-center gap-4" ref={menuRef}>
+                {/* Dashboard */}
+                <div className="relative group cursor-pointer">
+                  <button
+                    type="button"
+                    onClick={() => router.push("/Dashboard")}
+                    className="transition duration-300"
+                  >
+                    Dashboard
+                  </button>
+                  <span className="absolute left-0 -bottom-1 w-0 h-0.5 bg-black transition-all duration-300 group-hover:w-full"></span>
+                </div>
+
+                {/* Profile Menu */}
                 <div
                   className="flex items-center gap-2 cursor-pointer"
                   onClick={() => setIsUserMenuOpen((prev) => !prev)}
@@ -147,7 +178,7 @@ const Navbar = () => {
                 </div>
 
                 {isUserMenuOpen && (
-                  <div className="absolute right-4  top-full mt-4 bg-white shadow-lg rounded-md w-46 flex-col transition-all duration-200 z-50 flex">
+                  <div className="absolute right-4 top-full mt-4 bg-white shadow-lg rounded-md w-46 flex-col transition-all duration-200 z-50 flex">
                     <ul className="flex flex-col text-base text-gray-700 p-3">
                       <li
                         className="flex items-center gap-3 px-4 py-3 hover:bg-gray-100 rounded cursor-pointer"
@@ -162,7 +193,7 @@ const Navbar = () => {
                       <li
                         className="flex items-center gap-3 px-4 py-3 hover:bg-gray-100 rounded cursor-pointer"
                         onClick={() => {
-                          router.push("/exercise");
+                          router.push("/Exercise");
                           setIsUserMenuOpen(false);
                         }}
                       >
@@ -261,6 +292,13 @@ const Navbar = () => {
             </button>
           ) : (
             <>
+              <button
+                type="button"
+                  onClick={() => { router.push("/Dashboard"); setSidebarOpen(false)}}
+                className="text-gray-800"
+              >
+                Dashboard
+              </button>
               <div className="flex flex-col items-center gap-2">
                 <Image
                   src={user.image || dummyAvatar}
