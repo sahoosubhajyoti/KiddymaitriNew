@@ -4,7 +4,8 @@ import { createContext, useContext, useState, useEffect, ReactNode } from "react
 
 interface User {
   name: string;
-  image?: string; // made optional
+  image?: string;
+  type?: string;
 }
 interface AuthContextType {
   user: User | null;

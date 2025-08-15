@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../../context/Authcontext";
 import Link from "next/link";
+import { json } from "stream/consumers";
 
 export default function Login() {
   const { setUser } = useAuth();
@@ -23,6 +24,7 @@ export default function Login() {
       });
 
       const data = await res.json();
+      console.log("data",data)
 
       if (res.ok) {
         console.log("Login successful:", data);
@@ -32,8 +34,8 @@ export default function Login() {
         localStorage.setItem("token", data.access);
 
         // Store and set user in context
-        const userData = { name: data.name, image: data.image };
-        localStorage.setItem("usere1", JSON.stringify(userData));
+        const userData = { name: data.name, image: data.image, type:data.type };
+        localStorage.setItem("user", JSON.stringify(userData));
         setUser(userData);
 
         // Redirect to dashboard
