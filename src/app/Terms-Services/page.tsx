@@ -1,4 +1,5 @@
 
+import Footer from '@/components/Footer';
 import type { Metadata } from 'next';
 import React, { FC } from 'react';
 // For SEO and better browser tab information
@@ -225,81 +226,83 @@ support@kiddymaitri.co.in`,
 // The return type 'JSX.Element' explicitly states this function returns a React element.
 const TermsServicesPage: FC = () => {
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 py-10 text-gray-800 mt-10">
-      
-      <section className="mb-10">
-        <h2 className="text-xl font-semibold text-indigo-700 mb-3">
-          AGREEMENT TO OUR LEGAL TERMS
-        </h2>
-        <p className="text-sm sm:text-base leading-relaxed whitespace-pre-line">
-          We are KiddyMaitri Pvt. Ltd. (‘Company’, ‘we’, ‘us’, or ‘our’), a
-          company registered in India at TI 109 AT FTBI, TIIR BUILDING NIT,
-          ROURKELA, Sundargarh, Orissa 769008. {"\n\n"} We operate the website
-          kiddymaitri.co.in (the ‘Site’), as well as any other related products
-          and services that refer or link to these legal terms (the ‘Legal
-          Terms’) (collectively, the ‘Services’). {"\n\n"}Kiddymaitri Private
-          Limited deals with designing and manufacturing of learning-based
-          games, puzzles, and toys. Additionally, it also offers a range of
-          electronic toys tailored to enhance the learning experience for kids
-          {"\n\n"} You can contact us by email at
-          <span className="text-red-600 font-medium">
-            {" "}
-            support@kiddymaitri.co.in
-          </span>{" "}
-          or by post to KiddyMaitri Pvt. Ltd., TI 109 AT FTBI,TIIR BUILDING NIT,
-          ROURKELA, Sundargarh, Orissa 769008, India. {"\n\n"} These Legal Terms
-          constitute a legally binding agreement made between you, whether
-          personally or on behalf of an entity (‘you’), and KiddyMaitri Pvt.
-          Ltd., concerning your access to and use of the Services. You agree
-          that by accessing the Services, you have read, understood, and agreed
-          to be bound by all of these Legal Terms. IF YOU DO NOT AGREE WITH ALL
-          OF THESE LEGAL TERMS, THEN YOU ARE EXPRESSLY PROHIBITED FROM USING THE
-          SERVICES AND YOU MUST DISCONTINUE USE IMMEDIATELY. {"\n\n"} We will
-          provide you with prior notice of any scheduled changes to the Services
-          you are using. The modified Legal Terms will become effective upon
-          posting or notifying you by
-          <span className="text-red-600 font-medium">
-            {" "}
-            support@kiddymaitri.co.in
-          </span>
-          , as stated in the email message. By continuing to use the Services
-          after the effective date of any changes, you agree to be bound by the
-          modified terms. {"\n\n"} All users who are minors in the jurisdiction
-          in which they reside (generally under the age of 18) must have the
-          permission of, and be directly supervised by, their parent or {"\n\n"}{" "}
-          guardian to use the Services. If you are a minor, you must have your
-          parent or guardian read and agree to these Legal Terms prior to you
-          using the Services. We recommend that you print a copy of these Legal
-          Terms for your records.
-        </p>
-      </section>
-
-      <section className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900 mb-4">
-          TABLE OF CONTENTS
-        </h1>
-        <ul className="list-decimal pl-6 text-sm sm:text-base space-y-1">
-          {data.map((d) => (
-            <li key={d.id} className="text-xl">
-              <span className="font-medium ">
-                  {d.name}
-              </span>
-            </li>
-          ))}
-        </ul>
-      </section>
-
-      {data.map((section) => (
-        <section key={section.id} className="mb-10">
-          <h2 className="text-xl font-semibold text-indigo-700 mb-2">
-            {section.name}
+    <>
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-10 text-gray-800 mt-10">
+        <section className="mb-10">
+          <h2 className="text-xl font-semibold text-indigo-700 mb-3">
+            AGREEMENT TO OUR LEGAL TERMS
           </h2>
-          <p className="text-sm sm:text-base whitespace-pre-line leading-relaxed">
-            {section.description}
+          <p className="text-sm sm:text-base leading-relaxed whitespace-pre-line">
+            We are KiddyMaitri Pvt. Ltd. (‘Company’, ‘we’, ‘us’, or ‘our’), a
+            company registered in India at TI 109 AT FTBI, TIIR BUILDING NIT,
+            ROURKELA, Sundargarh, Orissa 769008. {"\n\n"} We operate the website
+            kiddymaitri.co.in (the ‘Site’), as well as any other related
+            products and services that refer or link to these legal terms (the
+            ‘Legal Terms’) (collectively, the ‘Services’). {"\n\n"}Kiddymaitri
+            Private Limited deals with designing and manufacturing of
+            learning-based games, puzzles, and toys. Additionally, it also
+            offers a range of electronic toys tailored to enhance the learning
+            experience for kids
+            {"\n\n"} You can contact us by email at
+            <span className="text-red-600 font-medium">
+              {" "}
+              support@kiddymaitri.co.in
+            </span>{" "}
+            or by post to KiddyMaitri Pvt. Ltd., TI 109 AT FTBI,TIIR BUILDING
+            NIT, ROURKELA, Sundargarh, Orissa 769008, India. {"\n\n"} These
+            Legal Terms constitute a legally binding agreement made between you,
+            whether personally or on behalf of an entity (‘you’), and
+            KiddyMaitri Pvt. Ltd., concerning your access to and use of the
+            Services. You agree that by accessing the Services, you have read,
+            understood, and agreed to be bound by all of these Legal Terms. IF
+            YOU DO NOT AGREE WITH ALL OF THESE LEGAL TERMS, THEN YOU ARE
+            EXPRESSLY PROHIBITED FROM USING THE SERVICES AND YOU MUST
+            DISCONTINUE USE IMMEDIATELY. {"\n\n"} We will provide you with prior
+            notice of any scheduled changes to the Services you are using. The
+            modified Legal Terms will become effective upon posting or notifying
+            you by
+            <span className="text-red-600 font-medium">
+              {" "}
+              support@kiddymaitri.co.in
+            </span>
+            , as stated in the email message. By continuing to use the Services
+            after the effective date of any changes, you agree to be bound by
+            the modified terms. {"\n\n"} All users who are minors in the
+            jurisdiction in which they reside (generally under the age of 18)
+            must have the permission of, and be directly supervised by, their
+            parent or {"\n\n"} guardian to use the Services. If you are a minor,
+            you must have your parent or guardian read and agree to these Legal
+            Terms prior to you using the Services. We recommend that you print a
+            copy of these Legal Terms for your records.
           </p>
         </section>
-      ))}
-    </div>
+
+        <section className="mb-6">
+          <h1 className="text-2xl font-bold text-gray-900 mb-4">
+            TABLE OF CONTENTS
+          </h1>
+          <ul className="list-decimal pl-6 text-sm sm:text-base space-y-1">
+            {data.map((d) => (
+              <li key={d.id} className="text-xl">
+                <span className="font-medium ">{d.name}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+
+        {data.map((section) => (
+          <section key={section.id} className="mb-10">
+            <h2 className="text-xl font-semibold text-indigo-700 mb-2">
+              {section.name}
+            </h2>
+            <p className="text-sm sm:text-base whitespace-pre-line leading-relaxed">
+              {section.description}
+            </p>
+          </section>
+        ))}
+      </div>
+      <Footer/>
+    </>
   );
 };
 
