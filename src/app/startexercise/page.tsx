@@ -92,7 +92,7 @@ function StartExercise() {
         const console_played_entered = 1;
 
         // The initial fetch to start the session
-        await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/exercise/`, {
+        await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/start-session/`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             credentials: "include",
