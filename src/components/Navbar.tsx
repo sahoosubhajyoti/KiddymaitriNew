@@ -37,7 +37,7 @@ const Navbar = () => {
   const router = useRouter();
   const pathname = usePathname();
   const { user, logout } = useAuth();
-  // console.log("user:", user); // Debugging line to check user state
+ console.log("user:", user); // Debugging line to check user state
   // Assuming `logout` exists
 
   const isHome = pathname === "/";
@@ -123,7 +123,7 @@ const Navbar = () => {
             ))}
 
             {/* If user logged in → Profile dropdown, else → Sign Up */}
-            {user === null ? (
+            {user?.type === undefined ? (
               <button
                 onClick={() => router.push("/Signup")}
                 className="px-4 py-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition duration-300"
@@ -159,16 +159,18 @@ const Navbar = () => {
                         <IoHome size={20} />
                         <span>Home</span>
                       </li>
-                      <li
-                        className="flex items-center gap-3 px-4 py-3 hover:bg-gray-100 rounded cursor-pointer"
-                        onClick={() => {
-                          router.push("/exercise");
-                          setIsUserMenuOpen(false);
-                        }}
-                      >
-                        <IoMdAdd size={20} />
-                        <span>Add Exercise</span>
-                      </li>
+                       {/* Conditional rendering for 'Add Exercise' on mobile */}
+              {user.type === "admin" && (
+                <button
+                  onClick={() => {
+                    setSidebarOpen(false);
+                    router.push("/exercise");
+                  }}
+                  className="px-6 py-2 bg-gray-300 rounded-full hover:bg-gray-400 transition duration-300"
+                >
+                  Add Exercise
+                </button>
+              )}
                       <li
                         className="flex items-center gap-3 px-4 py-3 hover:bg-gray-100 rounded cursor-pointer"
                         onClick={() => {

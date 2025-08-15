@@ -116,95 +116,96 @@ function StartExercise() {
   // ... (all your handler functions: fetchQuestion, handleSubmit, handleSkip, handlePauseToggle, handleStop)
   // These functions are omitted here for brevity but should be included in your final file.
   const fetchQuestion = async (group_name: string, exercise_names: string[]) => {
-    try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/exercise/`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ group_name, exercise_names, console_played_entered: "0" }),
-      });
+  try {
+   const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/exercise/`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify({ group_name, exercise_names, console_played_entered: "0" }),
+   });
 
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Error loading question");
+   const data = await res.json();
+   if (!res.ok) throw new Error(data.error || "Error loading question");
 
-      setQuestion(data);
-      setAnswer("");
-      setTimer(0);
-      setIsPaused(false);
-    } catch (err) {
-      console.error(err);
-      setError("Failed to fetch question.");
-    } finally {
-      setLoading(false);
-    }
-  };
+   setQuestion(data);
+   setAnswer("");
+   setTimer(0);
+   setIsPaused(false);
+  } catch (err) {
+   console.error(err);
+   setError("Failed to fetch question.");
+  } finally {
+   setLoading(false);
+  }
 
-  const handleSubmit = async () => {
-    try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/exercise/submit/`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ type: "submit", a: answer }),
-      });
+ };
 
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Submission failed");
+ const handleSubmit = async () => {
+  try {
+   const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/exercise/submit/`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify({ type: "submit", a: answer }),
+   });
 
-      setQuestion({ question: data.question });
-      setAnswer("");
-      setTimer(0);
-      setIsPaused(false);
+   const data = await res.json();
+   if (!res.ok) throw new Error(data.error || "Submission failed");
 
-      if (data.redirect) router.push("/dashboard");
-    } catch (err) {
-      console.error(err);
-      setError("Failed to submit answer.");
-    }
-  };
+   setQuestion({ question: data.question });
+   setAnswer("");
+   setTimer(0);
+   setIsPaused(false);
 
-  const handleSkip = async () => {
-    try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/exercise/submit/`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ type: "skip" }),
-      });
+   if (data.redirect) router.push("/Dashboard");
+  } catch (err) {
+   console.error(err);
+   setError("Failed to submit answer.");
+  }
+ };
 
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to skip");
+ const handleSkip = async () => {
+  try {
+   const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/exercise/submit/`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify({ type: "skip" }),
+   });
 
-      setQuestion({ question: data.question });
-      setAnswer("");
-      setTimer(0);
-      setIsPaused(false);
+   const data = await res.json();
+   if (!res.ok) throw new Error(data.error || "Failed to skip");
 
-      
-    } catch (err) {
-      console.error(err);
-      setError("Failed to skip question.");
-    }
-  };
+   setQuestion({ question: data.question });
+   setAnswer("");
+   setTimer(0);
+   setIsPaused(false);
 
-  const handlePauseToggle = async () => {
-    const type = isPaused ? "resume" : "pause";
-    try {
-      await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/exercise/submit/`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ type }),
-      });
-      setIsPaused((prev) => !prev);
-    } catch (err) {
-      console.error("Failed to toggle pause", err);
-    }
-  };
+   
+  } catch (err) {
+   console.error(err);
+   setError("Failed to skip question.");
+  }
+ };
 
-  const handleStop = () => {
-    router.push("/Dashboard");
-  };
+ const handlePauseToggle = async () => {
+  const type = isPaused ? "resume" : "pause";
+  try {
+   await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/exercise/submit/`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify({ type }),
+   });
+   setIsPaused((prev) => !prev);
+  } catch (err) {
+   console.error("Failed to toggle pause", err);
+  }
+ };
+
+ const handleStop = () => {
+  router.push("/Dashboard");
+ };
   return (
     // The JSX for rendering your component remains the same
     <div className="min-h-screen bg-gray-100 p-6 flex justify-center items-center">

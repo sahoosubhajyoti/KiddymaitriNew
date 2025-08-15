@@ -34,7 +34,7 @@ export default function Login() {
         localStorage.setItem("token", data.access);
 
         // Store and set user in context
-        const userData = { name: data.name, image: data.image, type:data.type };
+        const userData = { name: data.name, image: data.image, type:data.user_type };
         localStorage.setItem("user", JSON.stringify(userData));
         setUser(userData);
 
