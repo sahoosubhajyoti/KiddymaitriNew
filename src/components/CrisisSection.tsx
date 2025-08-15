@@ -21,7 +21,7 @@ const CrisisSection = () => {
         className="max-w-6xl mx-auto space-y-6"
       >
         {/* Title */}
-        <h2 className="text-3xl sm:text-5xl font-extrabold font-poppins text-[#ffffff] leading-snug">
+        <h2 className="text-3xl sm:text-5xl font-extrabold font-poppins text-[#efefef] leading-snug">
           The Crisis We Can’t Ignore
         </h2>
 
