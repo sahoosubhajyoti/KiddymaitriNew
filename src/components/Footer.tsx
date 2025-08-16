@@ -9,7 +9,7 @@ const Footer: React.FC = () => {
 
   return (
     <footer className="bg-white text-gray-800 py-10 px-5 md:px-10 font-poppins">
-      <div className="max-w-6xl mx-auto grid grid-cols-3 md:grid-cols-4 gap-6">
+      <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-6 text-center md:text-left">
         {/* Company */}
         <div>
           <h4 className="font-semibold mb-2 text-gray-900">Company</h4>
@@ -58,13 +58,19 @@ const Footer: React.FC = () => {
             >
               Terms of Service
             </li>
+            <li
+              onClick={() => router.push("/Shipping-Policy")}
+              className="cursor-pointer hover:text-blue-600 transition"
+            >
+              Shipping Policy
+            </li>
           </ul>
         </div>
 
         {/* Social Icons */}
         <div>
           <h4 className="font-semibold mb-2 text-gray-900">Social</h4>
-          <div className="flex gap-4 items-center">
+          <div className="flex justify-center md:justify-start gap-4 items-center">
             <a
               href="https://www.youtube.com/@kiddymaitri"
               target="_blank"
