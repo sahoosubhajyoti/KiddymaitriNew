@@ -93,7 +93,7 @@ const ShippingReturnPolicy = () => {
                   href="mailto:support@email.com"
                   className="text-blue-600 underline"
                 >
-                  support@email.com
+                 support@kiddymaitri.co.in
                 </a>{" "}
                 to obtain a Return Merchandise Authorisation (RMA) number.
               </p>

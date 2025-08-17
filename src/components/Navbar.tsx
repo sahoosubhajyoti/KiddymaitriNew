@@ -26,7 +26,6 @@ const navLinks: NavLink[] = [
   { name: "Product", to: "#product", type: "scroll" },
   { name: "Testimonials", to: "#testimonials", type: "scroll" },
   { name: "News", to: "#news", type: "scroll" },
-  { name: "About Us", to: "/About", type: "route" },
 ];
 
 const Navbar = () => {
@@ -38,7 +37,7 @@ const Navbar = () => {
   const pathname = usePathname();
   const { user, logout } = useAuth();
     const menuRef = useRef(null);
- console.log("user:", user); // Debugging line to check user state
+//  console.log("user:", user); // Debugging line to check user state
   // Assuming `logout` exists
 
   const isHome = pathname === "/";
@@ -155,7 +154,7 @@ const Navbar = () => {
                   <button
                     type="button"
                     onClick={() => router.push("/Dashboard")}
-                    className="transition duration-300"
+                    className="transition duration-300 cursor-pointer"
                   >
                     Dashboard
                   </button>
