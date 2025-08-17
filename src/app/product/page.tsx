@@ -116,7 +116,7 @@ const ProductIntroduction = () => {
   return (
     <section className="text-center max-w-4xl mx-auto mb-16 md:mb-24">
        <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-6">A Gateway to India's Timeless Wisdom</h2>
-       <p className="text-base md:text-lg text-gray-600 leading-relaxed">
+       <p className="text-base md:text-lg text-gray-600 text-justify leading-relaxed">
         Sanskrit is widely regarded as one of the most scientific languages in the world. It offers a deep connection to India’s rich heritage, cultural values, and timeless wisdom. Varnika-1 is a thoughtfully curated collection of preschool activity sheets designed to introduce Sanskrit vocabulary to curious little minds in a systematic way that facilitates easy learning and retention.
        </p>
     </section>
@@ -138,7 +138,7 @@ const Benefits = () => {
       <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">Benefits of Varnika-1 Worksheets</h2>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
         {benefitsList.map((item, index) => (
-          <div key={index} className="bg-white p-6 rounded-xl shadow-md hover:shadow-xl transition-shadow border border-gray-100 text-center flex flex-col items-center">
+          <div key={index} className="bg-white p-6 rounded-xl shadow-md hover:shadow-xl transition-shadow border border-gray-100 text-center flex flex-col items-center duration-500">
             <div className="mb-4">{item.icon}</div>
             <h3 className="text-xl font-semibold mb-2">{item.title}</h3>
             <p className="text-gray-600">{item.description}</p>
@@ -212,8 +212,8 @@ const DetailedBenefits = () => {
     return (
         <section className="bg-amber-50 rounded-2xl p-8 md:p-12 text-center max-w-5xl mx-auto mb-16 md:mb-24">
             <h2 className="text-3xl font-bold mb-6">A Meaningful Start to Lifelong Learning</h2>
-            <p className="text-lg text-gray-700 leading-relaxed">
-                Varnika-1 is a thoughtfully designed collection of activity sheets with Sanskrit vocabulary to enrich a child’s developmental journey. These worksheets enhance <strong>cognitive growth</strong>, improve <strong>fine motor skills</strong>, and encourage <strong>creativity and imagination</strong> through hands-on, engaging tasks. By introducing children to Sanskrit at an early age, Varnika-1 supports <strong>language development</strong>, builds <strong>memory and focus</strong>, and nurtures a connection to India’s rich cultural heritage. Each activity is crafted to boost <strong>confidence</strong>, inspire <strong>curiosity</strong>, and make learning a joyful experience.
+            <p className="text-lg text-gray-700 leading-relaxed text-justify">
+                Varnika-1 is a thoughtfully designed collection of activity sheets with Sanskrit vocabulary to enrich a child’s developmental journey. These worksheets enhance <strong>cognitive growth</strong>, improve <strong>fine motor skills</strong>, and encourage <strong>creativity and imagination</strong> through hands-on, engaging tasks. By introducing children to Sanskrit at an early age, Varnika-1 supports <strong>language development</strong>, builds <strong>memory and focus</strong>, and nurtures a connection to India’s rich cultural heritage. Each activity is crafted to boost <strong>confidence</strong>,inspire <strong>curiosity</strong>, and make learning a joyful experience.
             </p>
         </section>
     );

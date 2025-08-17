@@ -295,7 +295,7 @@ const TermsServicesPage: FC = () => {
             <h2 className="text-xl font-semibold text-indigo-700 mb-2">
               {section.name}
             </h2>
-            <p className="text-sm sm:text-base whitespace-pre-line leading-relaxed">
+            <p className="text-md sm:text-base whitespace-pre-line leading-relaxed">
               {section.description}
             </p>
           </section>
