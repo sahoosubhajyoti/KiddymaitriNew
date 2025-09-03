@@ -1,8 +1,16 @@
 "use client";
 import { useEffect, useState } from "react";
+interface QuestionData {
+  name: string;
+  attempts: number;
+  correct_rate: number;
+  avg_time: number;
+}
 
 export default function QuestionPerformance() {
-  const [questions, setQuestions] = useState<any[]>([]);
+  // Defines the shape of the question performance data
+
+   const [questions, setQuestions] = useState<QuestionData[]>([]);
 
   useEffect(() => {
     fetch(

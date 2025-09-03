@@ -11,7 +11,7 @@ export default function PositionedBox() {
   const router = useRouter(); 
   
   // All your inline style objects (boxStyle, sanskritTextStyle, etc.) remain here...
-    const boxStyle = {
+    const boxStyle :  React.CSSProperties = {
     // --- Box Shape & Position ---
     top: '80px',
     left: '20px',

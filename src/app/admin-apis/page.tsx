@@ -1,12 +1,50 @@
 "use client";
 import { useEffect, useState } from "react";
+// --- INTERFACE DEFINITIONS ---
+interface UserStats {
+  total_users: number;
+  active_users: number;
+  question_stats: {
+    correct_rate: number;
+  };
+}
 
+interface TopQuestion {
+  name: string;
+  attempts: number;
+  correct_rate: number;
+  avg_time: number;
+}
+
+interface DailyActivity {
+  date: string;
+  sessions: number;
+  users: number;
+}
+
+interface UserDetail {
+  user_info: {
+    email: string;
+    join_date: string;
+  };
+  daily_activity: {
+    date: string;
+    session_count: number;
+    questions_attempted: number;
+  }[];
+}
 export default function Dashboard() {
-  const [userStats, setUserStats] = useState<any>(null);
-  // console.log("userStats",userStats)
-  const [questions, setQuestions] = useState<any[]>([]);
-  const [daily, setDaily] = useState<any[]>([]);
-  const [userDetail, setUserDetail] = useState<any>(null);
+// --- BEFORE ---
+// const [userStats, setUserStats] = useState<any>(null);
+// const [questions, setQuestions] = useState<any[]>([]);
+// const [daily, setDaily] = useState<any[]>([]);
+// const [userDetail, setUserDetail] = useState<any>(null);
+
+// --- AFTER ---
+const [userStats, setUserStats] = useState<UserStats | null>(null);
+const [questions, setQuestions] = useState<TopQuestion[]>([]);
+const [daily, setDaily] = useState<DailyActivity[]>([]);
+const [userDetail, setUserDetail] = useState<UserDetail | null>(null);
   const [userId, setUserId] = useState("");
   const API_BASE = "http://localhost:8000/api/analytics"
 
@@ -92,8 +130,8 @@ export default function Dashboard() {
             </tr>
           </thead>
           <tbody>
-            {questions.map((q, i) => (
-              <tr key={i} className="border-t">
+            {questions.map((q) => (
+               <tr key={q.name} className="border-t">
                 <td className="p-2">{q.name}</td>
                 <td className="p-2">{q.attempts}</td>
                 <td className="p-2">{(q.correct_rate * 100).toFixed(1)}%</td>
@@ -108,8 +146,8 @@ export default function Dashboard() {
       <div className="bg-white shadow-md rounded-2xl p-4">
         <h2 className="text-xl font-semibold">Daily Activity</h2>
         <ul className="mt-2 space-y-1">
-          {daily.map((d, i) => (
-            <li key={i} className="border-b pb-1">
+          {daily.map((d) => (
+            <li key={d.date} className="border-b pb-1">
               {d.date} → {d.sessions} sessions, {d.users} users
             </li>
           ))}
@@ -148,8 +186,8 @@ export default function Dashboard() {
             <p>Joined: {userDetail.user_info?.join_date}</p>
             <h3 className="font-semibold mt-2">Daily Activity</h3>
             <ul>
-              {userDetail.daily_activity?.map((a, i) => (
-                <li key={i}>
+              {userDetail.daily_activity?.map((a) => (
+                <li key={a.date}>
                   {a.date}: {a.session_count} sessions, {a.questions_attempted}{" "}
                   questions
                 </li>

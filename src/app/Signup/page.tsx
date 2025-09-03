@@ -13,7 +13,7 @@ export default function Signup() {
   const [otp, setOtp] = useState<string>("");
   const [resendTime, setResendTime] = useState(0);
   const [canResend, setCanResend] = useState(true);
-  const [otpSent, setOtpSent] = useState(false);
+ 
 
   // Countdown timer for resend button
   useEffect(() => {
@@ -64,7 +64,7 @@ export default function Signup() {
 
       if (res.ok) {
         setStep("otp");
-        setOtpSent(true);
+        
         setCanResend(false);
         setResendTime(60);
       } else {
@@ -142,7 +142,7 @@ export default function Signup() {
         <div className="bg-white p-6 rounded-xl shadow-md w-full max-w-md">
           <h1 className="text-2xl font-bold mb-4 text-center">Verify OTP</h1>
           <p className="text-center mb-6">
-            We've sent a 6-digit code to <strong>{email}</strong>
+            We&apos;ve sent a 6-digit code to <strong>{email}</strong>
           </p>
 
           <div className="flex flex-col gap-4">
