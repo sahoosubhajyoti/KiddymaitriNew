@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { RxHamburgerMenu, RxCross1 } from "react-icons/rx";
 import { IoHome } from "react-icons/io5";
-import { IoMdAdd, IoMdSettings } from "react-icons/io";
+import { IoMdSettings } from "react-icons/io";
 import { GiProgression } from "react-icons/gi";
 import { TbLogout } from "react-icons/tb";
 import { useAuth } from "../context/Authcontext"; // Make sure this exists
@@ -36,7 +36,7 @@ const Navbar = () => {
   const router = useRouter();
   const pathname = usePathname();
   const { user, logout } = useAuth();
-    const menuRef = useRef(null);
+     const menuRef = useRef<HTMLDivElement>(null);
 //  console.log("user:", user); // Debugging line to check user state
   // Assuming `logout` exists
 
@@ -55,22 +55,24 @@ const Navbar = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, [isHome]);
 
- useEffect(() => {
-   function handleClickOutside(event) {
-     // If clicked outside menu and the menu button
-     if (menuRef.current && !menuRef.current.contains(event.target)) {
-       setIsUserMenuOpen(false);
-     }
-   }
+ 
+  useEffect(() => {
+    // FIX: Add the 'MouseEvent' type to the event parameter
+    function handleClickOutside(event: MouseEvent) {
+      // If clicked outside the menu element
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setIsUserMenuOpen(false);
+      }
+    }
 
-   // Listen for clicks
-   document.addEventListener("mousedown", handleClickOutside);
+    // Listen for clicks
+    document.addEventListener("mousedown", handleClickOutside);
 
-   // Cleanup
-   return () => {
-     document.removeEventListener("mousedown", handleClickOutside);
-   };
- }, []);
+    // Cleanup
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []); // The ref is stable, so the dependency array is correct as empty
 
   const handleScrollOrRedirect = (link: NavLink) => {
     if (link.type === "scroll") {

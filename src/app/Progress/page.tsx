@@ -1,8 +1,19 @@
 "use client";
 import { useEffect, useState } from "react";
 
+interface ProgressEntry {
+  "S.No.": number;
+  Date: string;
+  Exercise: string;
+  Questions: number;
+  Skipped: number;
+  Correct_Attempts: number;
+  Incorrect_Attempts: number;
+  Total_time: number | string;
+}
+
 export default function ProgressPage() {
-  const [progress, setProgress] = useState<any[]>([]);
+  const [progress, setProgress] = useState<ProgressEntry[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -34,6 +45,18 @@ export default function ProgressPage() {
     "Exercise",
     "Questions",
     "Skipped",
+    "Correct Attempts",
+    "Incorrect Attempts",
+    "Total Time",
+  ];
+
+  // FIX: Create an array of keys that are guaranteed to be in ProgressEntry.
+  const dataKeys: (keyof ProgressEntry)[] = [
+    "S.No.",
+    "Date",
+    "Exercise",
+    "Questions",
+    "Skipped",
     "Correct_Attempts",
     "Incorrect_Attempts",
     "Total_time",
@@ -54,12 +77,12 @@ export default function ProgressPage() {
           <table className="min-w-full table-auto text-sm">
             <thead className="bg-gray-100 text-gray-700">
               <tr>
-                {headers.map((key) => (
+                {headers.map((header) => (
                   <th
-                    key={key}
+                    key={header}
                     className="px-4 py-2 border font-medium text-left whitespace-nowrap"
                   >
-                    {key}
+                    {header}
                   </th>
                 ))}
               </tr>
@@ -67,7 +90,8 @@ export default function ProgressPage() {
             <tbody>
               {progress.map((entry, index) => (
                 <tr key={index} className="even:bg-gray-50">
-                  {headers.map((key) => (
+                  {/* FIX: Loop over the strongly-typed dataKeys array to prevent the error. */}
+                  {dataKeys.map((key) => (
                     <td
                       key={key}
                       className="px-4 py-2 border text-center whitespace-nowrap"

@@ -1,8 +1,15 @@
 "use client";
 import { useEffect, useState } from "react";
+interface DailyActivityData {
+  date: string;
+  sessions: number;
+  users: number;
+}
 
 export default function DailyActivity() {
-  const [daily, setDaily] = useState<any[]>([]);
+  // 1. Define an interface for the shape of your data
+
+  const [daily, setDaily] = useState<DailyActivityData[]>([]);
 
   useEffect(() => {
       fetch(

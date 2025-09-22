@@ -2,62 +2,61 @@ import React from 'react';
 
 // --- SVG ICON COMPONENTS ---
 // Using SVG icons for a cleaner and more professional look than emojis.
-
-const BookIcon = ({ className }) => (
+type IconProps = {
+  className: string;
+};
+const BookIcon = ({ className }: IconProps) => (
   <svg className={className} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
     <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v11.494m0 0a7.5 7.5 0 007.5-7.5h-15a7.5 7.5 0 007.5 7.5z" />
   </svg>
 );
 
-const LeafIcon = ({ className }) => (
+const LeafIcon = ({ className }: IconProps) => (
   <svg className={className} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
     <path strokeLinecap="round" strokeLinejoin="round" d="M14.25 9.75L16.5 12l-2.25 2.25m-4.5 0L7.5 12l2.25-2.25M6 20.25h12A2.25 2.25 0 0020.25 18V9.75a2.25 2.25 0 00-2.25-2.25H6A2.25 2.25 0 003.75 9.75v8.5A2.25 2.25 0 006 20.25z" />
   </svg>
 );
 
-const BrainIcon = ({ className }) => (
+const BrainIcon = ({ className }: IconProps) => (
     <svg className={className} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456zM16.5 13.5h.008v.008H16.5v-.008z" />
     </svg>
 );
 
-
-const SparklesIcon = ({ className }) => (
+const SparklesIcon = ({ className }: IconProps) => (
   <svg className={className} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
     <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456zM16.5 13.5h.008v.008H16.5v-.008z" />
   </svg>
 );
 
-const HandClickIcon = ({ className }) => (
+const HandClickIcon = ({ className }: IconProps) => (
     <svg className={className} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
         <path strokeLinecap="round" strokeLinejoin="round" d="M15.042 21.672L13.684 16.6m0 0l-2.51 2.225.569-9.47 5.227 7.917-3.286-.672zM12 2.25V4.5m5.834.166l-1.591 1.591M20.25 12h-2.25m-1.334 5.834l-1.591-1.591M4.5 12H2.25m1.334-5.834l1.591 1.591M12 21.75V19.5" />
     </svg>
 );
 
-const CreditCardIcon = ({ className }) => (
+const CreditCardIcon = ({ className }: IconProps) => (
   <svg className={className} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
     <path strokeLinecap="round" strokeLinejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
   </svg>
 );
 
-const DownloadIcon = ({ className }) => (
+const DownloadIcon = ({ className }: IconProps) => (
   <svg className={className} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
     <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
   </svg>
 );
 
-const PrinterIcon = ({ className }) => (
+const PrinterIcon = ({ className }: IconProps) => (
   <svg className={className} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
     <path strokeLinecap="round" strokeLinejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
   </svg>
 );
-
-const HappyFaceIcon = ({ className }) => (
+const HappyFaceIcon = ({ className }: IconProps) => (
   <svg className={className} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
     <path strokeLinecap="round" strokeLinejoin="round" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
   </svg>
 );
-
 
 // Main App Component
 export default function App() {
@@ -113,14 +112,14 @@ const ProductHero = () => {
 
 // 2. Product Introduction
 const ProductIntroduction = () => {
-  return (
-    <section className="text-center max-w-4xl mx-auto mb-16 md:mb-24">
-       <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-6">A Gateway to India's Timeless Wisdom</h2>
-       <p className="text-base md:text-lg text-gray-600 text-justify leading-relaxed">
-        Sanskrit is widely regarded as one of the most scientific languages in the world. It offers a deep connection to India’s rich heritage, cultural values, and timeless wisdom. Varnika-1 is a thoughtfully curated collection of preschool activity sheets designed to introduce Sanskrit vocabulary to curious little minds in a systematic way that facilitates easy learning and retention.
-       </p>
-    </section>
-  );
+ return (
+  <section className="text-center max-w-4xl mx-auto mb-16 md:mb-24">
+   <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-6">A Gateway to India&apos;s Timeless Wisdom</h2>
+   <p className="text-base md:text-lg text-gray-600 text-justify leading-relaxed">
+        Sanskrit is widely regarded as one of the most scientific languages in the world. It offers a deep connection to India&apos;s rich heritage, cultural values, and timeless wisdom. Varnika-1 is a thoughtfully curated collection of preschool activity sheets designed to introduce Sanskrit vocabulary to curious little minds in a systematic way that facilitates easy learning and retention.
+   </p>
+  </section>
+ );
 };
 
 

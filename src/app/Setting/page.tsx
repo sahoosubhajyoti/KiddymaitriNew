@@ -1,8 +1,15 @@
 "use client";
 import { useEffect, useState } from "react";
 
+// 1. Define an interface for the settings object
+interface UserSettings {
+  email_notifications: boolean;
+  theme: string;
+}
+
 export default function SettingsPage() {
-  const [settings, setSettings] = useState<any>(null);
+  // 2. Use the new interface instead of 'any', allowing for the initial null state
+  const [settings, setSettings] = useState<UserSettings | null>(null);
 
   useEffect(() => {
     const fetchSettings = async () => {
@@ -45,7 +52,7 @@ export default function SettingsPage() {
             </span>
           </div>
           <div className="flex items-center justify-between">
-            <span className="font-medium"> Theme</span>
+            <span className="font-medium">🎨 Theme</span>
             <span className="font-semibold text-blue-600">
               {settings.theme}
             </span>

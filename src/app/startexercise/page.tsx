@@ -7,7 +7,7 @@ import { InlineMath } from "react-katex";
 import "katex/dist/katex.min.css";
 import { IoMdSkipForward } from "react-icons/io";
 import { FaPause, FaStop } from "react-icons/fa";
-import { BsFillSignStopFill } from "react-icons/bs";
+
 import { GrResume } from "react-icons/gr";
 
 // Interfaces remain the same
@@ -126,7 +126,7 @@ function StartExercise() {
 
     initExerciseSession();
     // The effect now depends on searchParams
-  }, [searchParams]);
+  }, [searchParams,hasFetched]);
 
   // No changes needed for fetchQuestion, handleSubmit, handleSkip, etc.
   // ... (all your handler functions: fetchQuestion, handleSubmit, handleSkip, handlePauseToggle, handleStop)

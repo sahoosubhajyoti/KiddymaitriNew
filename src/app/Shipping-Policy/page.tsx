@@ -17,16 +17,16 @@ const ShippingReturnPolicy = () => {
                 Shipping & Return Policy
               </h1>
               <p className="text-base md:text-lg mt-2 leading-relaxed">
-                This Shipping & Return Policy is part of our Terms of Service
-                ("Terms") and should be therefore read alongside our main Terms:{" "}
-                <Link
-                  href="/Terms-Services"
-                  className="text-red-600 hover:text-red-700 underline"
-                >
-                  Terms of Service
-                </Link>
-                .
-              </p>
+  This Shipping & Return Policy is part of our Terms of Service
+  (&quot;Terms&quot;) and should be therefore read alongside our main Terms:{" "}
+  <Link
+    href="/Terms-Services"
+    className="text-red-600 hover:text-red-700 underline"
+  >
+    Terms of Service
+  </Link>
+  .
+</p>
               <p className="text-base md:text-lg mt-2 leading-relaxed">
                 Please carefully review our Shipping & Delivery Policy when
                 purchasing our products. This policy will apply to any order you

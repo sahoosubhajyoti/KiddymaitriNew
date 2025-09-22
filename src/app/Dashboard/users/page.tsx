@@ -1,8 +1,16 @@
 "use client";
 import { useEffect, useState } from "react";
-
+// Defines the shape of the main data object
+interface QuestionStats {
+  correct_rate: number;
+}
+interface UserData {
+  total_users: number;
+  active_users: number;
+  question_stats: QuestionStats;
+}
 export default function UserActivityMetadata() {
-  const [data, setData] = useState<any>(null);
+  const [data, setData] = useState<UserData | null>(null);
 
 
   useEffect(() => {

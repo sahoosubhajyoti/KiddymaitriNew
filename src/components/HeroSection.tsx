@@ -51,7 +51,7 @@ const HeroSection = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.2 }}
         >
-          Where curiosity meets creativity — shaping tomorrow's leaders through
+          Where curiosity meets creativity — shaping tomorrow&apos;s leaders through
           fun and purposeful learning.
         </motion.p>
 
