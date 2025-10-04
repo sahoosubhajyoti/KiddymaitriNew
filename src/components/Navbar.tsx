@@ -143,12 +143,20 @@ const Navbar = () => {
 
             {/* If user logged in → Profile dropdown, else → Sign Up */}
             {user?.type === undefined ? (
-              <button
-                onClick={() => router.push("/Signup")}
-                className="px-4 py-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition duration-300"
-              >
-                Sign Up
-              </button>
+             <div className="flex items-center space-x-4">
+                <button
+                  onClick={() => router.push("/Login")}
+                  className="transition duration-300 hover:text-red-500"
+                >
+                  Login
+                </button>
+                <button
+                  onClick={() => router.push("/Signup")}
+                  className="px-4 py-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition duration-300"
+                >
+                  Sign Up
+                </button>
+              </div>
             ) : (
               <div className="relative flex items-center gap-4" ref={menuRef}>
                 {/* Dashboard */}
@@ -285,15 +293,20 @@ const Navbar = () => {
 
           {/* Mobile user menu */}
           {!user ? (
-            <button
-              onClick={() => {
-                setSidebarOpen(false);
-                router.push("/Signup");
-              }}
-              className="px-6 py-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition duration-300"
-            >
-              Sign Up
-            </button>
+           <div className="flex items-center space-x-2">
+                <button
+                  onClick={() => router.push("/Login")}
+                  className="transition duration-300 hover:text-red-500"
+                >
+                  Login
+                </button>
+                <button
+                  onClick={() => router.push("/Signup")}
+                  className="px-4 py-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition duration-300"
+                >
+                  Sign Up
+                </button>
+              </div>
           ) : (
             <>
               <button
