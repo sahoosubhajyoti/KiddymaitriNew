@@ -9,6 +9,8 @@ import { IoMdSkipForward } from "react-icons/io";
 import { FaPause, FaStop } from "react-icons/fa";
 
 import { GrResume } from "react-icons/gr";
+import Clock from "@/components/Clock";
+import ShapeComponent from "@/components/Shape";
 
 // Interfaces remain the same
 interface Question {
@@ -16,6 +18,8 @@ interface Question {
   text?: string;
   options?: string[];
   redirect?: string;
+  type?: string;
+  qns?: string;
 }
 
 interface SelectionItem {
@@ -47,6 +51,9 @@ function StartExercise() {
   const [isPaused, setIsPaused] = useState(false);
   const [answer, setAnswer] = useState("");
   const [hasFetched, setHasFetched] = useState(false);
+  const [qnsType, setQnsType] = useState<string | null>(null);
+  const [qnsData, setQnsData] = useState<string | null>(null);
+  const [groupName, setGroupName] = useState<string | null>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   // No changes needed for timer logic, formatTime, pauseTimer, startTimer
@@ -131,11 +138,35 @@ function StartExercise() {
   // No changes needed for fetchQuestion, handleSubmit, handleSkip, etc.
   // ... (all your handler functions: fetchQuestion, handleSubmit, handleSkip, handlePauseToggle, handleStop)
   // These functions are omitted here for brevity but should be included in your final file.
-  const fetchQuestion = async (
+ const fetchQuestion = async (
     group_name: string,
     exercise_names: string[]
   ) => {
     try {
+      // --- MOCK START ---
+      
+      // 1. Define your fake data for the clock question
+      // const mockData = {
+      //   question: "",
+      //   type: "clock",
+      //   qns: "3:20"
+      // };
+
+      // // 2. Simulate a network delay (e.g., 500ms)
+      // await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // // 3. Set state using the mock data
+      // setQuestion(mockData);
+      // setQnsType(mockData.type || null);
+      // setQnsData(mockData.qns || null);
+      // setAnswer("");
+      // setTimer(0);
+      // setIsPaused(false);
+
+      // --- MOCK END ---
+
+
+      
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_API_BASE_URL}/exercise/`,
         {
@@ -151,12 +182,19 @@ function StartExercise() {
       );
 
       const data = await res.json();
+      
       if (!res.ok) throw new Error(data.error || "Error loading question");
 
       setQuestion(data);
+      setGroupName(group_name || null);
+      setQnsType(data.type || null);
+      setQnsData(data.qns || null);
+      
       setAnswer("");
       setTimer(0);
       setIsPaused(false);
+      
+
     } catch (err) {
       console.error(err);
       setError("Failed to fetch question.");
@@ -164,7 +202,6 @@ function StartExercise() {
       setLoading(false);
     }
   };
-
   const handleSubmit = async () => {
     try {
       const res = await fetch(
@@ -235,6 +272,42 @@ function StartExercise() {
   const handleStop = () => {
     router.push("/Dashboard");
   };
+  const renderDynamicContent = () => {
+    const group = groupName?.toLowerCase();
+
+    switch (group) {
+      case "clock":
+        return (
+          <div className="my-6 flex justify-center items-center">
+            {/* You're passing question.question here, which is fine */}
+            <Clock time={question?.question || "00:00"} />
+          </div>
+        );
+
+      case "shape":
+        return (
+          <div className="my-6 flex justify-center items-center">
+           <ShapeComponent shape={question?.question || null} />
+            
+          </div>
+        );
+
+      case "stick":
+        return (
+          <div className="my-6 flex justify-center items-center">
+           
+          </div>
+        );
+
+      // Add more cases as needed...
+
+      default:
+        // Return nothing if no group matches
+        return <p className="font-semibold">
+              Q: <InlineMath math={question?.question || question?.text || ""} />
+            </p>;
+    }
+  };
   return (
     // The JSX for rendering your component remains the same
     <div className="min-h-screen bg-gray-100 p-6 flex justify-center items-center">
@@ -249,9 +322,12 @@ function StartExercise() {
             <div className="text-right text-sm text-gray-600 font-mono">
               ⏱ {formatTime(timer)}
             </div>
-            <p className="font-semibold">
-              Q: <InlineMath math={question.question || question.text || ""} />
-            </p>
+           
+
+            {/* --- THIS IS THE NEW BLOCK --- */}
+            {/* Check if type is 'clock' and qnsData has a value */}
+           {renderDynamicContent()}
+            {/* --- END OF NEW BLOCK --- */}
 
             {question.options && (
               <ul className="space-y-2">
