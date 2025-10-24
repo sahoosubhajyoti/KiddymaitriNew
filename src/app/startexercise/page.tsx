@@ -11,6 +11,7 @@ import { FaPause, FaStop } from "react-icons/fa";
 import { GrResume } from "react-icons/gr";
 import Clock from "@/components/Clock";
 import ShapeComponent from "@/components/Shape";
+import StickComponent from "@/components/Stick";
 
 // Interfaces remain the same
 interface Question {
@@ -278,26 +279,46 @@ function StartExercise() {
     switch (group) {
       case "clock":
         return (
+          <div className="my-6 flex-col">
+            <p className="font-semibold">
+              Q: Tell the time
+            </p> 
           <div className="my-6 flex justify-center items-center">
             {/* You're passing question.question here, which is fine */}
+            {/* <p className="font-semibold">
+              Q: Tell the time
+            </p> */}
             <Clock time={question?.question || "00:00"} />
+          </div>
           </div>
         );
 
       case "shape":
         return (
-          <div className="my-6 flex justify-center items-center">
+          <div className="my-6 flex-col">
+            <p className="font-semibold">
+              Q: Tell the shape
+            </p> 
+          <div className="my-6 flex  justify-center items-center">
+            
            <ShapeComponent shape={question?.question || null} />
             
           </div>
-        );
-
-      case "stick":
-        return (
-          <div className="my-6 flex justify-center items-center">
-           
           </div>
         );
+
+      case "counting":
+        return (
+          <div className="my-6 flex-col">
+            <p className="font-semibold">
+              Q: count the no of sticks
+            </p>
+          <div className="my-6 flex justify-center items-center">
+           <StickComponent count={question?.question || null}/>
+          </div>
+          </div>
+        );
+        
 
       // Add more cases as needed...
 
