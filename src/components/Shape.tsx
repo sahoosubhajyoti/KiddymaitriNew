@@ -40,7 +40,7 @@ export default function ShapeComponent({ shape }: ShapeProps) {
   // 2. Look it up in the shapeMap.
   // 3. If it's not found (or if 'shape' is null), render a fallback.
   const renderedShape =
-    shapeMap[shape.toLowerCase()] || (
+    shapeMap[shape?.toLowerCase() ?? ''] || (
       <div className="text-gray-500">Shape not specified</div>
     );
 
