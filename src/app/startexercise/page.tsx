@@ -12,6 +12,7 @@ import { GrResume } from "react-icons/gr";
 import Clock from "@/components/Clock";
 import ShapeComponent from "@/components/Shape";
 import StickComponent from "@/components/Stick";
+import Fraction from "@/components/Fraction";
 
 // Interfaces remain the same
 interface Question {
@@ -318,7 +319,17 @@ function StartExercise() {
           </div>
           </div>
         );
-        
+        case "fraction":
+          return (
+<div className="my-6 flex-col">
+            <p className="font-semibold">
+              Q: tell the fraction of colored region 
+            </p>
+          <div className="my-6 flex justify-center items-center">
+           <Fraction frac={question?.question || "00:00"}/>
+          </div>
+          </div>
+          )
 
       // Add more cases as needed...
 
