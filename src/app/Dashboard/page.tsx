@@ -66,15 +66,35 @@ export default function Dashboard() {
     fetchDashboardData();
   }, [user?.type]);
 
-  const handleSelection = (
+ const handleSelection = (
     category: string,
     sub: string,
     isSelected: boolean
   ) => {
     setSelections((prev) => {
+      // Logic for ADDING a selection
       if (isSelected) {
+        // Check if there are already selections
+        if (prev.length > 0) {
+          // Get the category that is already active
+          const activeCategory = prev[0].category;
+          
+          // If the new selection is from a DIFFERENT category...
+          if (category !== activeCategory) {
+            // ...clear the old selections and start a new list with this item.
+            return [{ category, sub }];
+          }
+        }
+        
+        // If we're here, it means either:
+        // 1. The array was empty.
+        // 2. The new item is in the SAME category.
+        // In either case, just add the new item to the list.
         return [...prev, { category, sub }];
+
       } else {
+        // Logic for REMOVING a selection (this is unchanged)
+        // Filter out the item that was deselected.
         return prev.filter(
           (item) => !(item.category === category && item.sub === sub)
         );
@@ -178,33 +198,60 @@ export default function Dashboard() {
   }
 
   // ✅ Normal User Dashboard
-  return (
+  // Add this line right before your return statement
+  
+const activeCategory = selections.length > 0 ? selections[0].category : null;
+return (
     <div className="min-h-screen mt-10 flex flex-col items-center bg-gray-50 p-6">
       <div className="bg-white p-6 rounded-lg shadow-md w-full max-w-4xl">
-        <h1 className="text-2xl font-bold mb-6">Welcome, 👋</h1>
+        <h1 className="text-2xl font-bold mb-6">Welcome, superstar! What challenge will you master today? 🌟</h1>
       </div>
 
       {apiData?.exercises && (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 mt-8">
-          {Object.entries(apiData.exercises).map(([category, subExercises]) => (
-            <ExerciseCard
-              key={category}
-              category={category}
-              subExercises={subExercises}
-              onSelect={handleSelection}
-            />
-          ))}
+          {Object.entries(apiData.exercises).map(([category, subExercises]) => {
+            
+            // NEW: Filter the parent's 'selections' to get the list for *this* card
+            const selectedSubsForThisCard = selections
+              .filter((item) => item.category === category)
+              .map((item) => item.sub);
+
+            // NEW: Determine if this specific card should be disabled
+            const isCardDisabled =
+              activeCategory !== null && category !== activeCategory;
+
+            return (
+             <div 
+                key={category} // The key moves to the new outer element
+                className="flex flex-col items-center"
+              >
+                <ExerciseCard
+                  category={category}
+                  subExercises={subExercises}
+                  onSelect={handleSelection}
+                  selectedSubExercises={selectedSubsForThisCard}
+                  disabled={isCardDisabled}
+                />
+
+                {/* NEW: Conditionally render the Start button 
+                  This only appears if this card's category is the active one.
+                */}
+                {activeCategory === category && (
+                  <button
+                    onClick={handleStart}
+                    className="mt-4 px-6 py-3 bg-green-600 text-white font-semibold rounded-lg shadow hover:bg-green-700"
+                  >
+                    Start
+                  </button>
+                )}
+              </div>
+            );
+          })}
+          
         </div>
       )}
 
-      {selections.length > 0 && (
-        <button
-          onClick={handleStart}
-          className="mt-10 px-6 py-3 bg-green-600 text-white font-semibold rounded-lg shadow hover:bg-green-700"
-        >
-          Start
-        </button>
-      )}
+     
     </div>
   );
 }
