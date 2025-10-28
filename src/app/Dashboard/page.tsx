@@ -230,7 +230,7 @@ return (
                   subExercises={subExercises}
                   onSelect={handleSelection}
                   selectedSubExercises={selectedSubsForThisCard}
-                  disabled={isCardDisabled}
+                 
                 />
 
                 {/* NEW: Conditionally render the Start button 
