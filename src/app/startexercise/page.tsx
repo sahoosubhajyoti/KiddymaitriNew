@@ -321,7 +321,7 @@ function StartExercise() {
         );
         case "fraction":
           return (
-<div className="my-6 flex-col">
+        <div className="my-6 flex-col">
             <p className="font-semibold">
               Q: tell the fraction of colored region 
             </p>
@@ -329,15 +329,27 @@ function StartExercise() {
            <Fraction frac={question?.question || "00:00"}/>
           </div>
           </div>
-          )
+          );
 
       // Add more cases as needed...
 
+      case "arith":
+        return (
+      <p className="font-semibold">
+              Q: <InlineMath math={question?.question || question?.text || ""} />
+            </p>
+          );
+
       default:
         // Return nothing if no group matches
-        return <p className="font-semibold">
-              Q: <InlineMath math={question?.question || question?.text || ""} />
-            </p>;
+        return <div className="my-6 flex-col">
+            <p className="font-semibold">
+              Q: {question?.question || question?.text || ""}
+            </p>
+          <div className="my-6 flex justify-center items-center">
+          
+          </div>
+          </div>;
     }
   };
   return (
