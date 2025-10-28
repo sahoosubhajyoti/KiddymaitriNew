@@ -23,7 +23,7 @@ const FiveGroup = () => (
       - 'scale-x-125' makes it slightly wider than the 4 sticks.
       - '-rotate-45' tilts it.
     */}
-    <div className="absolute top-1/2 left-0 w-full h-0.5 bg-red-500 -rotate-45 origin-center scale-x-125"></div>
+    <div className="absolute top-1/2 left-0 w-full h-0.5 bg-gray-700 -rotate-45 origin-center scale-x-125"></div>
   </div>
 );
 

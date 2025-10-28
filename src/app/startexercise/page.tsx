@@ -383,20 +383,20 @@ function StartExercise() {
               </ul>
             )}
 
-            <textarea
-              className="w-full border p-2 rounded mt-2"
-              rows={4}
-              placeholder="Write your answer here..."
-              value={answer}
-              onChange={(e) => setAnswer(e.target.value)}
-              onKeyDown={(e) => {
-    // Check if the Enter key was pressed and the exercise is not paused
-    if (e.key === 'Enter' && !isPaused) {
-      e.preventDefault(); // Prevents a new line from being added
-      handleSubmit();
-    }
-  }}
-            />
+            <input
+            type="text"
+            className="w-full border p-3 rounded mt-2 shadow-sm" // Adjusted padding a bit for a standard input field
+            placeholder="Write your answer here..."
+            value={answer}
+            onChange={(e) => setAnswer(e.target.value)}
+            onKeyDown={(e) => {
+              // Check if the Enter key was pressed and the exercise is not paused
+              if (e.key === 'Enter' && !isPaused) {
+                e.preventDefault(); // Prevents form submission if it's inside one
+                handleSubmit();
+              }
+            }}
+          />
 
           <div className="flex flex-wrap items-center justify-center cursor-pointer gap-3 mt-4">
     {isPaused ? (
@@ -424,27 +424,57 @@ flex-row sm:flex-col"
 >
   <button
     onClick={handlePauseToggle}
-    className="group flex items-center cursor-pointer justify-center h-10 w-10 rounded-full shadow-lg hover:scale-110 transition-all duration-200"
+    className="relative group flex items-center cursor-pointer justify-center h-10 w-10 rounded-full shadow-lg hover:scale-110 transition-all duration-200"
   >
     {isPaused ? (
       <GrResume className="text-gray-400 text-base transition-transform duration-400" />
     ) : (
       <FaPause className="text-gray-400 text-base transition-transform duration-400" />
     )}
+    {/* --- Tooltip --- */}
+    <span
+      className="absolute px-2 py-1 bg-gray-700 text-white text-xs rounded-md 
+                 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap 
+                 bottom-full mb-2 left-1/2 -translate-x-1/2 
+                 sm:right-full sm:mr-2 sm:top-1/2 sm:-translate-y-1/2 sm:left-auto sm:bottom-auto sm:translate-x-0"
+    >
+      {isPaused ? "Resume Exercise" : "Pause Exercise"}
+    </span>
+    {/* --- End Tooltip --- */}
   </button>
   {isPaused === false && (
     <button
       onClick={handleSkip}
-      className="group flex items-center cursor-pointer justify-center h-10 w-10 rounded-full shadow-lg hover:scale-110 transition-all duration-200"
+      className="relative group flex items-center cursor-pointer justify-center h-10 w-10 rounded-full shadow-lg hover:scale-110 transition-all duration-200"
     >
       <IoMdSkipForward className="text-gray-400 text-base transition-transform duration-600" />
+      {/* --- Tooltip --- */}
+      <span
+        className="absolute px-2 py-1 bg-gray-700 text-white text-xs rounded-md 
+                   opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap 
+                   bottom-full mb-2 left-1/2 -translate-x-1/2 
+                   sm:right-full sm:mr-2 sm:top-1/2 sm:-translate-y-1/2 sm:left-auto sm:bottom-auto sm:translate-x-0"
+      >
+        Skip Question
+      </span>
+      {/* --- End Tooltip --- */}
     </button>
   )}
   <button
     onClick={handleStop}
-    className="group flex items-center cursor-pointer justify-center h-10 w-10 rounded-full shadow-lg hover:scale-110 transition-all duration-200"
+    className="relative group flex items-center cursor-pointer justify-center h-10 w-10 rounded-full shadow-lg hover:scale-110 transition-all duration-200"
   >
     <FaStop className="text-gray-400 text-base transition-transform duration-400" />
+    {/* --- Tooltip --- */}
+    <span
+      className="absolute px-2 py-1 bg-gray-700 text-white text-xs rounded-md 
+                 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap 
+                 bottom-full mb-2 left-1/2 -translate-x-1/2 
+                 sm:right-full sm:mr-2 sm:top-1/2 sm:-translate-y-1/2 sm:left-auto sm:bottom-auto sm:translate-x-0"
+    >
+      Stop Exercise
+    </span>
+    {/* --- End Tooltip --- */}
   </button>
 </div>
       </div>
