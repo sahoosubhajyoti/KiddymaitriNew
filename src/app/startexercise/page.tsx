@@ -312,7 +312,7 @@ function StartExercise() {
         return (
           <div className="my-6 flex-col">
             <p className="font-semibold">
-              Q: count the no of sticks
+              Q: count the number of sticks
             </p>
           <div className="my-6 flex justify-center items-center">
            <StickComponent count={question?.question || null}/>
