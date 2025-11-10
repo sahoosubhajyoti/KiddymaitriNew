@@ -1,82 +1,56 @@
 "use client";
 
-// 1. DEFINE THE NEW PROPS
-interface SubExercise {
-  key: string;
-  displayName: string;
-}
-
 interface ExerciseCardProps {
-  categoryKey: string;
-  categoryName: string;
-  subExercises: SubExercise[];
+  category: string;
+  subExercises: string[];
+  onSelect: (category: string, sub: string, isSelected: boolean) => void;
+  // Prop to receive the list of selected subs for this card
   selectedSubExercises: string[];
-  onSelect: (categoryKey: string, subExerciseKey: string, isSelected: boolean) => void;
-  isDisabled: boolean;
+  // REMOVED: The 'disabled' prop is gone
 }
 
 export default function ExerciseCard({
-  categoryKey,
-  categoryName,
+  category,
   subExercises,
-  selectedSubExercises,
   onSelect,
-  isDisabled,
+  selectedSubExercises, // Use the new prop
 }: ExerciseCardProps) {
   
-  // Handle click on a sub-exercise
-  const handleSubExerciseClick = (subExerciseKey: string) => {
-    // Don't do anything if the card is disabled
-    if (isDisabled) return;
-    
-    const isCurrentlySelected = selectedSubExercises.includes(subExerciseKey);
-    // Call the onSelect function passed from the Dashboard
-    onSelect(categoryKey, subExerciseKey, !isCurrentlySelected);
+  const toggleSub = (sub: string) => {
+    // REMOVED: The 'if (disabled) return;' check is gone
+
+    // Check if the sub is already selected *based on the prop*
+    const isAlreadySelected = selectedSubExercises.includes(sub);
+
+    // Just tell the parent what happened
+    onSelect(category, sub, !isAlreadySelected);
   };
 
   return (
     <div
-      className={`
-        bg-white rounded-lg shadow-md p-6 w-full max-w-sm
-        transition-all duration-300
-        ${isDisabled ? 'opacity-50 saturate-50 cursor-not-allowed' : 'hover:shadow-lg'}
-      `}
+      className={`w-64 h-64 bg-white rounded-xl shadow-md p-4 flex flex-col justify-between transition hover:shadow-lg`}
+      // REMOVED: All 'disabled' styling is gone from here
     >
-      {/* 2. USE categoryName for the title */}
-      <h2 className="text-xl font-bold mb-4 text-center capitalize">
-        {categoryName}
-      </h2>
+      <h2 className="text-lg font-bold text-center text-gray-800">{category}</h2>
 
-      <div className="space-y-3">
-        {/* 3. MAP over the new subExercises array (of objects) */}
-        {subExercises.map((sub) => {
-          // Check if this sub-exercise is in the selected list
-          const isSelected = selectedSubExercises.includes(sub.key);
-
-          return (
-            <button
-              key={sub.key}
-              onClick={() => handleSubExerciseClick(sub.key)}
-              disabled={isDisabled}
-              className={`
-                w-full p-3 rounded-md text-left font-semibold
-                border border-transparent
-                transition-all duration-200
-                ${isDisabled ? 'cursor-not-allowed' : 'cursor-pointer'}
-                ${
-                  isSelected
-                    ? 'bg-green-600 text-white shadow-inner'
-                    : `bg-gray-100 text-gray-800 ${!isDisabled ? 'hover:bg-gray-200 hover:border-gray-300' : ''}`
-                }
-              `}
-            >
-              {/* 4. USE sub.displayName for the text */}
-              {sub.displayName}
-            </button>
-          );
-        })}
+      <div className="flex flex-col items-center gap-2 mt-2 overflow-y-auto">
+        {subExercises.map((sub) => (
+          <button
+            key={sub}
+            onClick={() => toggleSub(sub)}
+            // REMOVED: 'disabled={disabled}' prop is gone
+            className={`px-3 py-1 text-sm rounded-md w-full text-center transition ${
+              // Check selection status from the prop
+              selectedSubExercises.includes(sub)
+                ? "bg-blue-600 text-white"
+                : "bg-blue-100 text-blue-900 hover:bg-blue-200"
+            }`}
+            // REMOVED: All 'disabled' styling is gone from here
+          >
+            {sub}
+          </button>
+        ))}
       </div>
     </div>
   );
 }
-
