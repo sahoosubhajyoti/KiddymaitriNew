@@ -2,47 +2,29 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { useAuth } from "../../../context/Authcontext";
-import ExerciseCard from "../../../components/ExerciseCard";
+import { useAuth } from "../../context/Authcontext";
+import ExerciseCard from "../../components/ExerciseCard";
 
-// 1. IMPORTS for i18n
-import { useTranslations, useLocale } from "next-intl";
-import LanguageSwitcher from "../../../components/LanguageSwitcher"; // <-- CHANGED: Import switcher
-
-// 2. NEW INTERFACES for the new API response
-interface SubExercise {
-  key: string;
-  displayName: string;
+interface ApiData {
+  exercises: {
+    [key: string]: string[];
+  };
 }
-
-interface Category {
-  key: string;
-  displayName: string;
-  subExercises: SubExercise[];
-}
-
-// (The old ApiData interface is no longer needed for the user part)
 
 export default function Dashboard() {
-  // 3. INIT i18n HOOKS
-  const t = useTranslations("Dashboard"); // <-- CHANGED: Init useTranslations
-  const locale = useLocale(); // <-- CHANGED: Init useLocale
-
   const { user, loading } = useAuth();
   const router = useRouter();
-
-  // 4. STATE for new API structure
-  const [categories, setCategories] = useState<Category[]>([]); // <-- CHANGED: From apiData to categories
+  const [apiData, setApiData] = useState<ApiData | null>(null);
   const [selections, setSelections] = useState<
     { category: string; sub: string }[]
   >([]);
   const [totalUsers, setTotalUsers] = useState<number>(0);
   const [open, setOpen] = useState(false);
 
-  // 5. UPDATED useEffect
+  // Fetch data
   useEffect(() => {
     if (user?.type === "admin") {
-      // (Admin fetch logic remains unchanged)
+      // Fetch summary API for Admin
       fetch(
         `${process.env.NEXT_PUBLIC_API_BASE_URL}/analytics/metadata/users`,
         {
@@ -69,37 +51,50 @@ export default function Dashboard() {
         const res = await fetch(
           `${process.env.NEXT_PUBLIC_API_BASE_URL}/dashboard/`,
           {
-             method: "GET",
+            method: "GET",
             headers: { "Content-Type": "application/json" },
-            credentials: "include", // <-- CHANGED: Send current language
+            credentials: "include",
           }
         );
         const data = await res.json();
-        setCategories(data.categories || []); // <-- CHANGED: Set categories array
+        setApiData(data);
       } catch (err) {
         console.error("Error fetching dashboard data:", err);
       }
     };
 
     fetchDashboardData();
-  }, [user?.type, locale]); // <-- CHANGED: Add locale to dependency array
+  }, [user?.type]);
 
-  const handleSelection = (
+ const handleSelection = (
     category: string,
     sub: string,
     isSelected: boolean
   ) => {
-    // This logic is perfect, it already uses the "key" (which you call 'category' and 'sub')
     setSelections((prev) => {
+      // Logic for ADDING a selection
       if (isSelected) {
+        // Check if there are already selections
         if (prev.length > 0) {
+          // Get the category that is already active
           const activeCategory = prev[0].category;
+
+          // If the new selection is from a DIFFERENT category...
           if (category !== activeCategory) {
+            // ...clear the old selections and start a new list with this item.
             return [{ category, sub }];
           }
         }
+
+        // If we're here, it means either:
+        // 1. The array was empty.
+        // 2. The new item is in the SAME category.
+        // In either case, just add the new item to the list.
         return [...prev, { category, sub }];
+
       } else {
+        // Logic for REMOVING a selection (this is unchanged)
+        // Filter out the item that was deselected.
         return prev.filter(
           (item) => !(item.category === category && item.sub === sub)
         );
@@ -108,17 +103,16 @@ export default function Dashboard() {
   };
 
   const handleStart = () => {
-    // This logic is also perfect, it sends the keys in the URL
     router.push(
       `/startexercise?data=${encodeURIComponent(JSON.stringify(selections))}`
     );
   };
 
   if (loading) {
-    return <div>{t("loading")}</div>; // <-- CHANGED: Translated static text
+    return <div>Loading...</div>;
   }
 
-  // ✅ Admin Dashboard (Unchanged, as requested)
+  // ✅ Admin Dashboard
   if (user?.type === "admin") {
     return (
       <div className="min-h-[60vh] mt-14 bg-gray-100 p-6 space-y-4">
@@ -133,7 +127,41 @@ export default function Dashboard() {
             Export Data
           </Link>
         </div>
-        {/* ... all other admin JSX ... */}
+
+        {/* User Activity Metadata */}
+        <div className="bg-white shadow rounded-lg p-4 flex justify-between">
+          <span>User Activity Metadata</span>
+          <Link
+            href="/Dashboard/users"
+            className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+          >
+            Get Report
+          </Link>
+        </div>
+
+        {/* Question Performance */}
+        <div className="bg-white shadow rounded-lg p-4 flex justify-between">
+          <span>Question Performance</span>
+          <Link
+            href="/Dashboard/questions"
+            className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+          >
+            Get Report
+          </Link>
+        </div>
+
+        {/* Time-Based Analytics */}
+        <div className="bg-white shadow rounded-lg p-4 flex justify-between">
+          <span>Time-Based Analytics</span>
+          <Link
+            href="/Dashboard/daily"
+            className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+          >
+            Get Report
+          </Link>
+        </div>
+
+        {/* Single User Activity with dropdown */}
         <div className="bg-white shadow rounded-lg p-4 flex justify-between items-center">
           <span className="font-semibold">Single User Activity</span>
           <div className="relative">
@@ -143,6 +171,7 @@ export default function Dashboard() {
             >
               Get Report
             </button>
+
             {open && (
               <div className="absolute right-0 mt-2 w-56 bg-white border rounded-lg shadow-lg z-10">
                 {totalUsers > 0 ? (
@@ -169,60 +198,61 @@ export default function Dashboard() {
   }
 
   // ✅ Normal User Dashboard
-  const activeCategory = selections.length > 0 ? selections[0].category : null;
-  return (
+  // Add this line right before your return statement
+
+const activeCategory = selections.length > 0 ? selections[0].category : null;
+return (
     <div className="min-h-screen mt-10 flex flex-col items-center bg-gray-50 p-6">
       <div className="bg-white p-6 rounded-lg shadow-md w-full max-w-4xl">
-        {/* // <-- CHANGED: Wrapped in flex to add switcher */}
-        <div className="flex justify-between items-center">
-          <h1 className="text-2xl font-bold mb-6">
-            {t("welcome")} {/* <-- CHANGED: Translated static text */}
-          </h1>
-          <LanguageSwitcher /> {/* <-- CHANGED: Added language button */}
-        </div>
+        <h1 className="text-2xl font-bold mb-6">Welcome, superstar! What challenge will you master today? 🌟</h1>
       </div>
 
-      {/* // <-- CHANGED: Check new 'categories' state */}
-      {categories.length > 0 && (
+      {apiData?.exercises && (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 mt-8">
-          {/* // <-- CHANGED: Map over 'categories' array */}
-          {categories.map((category) => {
+          {Object.entries(apiData.exercises).map(([category, subExercises]) => {
+
+            // NEW: Filter the parent's 'selections' to get the list for *this* card
             const selectedSubsForThisCard = selections
-              .filter((item) => item.category === category.key) // <-- CHANGED: Use .key
+              .filter((item) => item.category === category)
               .map((item) => item.sub);
 
+            // NEW: Determine if this specific card should be disabled
             const isCardDisabled =
-              activeCategory !== null && category.key !== activeCategory; // <-- CHANGED: Use .key
+              activeCategory !== null && category !== activeCategory;
 
             return (
-              <div
-                key={category.key} // <-- CHANGED: Use .key
+             <div 
+                key={category} // The key moves to the new outer element
                 className="flex flex-col items-center"
               >
                 <ExerciseCard
-                  // 7. UPDATED PROPS for ExerciseCard
-                  categoryKey={category.key}
-                  categoryName={category.displayName}
-                  subExercises={category.subExercises}
+                  category={category}
+                  subExercises={subExercises}
                   onSelect={handleSelection}
                   selectedSubExercises={selectedSubsForThisCard}
-                  isDisabled={isCardDisabled}
+                  disabled={isCardDisabled}
+                 
                 />
 
-                {/* // <-- CHANGED: Use .key for comparison */}
-                {activeCategory === category.key && (
+                {/* NEW: Conditionally render the Start button 
+                  This only appears if this card's category is the active one.
+                */}
+                {activeCategory === category && (
                   <button
                     onClick={handleStart}
                     className="mt-4 px-6 py-3 bg-green-600 text-white font-semibold rounded-lg shadow hover:bg-green-700"
                   >
-                    {t("start")} {/* <-- CHANGED: Translated static text */}
+                    Start
                   </button>
                 )}
               </div>
             );
           })}
+
         </div>
       )}
+
+
     </div>
   );
 }
