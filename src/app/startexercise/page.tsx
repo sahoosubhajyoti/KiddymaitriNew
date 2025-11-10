@@ -224,7 +224,11 @@ function StartExercise() {
       setTimer(0);
       setIsPaused(false);
 
-      if (data.redirect) router.push("/Dashboard");
+      if (data.redirect) {
+        if(data.debug.is_test_user) {
+          alert("As you are a test user, you can only attempt 10 correct answers per session. Please restart the exercise again.")
+        }
+        router.push("/Dashboard")};
     } catch (err) {
       console.error(err);
       setError("Failed to submit answer.");
@@ -282,7 +286,7 @@ function StartExercise() {
         return (
           <div className="my-6 flex-col">
             <p className="font-semibold">
-              Q: Tell the time
+              Q: Tell the time <span>for example answer is <b>12:20</b></span>
             </p> 
           <div className="my-6 flex justify-center items-center">
             {/* You're passing question.question here, which is fine */}

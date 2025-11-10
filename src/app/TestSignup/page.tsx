@@ -3,7 +3,8 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 
-export default function Signup() {
+// Renamed component to TestSignup
+export default function TestSignup() {
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [confirmPassword, setConfirmPassword] = useState<string>("");
@@ -13,7 +14,6 @@ export default function Signup() {
   const [otp, setOtp] = useState<string>("");
   const [resendTime, setResendTime] = useState(0);
   const [canResend, setCanResend] = useState(true);
- 
 
   // Countdown timer for resend button
   useEffect(() => {
@@ -56,15 +56,15 @@ export default function Signup() {
 
     try {
       // API call to register/send OTP
+      // NOTE: You might want to point this to a different test user endpoint
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/send-otp`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email}),
+        body: JSON.stringify({ email }),
       });
 
       if (res.ok) {
         setStep("otp");
-        
         setCanResend(false);
         setResendTime(60);
       } else {
@@ -87,6 +87,7 @@ export default function Signup() {
     setResendTime(60);
 
     try {
+      // NOTE: You might want to point this to a different test user endpoint
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/resend-otp`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -114,10 +115,11 @@ export default function Signup() {
     }
 
     try {
+      // NOTE: You might want to point this to a different test user endpoint
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/verify-otp`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, otp , password }),
+        body: JSON.stringify({ email, otp, password,test_user: true }),
       });
 
       if (res.ok) {
@@ -197,8 +199,10 @@ export default function Signup() {
   // Render signup form (default step)
   return (
     <div className="flex flex-col items-center justify-center min-h-screen p-4 bg-gray-100">
+      {/* Title changed for clarity */}
+   
       <div className="bg-white p-6 rounded-xl shadow-md w-full max-w-md">
-        <h1 className="text-2xl font-bold mb-4 text-center">Sign Up</h1>
+        <h1 className="text-2xl font-bold mb-4 text-center">Test User Sign Up</h1>
         <form onSubmit={handleSignup} className="flex flex-col gap-4">
           <input
             type="email"
@@ -241,13 +245,6 @@ export default function Signup() {
             Login
           </Link>
         </p>
-      </div>
-      <div className="absolute bottom-6 right-6 text-sm text-gray-700">
-        If you are a test user,{" "}
-        <Link href="/TestSignup" className="text-blue-600 hover:underline font-semibold">
-          sign up here
-        </Link>
-        
       </div>
     </div>
   );
