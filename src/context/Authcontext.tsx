@@ -27,7 +27,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 // Function to refresh token
   const refreshToken = async (): Promise<boolean> => {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/refresh/`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/refresh`, {
         method: 'POST',
         credentials: 'include',
         headers: {
@@ -53,7 +53,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   // Check authentication status
   const checkAuth = async () => {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/user/`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/user`, {
         credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
@@ -104,7 +104,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const logout = async () => {
     try {
       // Call backend logout
-      await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/logout/`, {
+      await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/logout`, {
         method: 'POST',
         credentials: 'include',
       });
