@@ -32,10 +32,10 @@ const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
-  const loading = false;
+  
   const router = useRouter();
   const pathname = usePathname();
-  const { user, logout } = useAuth();
+  const { user, logout ,loading} = useAuth();
      const menuRef = useRef<HTMLDivElement>(null);
 //  console.log("user:", user); // Debugging line to check user state
   // Assuming `logout` exists
