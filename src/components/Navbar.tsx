@@ -9,24 +9,18 @@ import { IoHome } from "react-icons/io5";
 import { IoMdSettings } from "react-icons/io";
 import { GiProgression } from "react-icons/gi";
 import { TbLogout } from "react-icons/tb";
-import { useAuth } from "../context/Authcontext"; // Make sure this exists
+import { useAuth } from "../context/Authcontext";
+import { useLocale,useTranslations } from "next-intl";
+import { useTransition } from "react";
 
-import KMLogo from "../assets/KM.png"; // Your logo
-import dummyAvatar from "../assets/avatar.png"; // dumy avatar
+import KMLogo from "../assets/KM.png";
+import dummyAvatar from "../assets/avatar.png";
 
 interface NavLink {
   name: string;
   to: string;
   type: "route" | "scroll";
 }
-
-const navLinks: NavLink[] = [
-  { name: "Shop", to: "/shop", type: "route" },
-  { name: "Home", to: "#home", type: "scroll" },
-  { name: "Product", to: "#product", type: "scroll" },
-  { name: "Testimonials", to: "#testimonials", type: "scroll" },
-  { name: "News", to: "#news", type: "scroll" },
-];
 
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -35,15 +29,28 @@ const Navbar = () => {
   
   const router = useRouter();
   const pathname = usePathname();
-  const { user, logout ,loading} = useAuth();
-     const menuRef = useRef<HTMLDivElement>(null);
-//  console.log("user:", user); // Debugging line to check user state
-  // Assuming `logout` exists
+  const { user, logout, loading } = useAuth();
+  const menuRef = useRef<HTMLDivElement>(null);
+  
+  // Get current locale and transition state
+  const locale = useLocale();
+  const t = useTranslations("Navbar"); 
+  const [isPending, startTransition] = useTransition();
 
-  const isHome = pathname === "/";
 
+  const changeLocale = (newLocale: string) => {
+    // Set cookie with proper attributes
+    document.cookie = `MYNEXTAPP_LOCALE=${newLocale}; path=/; max-age=31536000; SameSite=Lax`;
+    
+    startTransition(() => {
+      router.refresh();
+    });
+  };
+
+  // Your existing scroll effect
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 50);
+    const isHome = pathname === "/";
 
     if (isHome) {
       window.addEventListener("scroll", handleScroll);
@@ -53,30 +60,25 @@ const Navbar = () => {
     }
 
     return () => window.removeEventListener("scroll", handleScroll);
-  }, [isHome]);
+  }, [pathname]);
 
- 
+  // Your existing click outside effect
   useEffect(() => {
-    // FIX: Add the 'MouseEvent' type to the event parameter
     function handleClickOutside(event: MouseEvent) {
-      // If clicked outside the menu element
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
         setIsUserMenuOpen(false);
       }
     }
 
-    // Listen for clicks
     document.addEventListener("mousedown", handleClickOutside);
-
-    // Cleanup
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, []); // The ref is stable, so the dependency array is correct as empty
+  }, []);
 
   const handleScrollOrRedirect = (link: NavLink) => {
     if (link.type === "scroll") {
-      if (!isHome) {
+      if (pathname !== "/") {
         router.push(`/${link.to}`);
       } else {
         document.querySelector(link.to)?.scrollIntoView({
@@ -90,13 +92,21 @@ const Navbar = () => {
     setSidebarOpen(false);
   };
 
-  const navClasses = `fixed w-full top-0  z-50 transition-all duration-300 ${
-    isHome && !isScrolled
+  const navLinks: NavLink[] = [
+  { name: t("shop"), to: "/shop", type: "route" },
+  { name: t("home"), to: "#home", type: "scroll" },
+  { name: t("product"), to: "#product", type: "scroll" },
+  { name: t("testimonials"), to: "#testimonials", type: "scroll" },
+  { name: t("news"), to: "#news", type: "scroll" },
+];
+
+  const navClasses = `fixed w-full top-0 z-50 transition-all duration-300 ${
+    pathname === "/" && !isScrolled
       ? "bg-transparent text-white"
       : "bg-white text-gray-900 shadow-md"
   }`;
 
-    if (loading) {
+  if (loading) {
     return (
       <div className="fixed w-full top-0 z-50 bg-white shadow-md">
         <div className="max-w-7xl mx-auto px-4 py-3 flex justify-center">
@@ -109,7 +119,7 @@ const Navbar = () => {
   return (
     <>
       <nav className={navClasses}>
-        <div className="max-w-7xl mx-auto  px-4 py-3 flex justify-between items-center">
+        <div className="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
           {/* Logo */}
           <Link
             href="/"
@@ -129,7 +139,7 @@ const Navbar = () => {
           </Link>
 
           {/* Desktop nav */}
-          <div className="hidden md:flex  items-center space-x-6">
+          <div className="hidden md:flex items-center space-x-6">
             {navLinks.map((link) => (
               <span
                 key={link.name}
@@ -141,20 +151,58 @@ const Navbar = () => {
               </span>
             ))}
 
-            {/* If user logged in → Profile dropdown, else → Sign Up */}
+            {/* Language Switcher */}
+            <div className="flex items-center border rounded-md overflow-hidden ml-4">
+              <button
+                onClick={() => changeLocale("en")}
+                disabled={isPending}
+                className={`px-3 py-1 text-sm font-medium transition-colors ${
+                  locale === "en" 
+                    ? "bg-blue-600 text-white" 
+                    : "bg-gray-100 hover:bg-gray-200 text-gray-700"
+                } ${isPending ? "opacity-50 cursor-not-allowed" : ""}`}
+              >
+                EN
+              </button>
+               <button
+    onClick={() => changeLocale("hin")}
+    disabled={isPending}
+    className={`px-3 py-1 text-sm font-medium transition-colors ${
+      locale === "hin" 
+        ? "bg-blue-600 text-white" 
+        : "bg-gray-100 hover:bg-gray-200 text-gray-700"
+    } ${isPending ? "opacity-50 cursor-not-allowed" : ""}`}
+  >
+    हिंदी
+
+  </button>
+  <button
+    onClick={() => changeLocale("odi")}
+    disabled={isPending}
+    className={`px-3 py-1 text-sm font-medium transition-colors ${
+      locale === "odi" 
+        ? "bg-blue-600 text-white" 
+        : "bg-gray-100 hover:bg-gray-200 text-gray-700"
+    } ${isPending ? "opacity-50 cursor-not-allowed" : ""}`}
+  >
+    ଓଡିଆ
+  </button>
+            </div>
+
+            {/* User Auth Section */}
             {user?.type === undefined ? (
-             <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-4">
                 <button
                   onClick={() => router.push("/Login")}
                   className="transition duration-300 hover:text-red-500"
                 >
-                  Login
+                  {t('login')}
                 </button>
                 <button
                   onClick={() => router.push("/Signup")}
                   className="px-4 py-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition duration-300"
                 >
-                  Sign Up
+                   {t('signup')}
                 </button>
               </div>
             ) : (
@@ -199,19 +247,18 @@ const Navbar = () => {
                         <IoHome size={20} />
                         <span>Home</span>
                       </li>
-                       {/* Conditional rendering for 'Add Exercise' on mobile */}
-              {user.type === "admin" && (
-                <button
-                  onClick={() => {
-                    setSidebarOpen(false);
-                              router.push("/Exercise");
-                              setIsUserMenuOpen(false);
-                  }}
-                  className="px-6 py-2 bg-gray-300 rounded-full hover:bg-gray-400 transition duration-300"
-                >
-                  Add Exercise
-                </button>
-              )}
+                      {user.type === "admin" && (
+                        <button
+                          onClick={() => {
+                            setSidebarOpen(false);
+                            router.push("/Exercise");
+                            setIsUserMenuOpen(false);
+                          }}
+                          className="px-6 py-2 bg-gray-300 rounded-full hover:bg-gray-400 transition duration-300 text-left"
+                        >
+                          Add Exercise
+                        </button>
+                      )}
                       <li
                         className="flex items-center gap-3 px-4 py-3 hover:bg-gray-100 rounded cursor-pointer"
                         onClick={() => {
@@ -291,27 +338,65 @@ const Navbar = () => {
             </span>
           ))}
 
+          {/* Mobile Language Switcher */}
+<div className="flex flex-wrap gap-2 mt-4">
+  <button
+    onClick={() => changeLocale("en")}
+    disabled={isPending}
+    className={`px-4 py-2 text-sm font-medium transition-colors rounded ${
+      locale === "en" 
+        ? "bg-blue-600 text-white" 
+        : "bg-gray-100 hover:bg-gray-200 text-gray-700"
+    } ${isPending ? "opacity-50 cursor-not-allowed" : ""}`}
+  >
+    English
+  </button>
+  
+  <button
+    onClick={() => changeLocale("hin")}
+    disabled={isPending}
+    className={`px-4 py-2 text-sm font-medium transition-colors rounded ${
+      locale === "hin" 
+        ? "bg-blue-600 text-white" 
+        : "bg-gray-100 hover:bg-gray-200 text-gray-700"
+    } ${isPending ? "opacity-50 cursor-not-allowed" : ""}`}
+  >
+    हिंदी
+  </button>
+  <button
+    onClick={() => changeLocale("odi")}
+    disabled={isPending}
+    className={`px-4 py-2 text-sm font-medium transition-colors rounded ${
+      locale === "odi" 
+        ? "bg-blue-600 text-white" 
+        : "bg-gray-100 hover:bg-gray-200 text-gray-700"
+    } ${isPending ? "opacity-50 cursor-not-allowed" : ""}`}
+  >
+    ଓଡିଆ
+  </button>
+</div>
+
           {/* Mobile user menu */}
           {!user ? (
-           <div className="flex items-center space-x-2">
-                <button
-                  onClick={() => router.push("/Login")}
-                  className="transition duration-300 hover:text-red-500"
-                >
-                  Login
-                </button>
-                <button
-                  onClick={() => router.push("/Signup")}
-                  className="px-4 py-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition duration-300"
-                >
-                  Sign Up
-                </button>
-              </div>
+            <div className="flex items-center space-x-2 mt-4">
+              <button
+                onClick={() => router.push("/Login")}
+                className="transition duration-300 hover:text-red-500"
+              >
+                Login
+              </button>
+              <button
+                onClick={() => router.push("/Signup")}
+                className="px-4 py-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition duration-300"
+              >
+                Sign Up
+              </button>
+            </div>
           ) : (
             <>
               <button
                 type="button"
-                  onClick={() => { router.push("/Dashboard"); setSidebarOpen(false)}}
+                onClick={() => { router.push("/Dashboard"); setSidebarOpen(false); }}
                 className="text-gray-800"
               >
                 Dashboard

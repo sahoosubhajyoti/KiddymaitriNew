@@ -4,6 +4,8 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "../../context/Authcontext";
 import ExerciseCard from "../../components/ExerciseCard";
+import { useTranslations } from "next-intl";
+import api from "../../utility/axiosInstance"; // Adjust path
 
 interface ApiData {
   exercises: {
@@ -18,6 +20,7 @@ export default function Dashboard() {
   const [selections, setSelections] = useState<
     { category: string; sub: string }[]
   >([]);
+  const t = useTranslations("Dashboard");
   const [totalUsers, setTotalUsers] = useState<number>(0);
   const [open, setOpen] = useState(false);
 
@@ -25,39 +28,23 @@ export default function Dashboard() {
   useEffect(() => {
     if (user?.type === "admin") {
       // Fetch summary API for Admin
-      fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/analytics/metadata/users`,
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
-        }
-      )
-        .then((r) => r.json())
-        .then((res) => {
-          setTotalUsers(res.total_users || 0);
-        })
-        .catch((err) => {
-          console.error("Error fetching metadata:", err);
-        });
+      // Correct - axios gives data directly
+api.get('/analytics/metadata/users')
+  .then((response) => {
+    setTotalUsers(response.data.total_users || 0);
+  })
+  .catch((err) => {
+    console.error("Error fetching metadata:", err);
+  });
       return;
     }
 
     // Fetch user dashboard data
     const fetchDashboardData = async () => {
       try {
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_BASE_URL}/dashboard/`,
-          {
-            method: "GET",
-            headers: { "Content-Type": "application/json" },
-            credentials: "include",
-          }
-        );
-        const data = await res.json();
-        setApiData(data);
+        const res = await api.get('/dashboard/');
+        
+        setApiData(res.data);
       } catch (err) {
         console.error("Error fetching dashboard data:", err);
       }
