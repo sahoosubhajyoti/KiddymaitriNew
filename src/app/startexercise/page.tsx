@@ -13,6 +13,7 @@ import Clock from "@/components/Clock";
 import ShapeComponent from "@/components/Shape";
 import StickComponent from "@/components/Stick";
 import Fraction from "@/components/Fraction";
+import api from "../../utility/axiosInstance"; // Add this import
 
 // Interfaces remain the same
 interface Question {
@@ -113,15 +114,10 @@ function StartExercise() {
         const console_played_entered = 1;
 
         // The initial fetch to start the session
-        await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/start-session/`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify({
-            group_name,
-            exercise_names,
-            console_played_entered,
-          }),
+         await api.post('/start-session/', {
+          group_name,
+          exercise_names,
+          console_played_entered,
         });
 
         // The second fetch to get the first question
@@ -169,23 +165,16 @@ function StartExercise() {
 
 
       
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/exercise/`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify({
-            group_name,
-            exercise_names,
-            console_played_entered: "0",
-          }),
-        }
-      );
+        const response = await api.post('/exercise/', {
+        group_name,
+        exercise_names,
+        console_played_entered: "0",
+      });
 
-      const data = await res.json();
+      const data = response.data;
       
-      if (!res.ok) throw new Error(data.error || "Error loading question");
+      if (response.status !== 200) throw new Error(data.error || "Error loading question");
+
 
       setQuestion(data);
       setGroupName(group_name || null);
@@ -204,20 +193,16 @@ function StartExercise() {
       setLoading(false);
     }
   };
-  const handleSubmit = async () => {
+ const handleSubmit = async () => {
     try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/exercise/submit/`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify({ type: "submit", a: answer }),
-        }
-      );
+      // ✅ Updated to use axios
+      const response = await api.post('/exercise/submit/', { 
+        type: "submit", 
+        a: answer 
+      });
 
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Submission failed");
+      const data = response.data;
+      if (response.status !== 200) throw new Error(data.error || "Submission failed");
 
       setQuestion({ question: data.question });
       setAnswer("");
@@ -225,10 +210,11 @@ function StartExercise() {
       setIsPaused(false);
 
       if (data.redirect) {
-        if(data.debug.is_test_user) {
+        if(data.debug?.is_test_user) {
           alert("As you are a test user, you can only attempt 10 correct answers per session. Please restart the exercise again.")
         }
-        router.push("/Dashboard")};
+        router.push("/Dashboard");
+      }
     } catch (err) {
       console.error(err);
       setError("Failed to submit answer.");
@@ -237,18 +223,13 @@ function StartExercise() {
 
   const handleSkip = async () => {
     try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/exercise/submit/`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify({ type: "skip" }),
-        }
-      );
+      // ✅ Updated to use axios
+      const response = await api.post('/exercise/submit/', { 
+        type: "skip" 
+      });
 
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to skip");
+      const data = response.data;
+      if (response.status !== 200) throw new Error(data.error || "Failed to skip");
 
       setQuestion({ question: data.question });
       setAnswer("");
@@ -263,17 +244,14 @@ function StartExercise() {
   const handlePauseToggle = async () => {
     const type = isPaused ? "resume" : "pause";
     try {
-      await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/exercise/submit/`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ type }),
-      });
+      // ✅ Updated to use axios
+      await api.post('/exercise/submit/', { type });
       setIsPaused((prev) => !prev);
     } catch (err) {
       console.error("Failed to toggle pause", err);
     }
   };
+
 
   const handleStop = () => {
     router.push("/Dashboard");

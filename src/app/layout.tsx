@@ -3,6 +3,8 @@ import { Geist, Geist_Mono, Baloo_2,Poppins  } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
 import { AuthProvider } from "../context/Authcontext"; // ✅ Import your context provider
+import { NextIntlClientProvider } from "next-intl";
+import { getMessages, getLocale } from "next-intl/server";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -36,22 +38,28 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+   const [messages, locale] = await Promise.all([
+    getMessages(),
+    getLocale()
+  ]);
   return (
-    <html lang="en">
+    <html lang={locale}>
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${baloo.variable} ${poppins.variable}`}
       >
+          <NextIntlClientProvider messages={messages}>
         <AuthProvider>
           {" "}
           {/* ✅ Wrap your entire app */}
           <Navbar />
           {children}
         </AuthProvider>
+        </NextIntlClientProvider>
       </body>
     </html>
   );

@@ -1,0 +1,34 @@
+{
+  "HomePage": {
+    "title": "Kiddymaitri",
+    "description": "Educational platform for children"
+  },
+  "Dashboard": {
+    "loading": "Loading...",
+    "adminDashboard": "Admin Dashboard",
+    "exportData": "Export Data",
+    "userActivity": "User Activity Metadata",
+    "questionPerformance": "Question Performance",
+    "timeAnalytics": "Time-Based Analytics",
+    "singleUserActivity": "Single User Activity",
+    "getReport": "Get Report",
+    "user": "User",
+    "noUsers": "No users found",
+    "welcomeMessage": "Welcome, superstar! What challenge will you master today? 🌟",
+    "start": "Start"
+  },
+  "Navbar": {
+    "home": "Home",
+    "shop": "Shop",
+    "product": "Product",
+    "testimonials": "Testimonials",
+    "news": "News",
+    "login": "Login",
+    "signup": "Sign Up",
+    "dashboard": "Dashboard",
+    "progress": "Progress",
+    "settings": "Settings",
+    "logout": "Logout",
+    "addExercise": "Add Exercise"
+  }
+}
