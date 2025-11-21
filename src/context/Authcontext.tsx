@@ -24,6 +24,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   // Check authentication status
   const checkAuth = async () => {
+    const storedUser = localStorage.getItem("user");
+    if (!storedUser) {
+      setLoading(false);
+      return;
+    }
     try {
       // ✅ Updated to use axios
       const response = await api.get('/user');

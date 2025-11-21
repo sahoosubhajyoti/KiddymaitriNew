@@ -314,7 +314,7 @@ function StartExercise() {
           );
 
       // Add more cases as needed...
-
+      
       case "arith":
         return (
       <p className="font-semibold">

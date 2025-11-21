@@ -58,7 +58,7 @@ api.interceptors.response.use(
         
         // Clear user data and redirect
         localStorage.removeItem("user");
-        window.location.href = '/login';
+        window.location.href = '/Login';
         
         return Promise.reject(refreshError);
       } finally {
