@@ -70,16 +70,25 @@ export default function Login() {
             onChange={(e) => setPassword(e.target.value)}
             className="border p-2 rounded"
           />
+         
           <button type="submit" className="bg-green-600 text-white p-2 rounded">
             Login
           </button>
+
+          
         </form>
+         <Link href="/Forget-Password" className="text-blue-600 hover:underline">
+            Forgot password
+          </Link>
         <p className="mt-4 text-sm text-center">
           Don’t have an account?{" "}
           <Link href="/Signup" className="text-blue-600 hover:underline">
             Sign up
           </Link>
+          
         </p>
+        
+        
       </div>
     </div>
   );
