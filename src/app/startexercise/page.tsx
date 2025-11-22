@@ -13,11 +13,12 @@ import Clock from "@/components/Clock";
 import ShapeComponent from "@/components/Shape";
 import StickComponent from "@/components/Stick";
 import Fraction from "@/components/Fraction";
+import DataChart from "@/components/DataChart";
 import api from "../../utility/axiosInstance"; // Add this import
 
 // Interfaces remain the same
 interface Question {
-  question: string;
+  question: string | any;
   text?: string;
   options?: string[];
   redirect?: string;
@@ -314,7 +315,22 @@ function StartExercise() {
           );
 
       // Add more cases as needed...
-      
+      case "datachart2":
+        // Ensure the component is defined or imported
+        return (
+           <div className="my-6 flex justify-center items-center w-full">
+             {/* Pass the nested object { data_values:..., find_type:... } */}
+             <DataChart data={question?.question} />
+           </div>
+        );
+        case "datachart":
+        // Ensure the component is defined or imported
+        return (
+           <div className="my-6 flex justify-center items-center w-full">
+             {/* Pass the nested object { data_values:..., find_type:... } */}
+             <DataChart data={question?.question} />
+           </div>
+        );
       case "arith":
         return (
       <p className="font-semibold">
