@@ -55,8 +55,8 @@ function StartExercise() {
   const [isPaused, setIsPaused] = useState(false);
   const [answer, setAnswer] = useState("");
   const [hasFetched, setHasFetched] = useState(false);
-  const [_qnsType, setQnsType] = useState<string | null>(null);
-  const [_qnsData, setQnsData] = useState<string | null>(null);
+  // const [_qnsType, setQnsType] = useState<string | null>(null);
+  // const [_qnsData, setQnsData] = useState<string | null>(null);
   const [groupName, setGroupName] = useState<string | null>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -179,8 +179,8 @@ function StartExercise() {
 
       setQuestion(data);
       setGroupName(group_name || null);
-      setQnsType(data.type || null);
-      setQnsData(data.qns || null);
+      // setQnsType(data.type || null);
+      // setQnsData(data.qns || null);
       
       setAnswer("");
       setTimer(0);
@@ -266,14 +266,10 @@ function StartExercise() {
           <div className="my-6 flex-col">
             <p className="font-semibold">
               Q: Tell the time <span>for example answer is <b>12:20</b></span>
-            </p> 
-          <div className="my-6 flex justify-center items-center">
-            {/* You're passing question.question here, which is fine */}
-            {/* <p className="font-semibold">
-              Q: Tell the time
-            </p> */}
-            <Clock time={question?.question || "00:00"} />
-          </div>
+            </p>
+            <div className="my-6 flex justify-center items-center">
+              <Clock time={(question?.question as string) || "00:00"} />
+            </div>
           </div>
         );
 
@@ -282,12 +278,10 @@ function StartExercise() {
           <div className="my-6 flex-col">
             <p className="font-semibold">
               Q: Tell the shape
-            </p> 
-          <div className="my-6 flex  justify-center items-center">
-            
-           <ShapeComponent shape={question?.question || null} />
-            
-          </div>
+            </p>
+            <div className="my-6 flex justify-center items-center">
+              <ShapeComponent shape={(question?.question as string) || null} />
+            </div>
           </div>
         );
 
@@ -297,57 +291,58 @@ function StartExercise() {
             <p className="font-semibold">
               Q: count the number of sticks
             </p>
-          <div className="my-6 flex justify-center items-center">
-           <StickComponent count={question?.question || null}/>
-          </div>
+            <div className="my-6 flex justify-center items-center">
+              {/* FIX APPLIED HERE:
+                 We explicitly cast 'question.question' to 'string'. 
+                 Even though counting sounds like a number, the error said it expected a 'string | null',
+                 so 'as string' satisfies the compiler.
+              */}
+              <StickComponent count={(question?.question as string) || null} />
+            </div>
           </div>
         );
-        case "fraction":
-          return (
-        <div className="my-6 flex-col">
-            <p className="font-semibold">
-              Q: tell the fraction of colored region 
-            </p>
-          <div className="my-6 flex justify-center items-center">
-           <Fraction frac={question?.question || "00:00"}/>
-          </div>
-          </div>
-          );
 
-      // Add more cases as needed...
+      case "fraction":
+        return (
+          <div className="my-6 flex-col">
+            <p className="font-semibold">
+              Q: tell the fraction of colored region
+            </p>
+            <div className="my-6 flex justify-center items-center">
+              <Fraction frac={(question?.question as string) || "00:00"} />
+            </div>
+          </div>
+        );
+
       case "datachart2":
-        // Ensure the component is defined or imported
+      case "datachart":
         return (
-           <div className="my-6 flex justify-center items-center w-full">
-             {/* Pass the nested object { data_values:..., find_type:... } */}
-             <DataChart data={question?.question} />
-           </div>
+          <div className="my-6 flex justify-center items-center w-full">
+             <DataChart 
+              data={question?.question as { 
+                data_values: Record<string, number | string>; 
+                find_type: string; 
+              }} 
+            />
+          </div>
         );
-        case "datachart":
-        // Ensure the component is defined or imported
-        return (
-           <div className="my-6 flex justify-center items-center w-full">
-             {/* Pass the nested object { data_values:..., find_type:... } */}
-             <DataChart data={question?.question} />
-           </div>
-        );
+
       case "arith":
         return (
-      <p className="font-semibold">
-              Q: <InlineMath math={question?.question || question?.text || ""} />
-            </p>
-          );
+          <p className="font-semibold">
+            Q: <InlineMath math={(question?.question as string) || question?.text || ""} />
+          </p>
+        );
 
       default:
-        // Return nothing if no group matches
-        return <div className="my-6 flex-col">
+        return (
+          <div className="my-6 flex-col">
             <p className="font-semibold">
-              Q: {question?.question || question?.text || ""}
+              Q: {(question?.question as string) || question?.text || ""}
             </p>
-          <div className="my-6 flex justify-center items-center">
-          
+            <div className="my-6 flex justify-center items-center"></div>
           </div>
-          </div>;
+        );
     }
   };
   return (

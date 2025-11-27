@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "../../context/Authcontext";
 import ExerciseCard from "../../components/ExerciseCard";
-import { useTranslations } from "next-intl";
+//import { useTranslations } from "next-intl";
 import api from "../../utility/axiosInstance"; // Adjust path
 
 interface ApiData {
