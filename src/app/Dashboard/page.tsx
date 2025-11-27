@@ -20,7 +20,7 @@ export default function Dashboard() {
   const [selections, setSelections] = useState<
     { category: string; sub: string }[]
   >([]);
-  const t = useTranslations("Dashboard");
+  //const t = useTranslations("Dashboard");
   const [totalUsers, setTotalUsers] = useState<number>(0);
   const [open, setOpen] = useState(false);
 
@@ -204,8 +204,7 @@ return (
               .map((item) => item.sub);
 
             // NEW: Determine if this specific card should be disabled
-            const isCardDisabled =
-              activeCategory !== null && category !== activeCategory;
+          
 
             return (
              <div 

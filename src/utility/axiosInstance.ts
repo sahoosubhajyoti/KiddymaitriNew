@@ -1,10 +1,19 @@
 // utility/axiosInstance.ts
 import axios from 'axios';
 
-let isRefreshing = false;
-let failedQueue: any[] = [];
+// 1. Define the interface for the items in your queue
+interface FailedRequest {
+  resolve: (value: unknown) => void;
+  reject: (reason?: unknown) => void;
+}
 
-const processQueue = (error: any, token: string | null = null) => {
+let isRefreshing = false;
+
+// 2. Apply the interface to the queue array
+let failedQueue: FailedRequest[] = [];
+
+// 3. Type the error argument as 'Error | null'
+const processQueue = (error: Error | null, token: string | null = null) => {
   failedQueue.forEach(prom => {
     if (error) {
       prom.reject(error);
@@ -54,7 +63,8 @@ api.interceptors.response.use(
         return api(originalRequest);
       } catch (refreshError) {
         // Refresh failed - redirect to login
-        processQueue(refreshError, null);
+        // Cast refreshError to Error or unknown, but Error is safe here for the queue
+        processQueue(refreshError as Error, null);
         
         // Clear user data and redirect
         localStorage.removeItem("user");

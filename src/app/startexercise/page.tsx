@@ -18,7 +18,7 @@ import api from "../../utility/axiosInstance"; // Add this import
 
 // Interfaces remain the same
 interface Question {
-  question: string | any;
+ question: string | number | object;
   text?: string;
   options?: string[];
   redirect?: string;
@@ -55,8 +55,8 @@ function StartExercise() {
   const [isPaused, setIsPaused] = useState(false);
   const [answer, setAnswer] = useState("");
   const [hasFetched, setHasFetched] = useState(false);
-  const [qnsType, setQnsType] = useState<string | null>(null);
-  const [qnsData, setQnsData] = useState<string | null>(null);
+  const [_qnsType, setQnsType] = useState<string | null>(null);
+  const [_qnsData, setQnsData] = useState<string | null>(null);
   const [groupName, setGroupName] = useState<string | null>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
