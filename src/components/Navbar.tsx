@@ -1,17 +1,18 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useTransition } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
-import { RxHamburgerMenu, RxCross1 } from "react-icons/rx";
+import { useAuth } from "../context/Authcontext";
+import { useLocale, useTranslations } from "next-intl";
+
+// Icons
+import { RxHamburgerMenu, RxCross1, RxChevronDown } from "react-icons/rx";
 import { IoHome } from "react-icons/io5";
-import { IoMdSettings } from "react-icons/io";
+import { IoMdSettings, IoMdGlobe } from "react-icons/io";
 import { GiProgression } from "react-icons/gi";
 import { TbLogout } from "react-icons/tb";
-import { useAuth } from "../context/Authcontext";
-import { useLocale,useTranslations } from "next-intl";
-import { useTransition } from "react";
 
 import KMLogo from "../assets/KM.png";
 import dummyAvatar from "../assets/avatar.png";
@@ -22,32 +23,70 @@ interface NavLink {
   type: "route" | "scroll";
 }
 
+// 1. UPDATED: Added backendValue to match SettingsPage logic
+const languages = [
+  { code: "en", label: "English", short: "EN", backendValue: "ENGLISH" },
+  { code: "hin", label: "हिंदी", short: "HI", backendValue: "HINDI" },
+  { code: "odi", label: "ଓଡିଆ", short: "OD", backendValue: "ODIA" },
+];
+
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+   
+  // Dropdown States
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
-  
+  const [isLangMenuOpen, setIsLangMenuOpen] = useState(false);
+
   const router = useRouter();
   const pathname = usePathname();
   const { user, logout, loading } = useAuth();
+   
+  // Refs for click-outside detection
   const menuRef = useRef<HTMLDivElement>(null);
-  
-  // Get current locale and transition state
+  const langMenuRef = useRef<HTMLDivElement>(null);
+
   const locale = useLocale();
-  const t = useTranslations("Navbar"); 
+  const t = useTranslations("Navbar");
   const [isPending, startTransition] = useTransition();
 
+  // Helper to get current language label
+  const currentLang = languages.find((l) => l.code === locale) || languages[0];
 
-  const changeLocale = (newLocale: string) => {
-    // Set cookie with proper attributes
+  // 2. UPDATED: changeLocale now syncs with Backend if user is logged in
+  const changeLocale = async (newLocale: string) => {
+    // A. Immediate UI/Cookie Update
     document.cookie = `MYNEXTAPP_LOCALE=${newLocale}; path=/; max-age=31536000; SameSite=Lax`;
     
     startTransition(() => {
       router.refresh();
+      setIsLangMenuOpen(false); // Close desktop menu
     });
+
+    // B. Backend API Call (Only if user is logged in)
+    if (user) {
+        const langData = languages.find((l) => l.code === newLocale);
+        const medium = langData ? langData.backendValue : "ENGLISH";
+
+        try {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/profile`, {
+                method: "PATCH",
+                headers: { 
+                    "Content-Type": "application/json" 
+                },
+                credentials: "include", // Important for cookies/auth
+                body: JSON.stringify({ medium: medium }),
+            });
+
+            if (!response.ok) {
+                console.error("Failed to update language preference on backend");
+            }
+        } catch (error) {
+            console.error("Error syncing language preference:", error);
+        }
+    }
   };
 
-  // Your existing scroll effect
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 50);
     const isHome = pathname === "/";
@@ -62,11 +101,19 @@ const Navbar = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, [pathname]);
 
-  // Your existing click outside effect
+  // Unified Click Outside Effect
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+      const target = event.target as Node;
+      
+      // Close User Menu
+      if (menuRef.current && !menuRef.current.contains(target)) {
         setIsUserMenuOpen(false);
+      }
+      
+      // Close Language Menu
+      if (langMenuRef.current && !langMenuRef.current.contains(target)) {
+        setIsLangMenuOpen(false);
       }
     }
 
@@ -93,12 +140,12 @@ const Navbar = () => {
   };
 
   const navLinks: NavLink[] = [
-  { name: t("shop"), to: "/shop", type: "route" },
-  { name: t("home"), to: "#home", type: "scroll" },
-  { name: t("product"), to: "#product", type: "scroll" },
-  { name: t("testimonials"), to: "#testimonials", type: "scroll" },
-  { name: t("news"), to: "#news", type: "scroll" },
-];
+    { name: t("shop"), to: "/shop", type: "route" },
+    { name: t("home"), to: "#home", type: "scroll" },
+    { name: t("product"), to: "#product", type: "scroll" },
+    { name: t("testimonials"), to: "#testimonials", type: "scroll" },
+    { name: t("news"), to: "#news", type: "scroll" },
+  ];
 
   const navClasses = `fixed w-full top-0 z-50 transition-all duration-300 ${
     pathname === "/" && !isScrolled
@@ -151,42 +198,42 @@ const Navbar = () => {
               </span>
             ))}
 
-            {/* Language Switcher */}
-            <div className="flex items-center border rounded-md overflow-hidden ml-4">
+            {/* --------------------------- */}
+            {/* Desktop Language Dropdown   */}
+            {/* --------------------------- */}
+            <div className="relative ml-4" ref={langMenuRef}>
               <button
-                onClick={() => changeLocale("en")}
-                disabled={isPending}
-                className={`px-3 py-1 text-sm font-medium transition-colors ${
-                  locale === "en" 
-                    ? "bg-blue-600 text-white" 
-                    : "bg-gray-100 hover:bg-gray-200 text-gray-700"
-                } ${isPending ? "opacity-50 cursor-not-allowed" : ""}`}
+                onClick={() => setIsLangMenuOpen(!isLangMenuOpen)}
+                className={`flex items-center gap-1 px-3 py-1.5 rounded-full border transition-all duration-200 ${
+                  pathname === "/" && !isScrolled 
+                    ? "border-white/50 hover:bg-white/10" 
+                    : "border-gray-300 hover:bg-gray-100"
+                }`}
               >
-                EN
+                <IoMdGlobe size={18} />
+                <span className="text-sm font-medium mx-1">{currentLang.label}</span>
+                <RxChevronDown 
+                    size={16} 
+                    className={`transition-transform duration-200 ${isLangMenuOpen ? "rotate-180" : ""}`}
+                />
               </button>
-               <button
-    onClick={() => changeLocale("hin")}
-    disabled={isPending}
-    className={`px-3 py-1 text-sm font-medium transition-colors ${
-      locale === "hin" 
-        ? "bg-blue-600 text-white" 
-        : "bg-gray-100 hover:bg-gray-200 text-gray-700"
-    } ${isPending ? "opacity-50 cursor-not-allowed" : ""}`}
-  >
-    हिंदी
 
-  </button>
-  <button
-    onClick={() => changeLocale("odi")}
-    disabled={isPending}
-    className={`px-3 py-1 text-sm font-medium transition-colors ${
-      locale === "odi" 
-        ? "bg-blue-600 text-white" 
-        : "bg-gray-100 hover:bg-gray-200 text-gray-700"
-    } ${isPending ? "opacity-50 cursor-not-allowed" : ""}`}
-  >
-    ଓଡିଆ
-  </button>
+              {isLangMenuOpen && (
+                <div className="absolute right-0 top-full mt-2 w-32 bg-white rounded-md shadow-lg py-1 border border-gray-100 overflow-hidden z-50">
+                  {languages.map((lang) => (
+                    <button
+                      key={lang.code}
+                      onClick={() => changeLocale(lang.code)}
+                      disabled={isPending}
+                      className={`block w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition-colors ${
+                        locale === lang.code ? "text-blue-600 font-semibold bg-blue-50" : "text-gray-700"
+                      } ${isPending ? "opacity-50 cursor-not-allowed" : ""}`}
+                    >
+                      {lang.label}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* User Auth Section */}
@@ -202,12 +249,12 @@ const Navbar = () => {
                   onClick={() => router.push("/Signup")}
                   className="px-4 py-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition duration-300"
                 >
-                   {t('signup')}
+                  {t('signup')}
                 </button>
               </div>
             ) : (
               <div className="relative flex items-center gap-4" ref={menuRef}>
-                {/* Dashboard */}
+                {/* Dashboard Link */}
                 <div className="relative group cursor-pointer">
                   <button
                     type="button"
@@ -231,56 +278,58 @@ const Navbar = () => {
                     height={32}
                     className="rounded-full object-cover"
                   />
-                  <span className="text-sm font-medium">{user.name}</span>
                 </div>
 
                 {isUserMenuOpen && (
-                  <div className="absolute right-4 top-full mt-4 bg-white shadow-lg rounded-md w-46 flex-col transition-all duration-200 z-50 flex">
-                    <ul className="flex flex-col text-base text-gray-700 p-3">
+                  <div className="absolute right-0 top-full mt-4 bg-white shadow-lg rounded-md w-56 flex-col transition-all duration-200 z-50 flex border border-gray-100">
+                    <ul className="flex flex-col text-sm text-gray-700 py-2">
                       <li
-                        className="flex items-center gap-3 px-4 py-3 hover:bg-gray-100 rounded cursor-pointer"
+                        className="flex items-center gap-3 px-4 py-2 hover:bg-gray-100 cursor-pointer"
                         onClick={() => {
                           router.push("/#home");
                           setIsUserMenuOpen(false);
                         }}
                       >
-                        <IoHome size={20} />
+                        <IoHome size={18} />
                         <span>Home</span>
                       </li>
                       {user.type === "admin" && (
-                        <button
-                          onClick={() => {
-                            setSidebarOpen(false);
-                            router.push("/Exercise");
-                            setIsUserMenuOpen(false);
-                          }}
-                          className="px-6 py-2 bg-gray-300 rounded-full hover:bg-gray-400 transition duration-300 text-left"
-                        >
-                          Add Exercise
-                        </button>
+                        <li className="px-4 py-2">
+                            <button
+                            onClick={() => {
+                                setSidebarOpen(false);
+                                router.push("/Exercise");
+                                setIsUserMenuOpen(false);
+                            }}
+                            className="w-full text-center py-1.5 bg-gray-100 rounded-full hover:bg-gray-200 text-xs font-semibold transition"
+                            >
+                            Add Exercise
+                            </button>
+                        </li>
                       )}
                       <li
-                        className="flex items-center gap-3 px-4 py-3 hover:bg-gray-100 rounded cursor-pointer"
+                        className="flex items-center gap-3 px-4 py-2 hover:bg-gray-100 cursor-pointer"
                         onClick={() => {
                           router.push("/Progress");
                           setIsUserMenuOpen(false);
                         }}
                       >
-                        <GiProgression size={20} />
+                        <GiProgression size={18} />
                         <span>Progress</span>
                       </li>
                       <li
-                        className="flex items-center gap-3 px-4 py-3 hover:bg-gray-100 rounded cursor-pointer"
+                        className="flex items-center gap-3 px-4 py-2 hover:bg-gray-100 cursor-pointer"
                         onClick={() => {
                           router.push("/Setting");
                           setIsUserMenuOpen(false);
                         }}
                       >
-                        <IoMdSettings size={20} />
+                        <IoMdSettings size={18} />
                         <span>Setting</span>
                       </li>
-                      <li className="flex items-center gap-3 px-4 py-3 hover:bg-gray-100 rounded">
-                        <TbLogout size={20} />
+                      <hr className="my-1 border-gray-100" />
+                      <li className="flex items-center gap-3 px-4 py-2 hover:bg-gray-100 cursor-pointer text-red-500">
+                        <TbLogout size={18} />
                         <button
                           type="button"
                           onClick={() => {
@@ -317,9 +366,9 @@ const Navbar = () => {
 
       {/* Sidebar (Mobile) */}
       <div
-        className={`fixed top-0 left-0 h-screen w-full bg-white z-50 transform transition-transform duration-300 ${
+        className={`fixed top-0 left-0 h-screen w-[80%] max-w-sm bg-white z-50 transform transition-transform duration-300 ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
-        } overflow-y-auto flex flex-col`}
+        } overflow-y-auto flex flex-col shadow-2xl`}
       >
         <div className="flex items-center justify-between p-4 border-b">
           <Image src={KMLogo} alt="Logo" className="h-8 w-auto" />
@@ -327,100 +376,98 @@ const Navbar = () => {
             <RxCross1 size={24} />
           </button>
         </div>
-        <div className="flex-grow flex flex-col items-center space-y-6 text-xl font-medium p-10">
-          {navLinks.map((link) => (
-            <span
-              key={link.name}
-              onClick={() => handleScrollOrRedirect(link)}
-              className="text-gray-800 hover:text-red-500 transition cursor-pointer"
-            >
-              {link.name}
-            </span>
-          ))}
+         
+        <div className="flex-grow flex flex-col p-6 space-y-6">
+          {/* Mobile Nav Links */}
+          <div className="flex flex-col space-y-4">
+            {navLinks.map((link) => (
+                <span
+                key={link.name}
+                onClick={() => handleScrollOrRedirect(link)}
+                className="text-lg font-medium text-gray-800 hover:text-red-500 transition cursor-pointer"
+                >
+                {link.name}
+                </span>
+            ))}
+          </div>
 
-          {/* Mobile Language Switcher */}
-<div className="flex flex-wrap gap-2 mt-4">
-  <button
-    onClick={() => changeLocale("en")}
-    disabled={isPending}
-    className={`px-4 py-2 text-sm font-medium transition-colors rounded ${
-      locale === "en" 
-        ? "bg-blue-600 text-white" 
-        : "bg-gray-100 hover:bg-gray-200 text-gray-700"
-    } ${isPending ? "opacity-50 cursor-not-allowed" : ""}`}
-  >
-    English
-  </button>
-  
-  <button
-    onClick={() => changeLocale("hin")}
-    disabled={isPending}
-    className={`px-4 py-2 text-sm font-medium transition-colors rounded ${
-      locale === "hin" 
-        ? "bg-blue-600 text-white" 
-        : "bg-gray-100 hover:bg-gray-200 text-gray-700"
-    } ${isPending ? "opacity-50 cursor-not-allowed" : ""}`}
-  >
-    हिंदी
-  </button>
-  <button
-    onClick={() => changeLocale("odi")}
-    disabled={isPending}
-    className={`px-4 py-2 text-sm font-medium transition-colors rounded ${
-      locale === "odi" 
-        ? "bg-blue-600 text-white" 
-        : "bg-gray-100 hover:bg-gray-200 text-gray-700"
-    } ${isPending ? "opacity-50 cursor-not-allowed" : ""}`}
-  >
-    ଓଡିଆ
-  </button>
-</div>
+          <hr className="border-gray-200" />
+
+          {/* Mobile Language Section (Collapsible style) */}
+          <div className="space-y-3">
+             <h3 className="text-sm uppercase text-gray-400 font-bold tracking-wider flex items-center gap-2">
+                <IoMdGlobe /> Language
+             </h3>
+             <div className="grid grid-cols-2 gap-2">
+                {languages.map((lang) => (
+                    <button
+                        key={lang.code}
+                        onClick={() => changeLocale(lang.code)}
+                        disabled={isPending}
+                        className={`px-3 py-2 text-sm font-medium rounded-md border transition-all ${
+                            locale === lang.code 
+                            ? "bg-blue-600 text-white border-blue-600 shadow-md" 
+                            : "bg-white text-gray-700 border-gray-200 hover:bg-gray-50"
+                        }`}
+                    >
+                        {lang.label}
+                    </button>
+                ))}
+             </div>
+          </div>
+
+          <hr className="border-gray-200" />
 
           {/* Mobile user menu */}
           {!user ? (
-            <div className="flex items-center space-x-2 mt-4">
+            <div className="flex flex-col space-y-3">
               <button
                 onClick={() => router.push("/Login")}
-                className="transition duration-300 hover:text-red-500"
+                className="w-full py-2 border border-red-500 text-red-500 rounded-lg hover:bg-red-50 transition font-medium"
               >
                 Login
               </button>
               <button
                 onClick={() => router.push("/Signup")}
-                className="px-4 py-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition duration-300"
+                className="w-full py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition font-medium shadow-md"
               >
                 Sign Up
               </button>
             </div>
           ) : (
-            <>
-              <button
-                type="button"
-                onClick={() => { router.push("/Dashboard"); setSidebarOpen(false); }}
-                className="text-gray-800"
-              >
-                Dashboard
-              </button>
-              <div className="flex flex-col items-center gap-2">
+            <div className="flex flex-col space-y-4">
+               <div className="flex items-center gap-3 bg-gray-50 p-3 rounded-lg">
                 <Image
                   src={user.image || dummyAvatar}
                   alt="user"
                   width={40}
                   height={40}
-                  className="rounded-full object-cover"
+                  className="rounded-full object-cover border border-gray-200"
                 />
-                <span>{user.name}</span>
+                <div className="flex flex-col">
+                    <span className="font-semibold text-gray-800">{user.name}</span>
+                    <span className="text-xs text-gray-500">Logged in</span>
+                </div>
               </div>
+
+              <button
+                type="button"
+                onClick={() => { router.push("/Dashboard"); setSidebarOpen(false); }}
+                className="text-left font-medium text-gray-700 hover:text-blue-600"
+              >
+                Dashboard
+              </button>
+               
               <button
                 onClick={() => {
                   logout();
                   router.push("/Login");
                 }}
-                className="px-6 py-2 bg-gray-300 rounded-full hover:bg-gray-400 transition duration-300"
+                className="w-full py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition font-medium"
               >
                 Logout
               </button>
-            </>
+            </div>
           )}
         </div>
       </div>
