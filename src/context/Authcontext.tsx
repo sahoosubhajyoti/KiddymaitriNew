@@ -1,12 +1,14 @@
 "use client";
 
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { useRouter } from "next/navigation";
 import api from "../utility/axiosInstance"; // Adjust path as needed
 
 interface User {
   name: string;
   image?: string;
   type?: string;
+  language?: string;
 }
 
 interface AuthContextType {
@@ -21,6 +23,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const router = useRouter();
 
   // Check authentication status
   const checkAuth = async () => {
@@ -35,6 +38,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const userData = response.data;
       setUser(userData);
       localStorage.setItem("user", JSON.stringify(userData));
+      const currentCookie = document.cookie
+    .split('; ')
+    .find(row => row.startsWith('MYNEXTAPP_LOCALE='))
+    ?.split('=')[1];
+
+  if (userData.language && userData.language !== currentCookie) {
+     document.cookie = `MYNEXTAPP_LOCALE=${userData.language}; path=/; max-age=31536000; SameSite=Lax`;
+     router.refresh();
+  }
     } catch (error) {
       console.error('Auth check error:', error);
       setUser(null);

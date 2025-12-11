@@ -3,103 +3,42 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "../../context/Authcontext";
-import ExerciseCard from "../../components/ExerciseCard";
-//import { useTranslations } from "next-intl";
-import api from "../../utility/axiosInstance"; // Adjust path
+import api from "../../utility/axiosInstance"; 
 
-interface ApiData {
-  exercises: {
-    [key: string]: string[];
-  };
-}
+// Note: The ApiData interface for exercises is removed here 
+// because that data fetching will happen on the new /exercise page.
 
 export default function Dashboard() {
   const { user, loading } = useAuth();
   const router = useRouter();
-  const [apiData, setApiData] = useState<ApiData | null>(null);
-  const [selections, setSelections] = useState<
-    { category: string; sub: string }[]
-  >([]);
-  //const t = useTranslations("Dashboard");
+  
+  // Admin State
   const [totalUsers, setTotalUsers] = useState<number>(0);
   const [open, setOpen] = useState(false);
 
-  // Fetch data
+  // Fetch data (Admin Only)
   useEffect(() => {
     if (user?.type === "admin") {
-      // Fetch summary API for Admin
-      // Correct - axios gives data directly
-api.get('/analytics/metadata/users')
-  .then((response) => {
-    setTotalUsers(response.data.total_users || 0);
-  })
-  .catch((err) => {
-    console.error("Error fetching metadata:", err);
-  });
-      return;
+      api.get('/analytics/metadata/users')
+        .then((response) => {
+          setTotalUsers(response.data.total_users || 0);
+        })
+        .catch((err) => {
+          console.error("Error fetching metadata:", err);
+        });
     }
-
-    // Fetch user dashboard data
-    const fetchDashboardData = async () => {
-      try {
-        const res = await api.get('/dashboard/');
-        
-        setApiData(res.data);
-      } catch (err) {
-        console.error("Error fetching dashboard data:", err);
-      }
-    };
-
-    fetchDashboardData();
+    // We removed the User fetch here because that logic 
+    // moves to the specific pages (Exercise/Quiz/Test)
   }, [user?.type]);
 
- const handleSelection = (
-    category: string,
-    sub: string,
-    isSelected: boolean
-  ) => {
-    setSelections((prev) => {
-      // Logic for ADDING a selection
-      if (isSelected) {
-        // Check if there are already selections
-        if (prev.length > 0) {
-          // Get the category that is already active
-          const activeCategory = prev[0].category;
-
-          // If the new selection is from a DIFFERENT category...
-          if (category !== activeCategory) {
-            // ...clear the old selections and start a new list with this item.
-            return [{ category, sub }];
-          }
-        }
-
-        // If we're here, it means either:
-        // 1. The array was empty.
-        // 2. The new item is in the SAME category.
-        // In either case, just add the new item to the list.
-        return [...prev, { category, sub }];
-
-      } else {
-        // Logic for REMOVING a selection (this is unchanged)
-        // Filter out the item that was deselected.
-        return prev.filter(
-          (item) => !(item.category === category && item.sub === sub)
-        );
-      }
-    });
-  };
-
-  const handleStart = () => {
-    router.push(
-      `/startexercise?data=${encodeURIComponent(JSON.stringify(selections))}`
-    );
-  };
 
   if (loading) {
-    return <div>Loading...</div>;
+    return <div className="p-10 text-center">Loading...</div>;
   }
 
-  // ✅ Admin Dashboard
+  // ==========================================
+  // ✅ 1. Admin Dashboard (Unchanged)
+  // ==========================================
   if (user?.type === "admin") {
     return (
       <div className="min-h-[60vh] mt-14 bg-gray-100 p-6 space-y-4">
@@ -160,7 +99,7 @@ api.get('/analytics/metadata/users')
             </button>
 
             {open && (
-              <div className="absolute right-0 mt-2 w-56 bg-white border rounded-lg shadow-lg z-10">
+              <div className="absolute right-0 mt-2 w-56 bg-white border rounded-lg shadow-lg z-10 max-h-60 overflow-y-auto">
                 {totalUsers > 0 ? (
                   Array.from({ length: totalUsers }, (_, i) => i + 1).map(
                     (id) => (
@@ -184,61 +123,68 @@ api.get('/analytics/metadata/users')
     );
   }
 
-  // ✅ Normal User Dashboard
-  // Add this line right before your return statement
-
-const activeCategory = selections.length > 0 ? selections[0].category : null;
-return (
+  // ==========================================
+  // ✅ 2. Normal User Dashboard (New 3-Card Layout)
+  // ==========================================
+  return (
     <div className="min-h-screen mt-10 flex flex-col items-center bg-gray-50 p-6">
-      <div className="bg-white p-6 rounded-lg shadow-md w-full max-w-4xl">
-        <h1 className="text-2xl font-bold mb-6">Welcome, superstar! What challenge will you master today? 🌟</h1>
+      <div className="bg-white p-6 rounded-lg shadow-md w-full max-w-4xl text-center mb-10">
+        <h1 className="text-3xl font-bold text-gray-800">
+          Welcome back, {user?.name || "User"}! 👋
+        </h1>
+        <p className="text-gray-600 mt-2">
+          Select a mode to continue your learning journey.
+        </p>
       </div>
 
-      {apiData?.exercises && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 mt-8">
-          {Object.entries(apiData.exercises).map(([category, subExercises]) => {
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full max-w-5xl px-4">
+        
+        {/* CARD 1: EXERCISES (Redirects to your existing logic) */}
+        <Link 
+          href="/Exercise" 
+          className="group relative bg-white border border-gray-200 rounded-xl p-8 shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 cursor-pointer flex flex-col items-center text-center"
+        >
+          <div className="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mb-4 text-2xl group-hover:bg-blue-600 group-hover:text-white transition-colors">
+            📚
+          </div>
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">Exercises</h2>
+          <p className="text-gray-500">
+            Browse categories and practice specific coding challenges at your own pace.
+          </p>
+          <span className="mt-6 text-blue-600 font-semibold group-hover:underline">Start Practice &rarr;</span>
+        </Link>
 
-            // NEW: Filter the parent's 'selections' to get the list for *this* card
-            const selectedSubsForThisCard = selections
-              .filter((item) => item.category === category)
-              .map((item) => item.sub);
+        {/* CARD 2: QUIZ */}
+        <Link 
+          href="/quiz" 
+          className="group relative bg-white border border-gray-200 rounded-xl p-8 shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 cursor-pointer flex flex-col items-center text-center"
+        >
+          <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mb-4 text-2xl group-hover:bg-green-600 group-hover:text-white transition-colors">
+            🧠
+          </div>
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">Quiz</h2>
+          <p className="text-gray-500">
+            Test your knowledge with quick-fire questions and instant feedback.
+          </p>
+          <span className="mt-6 text-green-600 font-semibold group-hover:underline">Take a Quiz &rarr;</span>
+        </Link>
 
-            // NEW: Determine if this specific card should be disabled
-          
+        {/* CARD 3: TEST */}
+        <Link 
+          href="/test" 
+          className="group relative bg-white border border-gray-200 rounded-xl p-8 shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 cursor-pointer flex flex-col items-center text-center"
+        >
+          <div className="w-16 h-16 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center mb-4 text-2xl group-hover:bg-purple-600 group-hover:text-white transition-colors">
+            ⏱️
+          </div>
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">Test</h2>
+          <p className="text-gray-500">
+            Simulate a real exam environment with timed assessments.
+          </p>
+          <span className="mt-6 text-purple-600 font-semibold group-hover:underline">Start Test &rarr;</span>
+        </Link>
 
-            return (
-             <div 
-                key={category} // The key moves to the new outer element
-                className="flex flex-col items-center"
-              >
-                <ExerciseCard
-                  category={category}
-                  subExercises={subExercises}
-                  onSelect={handleSelection}
-                  selectedSubExercises={selectedSubsForThisCard}
-                
-                 
-                />
-
-                {/* NEW: Conditionally render the Start button 
-                  This only appears if this card's category is the active one.
-                */}
-                {activeCategory === category && (
-                  <button
-                    onClick={handleStart}
-                    className="mt-4 px-6 py-3 bg-green-600 text-white font-semibold rounded-lg shadow hover:bg-green-700"
-                  >
-                    Start
-                  </button>
-                )}
-              </div>
-            );
-          })}
-
-        </div>
-      )}
-
-
+      </div>
     </div>
   );
 }

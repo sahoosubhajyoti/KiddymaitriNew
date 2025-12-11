@@ -33,11 +33,24 @@ export default function Login() {
         // Store token
         localStorage.setItem("token", data.access);
 
-        // Store and set user in context
-        const userData = { name: data.name, image: data.image, type:data.user_type };
+        // 2. Handle Language Immediately
+        // If the backend sends a language, set the cookie NOW so the Dashboard loads in that language.
+        if (data.language) {
+            document.cookie = `MYNEXTAPP_LOCALE=${data.language}; path=/; max-age=31536000; SameSite=Lax`;
+        }
+
+        
+       
+       // 3. Update User Object with Language
+        const userData = { 
+            name: data.name, 
+            image: data.image, 
+            type: data.user_type,
+            language: data.language // Add language here so context knows about it
+        };
         localStorage.setItem("user", JSON.stringify(userData));
         setUser(userData);
-
+         router.refresh();
         // Redirect to dashboard
         router.push("/Dashboard"); // Lowercase unless your folder is actually "Dashboard"
       } else {

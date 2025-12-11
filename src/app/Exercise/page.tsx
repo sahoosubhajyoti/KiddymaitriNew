@@ -1,144 +1,150 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useAuth } from "../../context/Authcontext";
+import Link from "next/link";
+import { useAuth } from "../../context/Authcontext"; // ⚠️ Check this path
+import ExerciseCard from "../../components/ExerciseCard"; // ⚠️ Check this path
+import api from "../../utility/axiosInstance"; // ⚠️ Check this path
 
-export default function AddExercise() {
-  const { user } = useAuth();
+interface ApiData {
+  exercises: {
+    [key: string]: string[];
+  };
+}
+
+export default function ExercisePage() {
+  const { user, loading } = useAuth();
   const router = useRouter();
+  const [apiData, setApiData] = useState<ApiData | null>(null);
+  
+  // Stores the selected sub-exercises
+  const [selections, setSelections] = useState<{ category: string; sub: string }[]>([]);
 
-  const [formData, setFormData] = useState({
-    exg_name: "",
-    exg_class: "",
-    exr_list: "",
-    exg_code: "",
-  });
-
-  const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState("");
-
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!user) {
-      router.push("/login");
-      return;
-    }
-
-    setLoading(true);
-    setMessage("");
-
-    try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/exercise/add/`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include", // Send cookies/session if required
-          body: JSON.stringify(formData),
-        }
-      );
-
-      const data = await response.json();
-
-      if (response.ok) {
-        setMessage("Exercise added successfully!");
-        setFormData({
-          exg_name: "",
-          exg_class: "",
-          exr_list: "",
-          exg_code: "",
-        });
-      } else {
-        setMessage(data.error || "Failed to add exercise.");
+  // Fetch data on mount
+  useEffect(() => {
+    const fetchExerciseData = async () => {
+      try {
+        // We reuse the existing endpoint that returns the exercises list
+        const res = await api.get('/dashboard/');
+        setApiData(res.data);
+      } catch (err) {
+        console.error("Error fetching exercise data:", err);
       }
-    } catch (err) {
-      console.error("Failed to add exercise:", err); // Log the actual error
-      setMessage("Something went wrong.");
-    } finally {
-      setLoading(false);
+    };
+
+    if (user) {
+      fetchExerciseData();
     }
+  }, [user]);
+
+  // Handle checking/unchecking boxes
+  const handleSelection = (
+    category: string,
+    sub: string,
+    isSelected: boolean
+  ) => {
+    setSelections((prev) => {
+      // Logic for ADDING a selection
+      if (isSelected) {
+        // Check if there are already selections
+        if (prev.length > 0) {
+          // Get the category that is already active
+          const activeCategory = prev[0].category;
+
+          // If the new selection is from a DIFFERENT category...
+          if (category !== activeCategory) {
+            // ...clear the old selections and start a new list with this item.
+            return [{ category, sub }];
+          }
+        }
+
+        // If we're here, it means either:
+        // 1. The array was empty.
+        // 2. The new item is in the SAME category.
+        return [...prev, { category, sub }];
+
+      } else {
+        // Logic for REMOVING a selection
+        return prev.filter(
+          (item) => !(item.category === category && item.sub === sub)
+        );
+      }
+    });
   };
+
+  const handleStart = () => {
+    // Navigate to start page with selections as query param
+    router.push(
+      `/startexercise?data=${encodeURIComponent(JSON.stringify(selections))}`
+    );
+  };
+
+  if (loading) {
+    return <div className="p-10 text-center">Loading...</div>;
+  }
+
+  // Helper to determine which category is currently active (if any)
+  const activeCategory = selections.length > 0 ? selections[0].category : null;
 
   return (
-    <div className="max-w-4xl  mx-auto mt-10 p-6 bg-white shadow-md rounded">
-      <h2 className="text-2xl font-bold mb-6 text-blue-700">
-        Add New Exercise
-      </h2>
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-        <label className="flex flex-col">
-          <span className="text-sm font-medium text-gray-700">
-            Exercise Name
-          </span>
-          <input
-            type="text"
-            name="exg_name"
-            value={formData.exg_name}
-            onChange={handleChange}
-            required
-            className="px-4 py-2 border border-gray-300 rounded"
-          />
-        </label>
+    <div className="min-h-screen mt-10 flex flex-col items-center bg-gray-50 p-6">
+      
+      {/* Header with Back Button */}
+      <div className="w-full max-w-4xl mb-6 flex items-center justify-between">
+        <Link href="/Dashboard" className="text-gray-500 hover:text-gray-800 flex items-center gap-2">
+          &larr; Back to Dashboard
+        </Link>
+      </div>
 
-        <label className="flex flex-col">
-          <span className="text-sm font-medium text-gray-700">
-            Exercise Class
-          </span>
-          <input
-            type="text"
-            name="exg_class"
-            value={formData.exg_class}
-            onChange={handleChange}
-            required
-            className="px-4 py-2 border border-gray-300 rounded"
-          />
-        </label>
+      <div className="bg-white p-6 rounded-lg shadow-md w-full max-w-4xl text-center">
+        <h1 className="text-2xl font-bold mb-2">Select Your Exercises 📚</h1>
+        <p className="text-gray-600">Choose a category and select topics to practice.</p>
+      </div>
 
-        <label className="flex flex-col">
-          <span className="text-sm font-medium text-gray-700">
-            Exercise List
-          </span>
-          <input
-            type="text"
-            name="exr_list"
-            value={formData.exr_list}
-            onChange={handleChange}
-            className="px-4 py-2 border border-gray-300 rounded"
-          />
-        </label>
+      {apiData?.exercises ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 mt-8 w-full max-w-5xl">
+          {Object.entries(apiData.exercises).map(([category, subExercises]) => {
+            
+            // Filter the parent's 'selections' to get the list for *this* card
+            const selectedSubsForThisCard = selections
+              .filter((item) => item.category === category)
+              .map((item) => item.sub);
 
-        <label className="flex flex-col">
-          <span className="text-sm font-medium text-gray-700">
-            Exercise Code
-          </span>
-          <textarea
-            name="exg_code"
-            value={formData.exg_code}
-            onChange={handleChange}
-            className="px-4 py-2 border border-gray-300 rounded font-mono"
-            rows={30}
-            style={{ resize: "vertical" }}
-          />
-        </label>
+            // Optional: Visually disable card if another category is active
+            const isDimmed = activeCategory && activeCategory !== category;
 
-        <button
-          type="submit"
-          disabled={loading}
-          className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 rounded"
-        >
-          {loading ? "Adding..." : "Add Exercise"}
-        </button>
-      </form>
+            return (
+              <div
+                key={category}
+                className={`flex flex-col items-center transition-opacity duration-300 ${
+                  isDimmed ? "opacity-50 pointer-events-none" : "opacity-100"
+                }`}
+              >
+                <ExerciseCard
+                  category={category}
+                  subExercises={subExercises}
+                  onSelect={handleSelection}
+                  selectedSubExercises={selectedSubsForThisCard}
+                />
 
-      {message && (
-        <p className="mt-4 text-center text-sm text-red-500">{message}</p>
+                {/* Only show Start button under the Active Category */}
+                {activeCategory === category && (
+                  <button
+                    onClick={handleStart}
+                    className="mt-4 px-8 py-3 bg-blue-600 text-white font-bold rounded-lg shadow-md hover:bg-blue-700 transition-colors animate-fade-in-up"
+                  >
+                    Start Practice &rarr;
+                  </button>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      ) : (
+        <div className="mt-10 text-gray-500">
+           {/* Fallback if no data or still loading data */}
+           Loading exercises...
+        </div>
       )}
     </div>
   );
