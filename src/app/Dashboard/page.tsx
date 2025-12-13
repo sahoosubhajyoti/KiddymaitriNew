@@ -156,7 +156,7 @@ export default function Dashboard() {
 
         {/* CARD 2: QUIZ */}
         <Link 
-          href="/quiz" 
+          href="/Quiz" 
           className="group relative bg-white border border-gray-200 rounded-xl p-8 shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 cursor-pointer flex flex-col items-center text-center"
         >
           <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mb-4 text-2xl group-hover:bg-green-600 group-hover:text-white transition-colors">
@@ -171,7 +171,7 @@ export default function Dashboard() {
 
         {/* CARD 3: TEST */}
         <Link 
-          href="/test" 
+          href="/Test" 
           className="group relative bg-white border border-gray-200 rounded-xl p-8 shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 cursor-pointer flex flex-col items-center text-center"
         >
           <div className="w-16 h-16 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center mb-4 text-2xl group-hover:bg-purple-600 group-hover:text-white transition-colors">
