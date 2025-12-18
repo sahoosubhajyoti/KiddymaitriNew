@@ -20,8 +20,7 @@ interface QuestionItem {
   sequence_number: number;
   group_name: string;
   exercise_name: string;
-  // FIX: Replaced 'any' with specific types to satisfy linter
-  question_text: string | number | object; 
+  question_text: string | number | object;
   user_response: string | null;
   is_attempted: boolean;
   time_taken: number | null;
@@ -53,60 +52,54 @@ export default function TestPageWrapper() {
 
 function TestPage() {
   const router = useRouter();
-  const inputRef = useRef<HTMLInputElement>(null); // Ref to auto-focus input
+  const inputRef = useRef<HTMLInputElement>(null);
 
-  // Data State
-  const [loading, setLoading] = useState(true);
+  // --- State ---
+  const [hasStarted, setHasStarted] = useState(false); // New: Instruction barrier
+  const [loading, setLoading] = useState(false); // Default false, waits for user to start
   const [assessment, setAssessment] = useState<AssessmentResponse | null>(null);
   const [result, setResult] = useState<QuizResult | null>(null);
   
-  // Quiz Interaction State
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState<{ [key: number]: string }>({}); 
 
-  // Timer State
   const [timeLeft, setTimeLeft] = useState<number>(20 * 60); 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
-   const hasInitialized = useRef(false);
-  // --- 1. Initialize Test ---
-  useEffect(() => {
-    // If we already started initializing, stop here.
-    if (hasInitialized.current) return;
-    
-    // Mark as initialized immediately
-    hasInitialized.current = true;
-    const initQuiz = async () => {
-      try {
-        const res = await api.post("/assessments/start/", {
-          type: "TEST",
-        });
-        const data: AssessmentResponse = res.data;
-        setAssessment(data);
 
-        const initialAnswers: { [key: number]: string } = {};
-        data.items.forEach((item) => {
-          if (item.user_response) initialAnswers[item.id] = item.user_response;
-        });
-        setAnswers(initialAnswers);
+  // --- 1. Start Test Logic ---
+  const handleStartTest = async () => {
+    setHasStarted(true);
+    setLoading(true);
 
-        if (data.duration) {
-            setTimeLeft(data.duration); 
-        }
+    try {
+      const res = await api.post("/assessments/start/", {
+        type: "TEST",
+      });
+      const data: AssessmentResponse = res.data;
+      setAssessment(data);
 
-        setLoading(false);
-      } catch (err) {
-        console.error("Error starting quiz:", err);
-        alert("Failed to load quiz.");
-        router.push("/Dashboard");
+      const initialAnswers: { [key: number]: string } = {};
+      data.items.forEach((item) => {
+        if (item.user_response) initialAnswers[item.id] = item.user_response;
+      });
+      setAnswers(initialAnswers);
+
+      if (data.duration) {
+          setTimeLeft(data.duration); 
       }
-    };
 
-    initQuiz();
-  }, [router]);
+      setLoading(false);
+    } catch (err) {
+      console.error("Error starting test:", err);
+      alert("Failed to load test.");
+      router.push("/Dashboard");
+    }
+  };
 
   // --- 2. Timer Logic ---
   useEffect(() => {
-    if (!loading && assessment && !result && timeLeft > 0) {
+    // Run timer only if started, loaded, and no result yet
+    if (hasStarted && !loading && assessment && !result && timeLeft > 0) {
       timerRef.current = setInterval(() => {
         setTimeLeft((prev) => {
           if (prev <= 1) {
@@ -123,14 +116,14 @@ function TestPage() {
       if (timerRef.current) clearInterval(timerRef.current);
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loading, assessment, result]);
+  }, [hasStarted, loading, assessment, result]);
 
-  // --- Auto-focus effect when index changes ---
+  // --- Auto-focus effect ---
   useEffect(() => {
     if (inputRef.current) {
       inputRef.current.focus();
     }
-  }, [currentIndex, loading]);
+  }, [currentIndex, loading, hasStarted]);
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -174,7 +167,6 @@ function TestPage() {
     const currentItem = assessment.items[currentIndex];
     const currentAns = answers[currentItem.id] || "";
 
-    // 🔒 Validation: Prevent moving forward if empty
     if (!currentAns.trim()) {
         alert("Please enter an answer to proceed.");
         return;
@@ -192,7 +184,6 @@ function TestPage() {
     const currentItem = assessment.items[currentIndex];
     const currentAns = answers[currentItem.id] || "";
 
-    // 🔒 Validation: Prevent finishing if last answer is empty
     if (!currentAns.trim()) {
         alert("Please enter an answer to finish.");
         return;
@@ -206,7 +197,6 @@ function TestPage() {
     if (!assessment) return;
     const currentItem = assessment.items[currentIndex];
     const currentAns = answers[currentItem.id] || "";
-    // No validation needed for auto-submit (time ran out)
     await submitSingleAnswer(currentItem.id, currentAns);
     await finishSession(assessment.id);
   };
@@ -299,9 +289,55 @@ function TestPage() {
 
   // --- 6. RENDER LOGIC ---
 
+  // ✅ 6A. INSTRUCTION SCREEN
+  if (!hasStarted) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
+        <div className="bg-white p-8 rounded-xl shadow-xl w-full max-w-lg border-t-4 border-indigo-600">
+          <h1 className="text-3xl font-bold text-gray-800 mb-6 text-center">Test Instructions 📋</h1>
+          
+          <div className="space-y-4 text-gray-700 mb-8">
+            <p className="font-medium">Please read the following rules carefully before starting:</p>
+            <ul className="list-disc pl-6 space-y-2">
+              <li>
+                <span className="font-bold text-red-500">Time Bound:</span> The test has a strict time limit. It will auto-submit when time runs out.
+              </li>
+              <li>
+                <span className="font-bold text-blue-500">Mandatory:</span> You cannot skip questions. An answer is required to proceed.
+              </li>
+              <li>
+                <span className="font-bold text-orange-500">One Way:</span> You cannot go back to review or change previous answers.
+              </li>
+              <li>
+                <span className="font-bold text-gray-500">No Pausing:</span> Once started, the timer runs continuously.
+              </li>
+              <li>
+                Click <span className="font-bold">Finish</span> on the last question to submit your test.
+              </li>
+            </ul>
+          </div>
+
+          <button
+            onClick={handleStartTest}
+            className="w-full py-4 bg-gradient-to-r from-indigo-600 to-indigo-700 text-white rounded-lg font-bold text-lg shadow-lg hover:scale-[1.02] transition-transform"
+          >
+            Start Test &rarr;
+          </button>
+          
+          <div className="mt-4 text-center">
+            <Link href="/Dashboard" className="text-gray-400 hover:text-gray-600 text-sm">
+              Cancel and return to Dashboard
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ✅ 6B. LOADING
   if (loading) return <div className="min-h-screen flex items-center justify-center">Loading Test...</div>;
   
-  // ✅ RESULT VIEW
+  // ✅ 6C. RESULTS
   if (result) {
     const percentage = Math.round((result.score / result.total_questions) * 100);
     
@@ -338,7 +374,6 @@ function TestPage() {
                     {index + 1}
                   </span>
                   <div className="text-lg font-medium text-gray-800 w-full">
-                    {/* Safe check for rendering text vs object in result view */}
                     <InlineMath math={typeof item.question_text === 'string' ? item.question_text : "Visual Question"} />
                   </div>
                 </div>
@@ -366,7 +401,7 @@ function TestPage() {
     );
   }
 
-  // ✅ QUIZ VIEW
+  // ✅ 6D. ACTIVE TEST
   if (!assessment) return null;
 
   const currentQuestion = assessment.items[currentIndex];
@@ -375,7 +410,6 @@ function TestPage() {
   const isLastQuestion = currentIndex === assessment.items.length - 1;
   const timerColor = timeLeft < 60 ? "bg-red-100 text-red-600" : "bg-gray-100 text-gray-700";
   
-  // Logic to determine if buttons should be disabled
   const isInputEmpty = !currentAnswer || currentAnswer.trim() === "";
 
   return (
@@ -403,7 +437,7 @@ function TestPage() {
           ></div>
         </div>
 
-        {/* Dynamic Question Content */}
+        {/* Content */}
         <div className="flex-grow flex flex-col justify-center items-center">
             <div className="text-center w-full">
                 {renderDynamicContent()}
@@ -422,9 +456,8 @@ function TestPage() {
                 onKeyDown={(e) => {
                     if (e.key === 'Enter') {
                         e.preventDefault();
-                        if (isInputEmpty) return; // Block Enter if empty
-
-                        // FIX: Replaced ternary with if/else to allow Void return
+                        if (isInputEmpty) return; 
+                        
                         if (isLastQuestion) {
                             handleFinish();
                         } else {
@@ -436,7 +469,7 @@ function TestPage() {
             />
         </div>
 
-        {/* Navigation - Only NEXT or FINISH */}
+        {/* Controls */}
         <div className="flex justify-end items-center mt-8">
             {isLastQuestion ? (
                 <button
@@ -445,7 +478,7 @@ function TestPage() {
                     className={`px-6 py-2 bg-gradient-to-r from-red-500 to-red-700 text-white rounded shadow-lg transition-transform font-bold 
                     ${isInputEmpty ? "opacity-50 cursor-not-allowed" : "hover:scale-105"}`}
                 >
-                    Finish Quiz
+                    Finish Test
                 </button>
             ) : (
                 <button

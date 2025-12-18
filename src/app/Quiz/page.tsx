@@ -20,7 +20,7 @@ interface QuestionItem {
   sequence_number: number;
   group_name: string;
   exercise_name: string;
-  question_text: string | number | object; // Updated for flexible data
+  question_text: string | number | object;
   user_response: string | null;
   is_attempted: boolean;
   time_taken: number | null;
@@ -52,61 +52,54 @@ export default function QuizPageWrapper() {
 
 function QuizPage() {
   const router = useRouter();
-  const inputRef = useRef<HTMLInputElement>(null); // Ref for auto-focus
+  const inputRef = useRef<HTMLInputElement>(null);
 
-  // Data State
-  const [loading, setLoading] = useState(true);
+  // --- State ---
+  const [hasStarted, setHasStarted] = useState(false); // New: Tracks if instructions are passed
+  const [loading, setLoading] = useState(false); // Changed default to false (waiting for start)
   const [assessment, setAssessment] = useState<AssessmentResponse | null>(null);
   const [result, setResult] = useState<QuizResult | null>(null);
   
-  // Quiz Interaction State
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState<{ [key: number]: string }>({}); 
 
-  // Timer State
   const [timeLeft, setTimeLeft] = useState<number>(20 * 60); 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
- const hasInitialized = useRef(false);
-  // --- 1. Initialize Quiz ---
 
-  useEffect(() => {
-     // If we already started initializing, stop here.
-    if (hasInitialized.current) return;
-    
-    // Mark as initialized immediately
-    hasInitialized.current = true;
-    const initQuiz = async () => {
-      try {
-        const res = await api.post("/assessments/start/", {
-          type: "QUIZ",
-        });
-        const data: AssessmentResponse = res.data;
-        setAssessment(data);
+  // --- 1. Start Quiz Logic (Moved from useEffect) ---
+  const handleStartQuiz = async () => {
+    setHasStarted(true);
+    setLoading(true);
 
-        const initialAnswers: { [key: number]: string } = {};
-        data.items.forEach((item) => {
-          if (item.user_response) initialAnswers[item.id] = item.user_response;
-        });
-        setAnswers(initialAnswers);
+    try {
+      const res = await api.post("/assessments/start/", {
+        type: "QUIZ",
+      });
+      const data: AssessmentResponse = res.data;
+      setAssessment(data);
 
-        if (data.duration) {
-            setTimeLeft(data.duration); 
-        }
+      const initialAnswers: { [key: number]: string } = {};
+      data.items.forEach((item) => {
+        if (item.user_response) initialAnswers[item.id] = item.user_response;
+      });
+      setAnswers(initialAnswers);
 
-        setLoading(false);
-      } catch (err) {
-        console.error("Error starting quiz:", err);
-        alert("Failed to load quiz.");
-        router.push("/Dashboard");
+      if (data.duration) {
+          setTimeLeft(data.duration); 
       }
-    };
 
-    initQuiz();
-  }, [router]);
+      setLoading(false);
+    } catch (err) {
+      console.error("Error starting quiz:", err);
+      alert("Failed to load quiz.");
+      router.push("/Dashboard");
+    }
+  };
 
   // --- 2. Timer Logic ---
   useEffect(() => {
-    if (!loading && assessment && !result && timeLeft > 0) {
+    // Only run timer if quiz has started, is loaded, and no result yet
+    if (hasStarted && !loading && assessment && !result && timeLeft > 0) {
       timerRef.current = setInterval(() => {
         setTimeLeft((prev) => {
           if (prev <= 1) {
@@ -123,14 +116,14 @@ function QuizPage() {
       if (timerRef.current) clearInterval(timerRef.current);
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loading, assessment, result]);
+  }, [hasStarted, loading, assessment, result]);
 
   // --- Auto-focus effect ---
   useEffect(() => {
     if (inputRef.current) {
       inputRef.current.focus();
     }
-  }, [currentIndex, loading]);
+  }, [currentIndex, loading, hasStarted]);
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -206,7 +199,6 @@ function QuizPage() {
     if (!assessment) return;
     const currentItem = assessment.items[currentIndex];
     const currentAns = answers[currentItem.id] || "";
-    // No validation for auto-submit
     await submitSingleAnswer(currentItem.id, currentAns);
     await finishSession(assessment.id);
   };
@@ -299,9 +291,55 @@ function QuizPage() {
 
   // --- 6. RENDER LOGIC ---
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center">Loading Quiz...</div>;
+  // ✅ 6A. INSTRUCTION SCREEN
+  if (!hasStarted) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
+        <div className="bg-white p-8 rounded-xl shadow-xl w-full max-w-lg border-t-4 border-blue-600">
+          <h1 className="text-3xl font-bold text-gray-800 mb-6 text-center">Quiz Instructions 📝</h1>
+          
+          <div className="space-y-4 text-gray-700 mb-8">
+            <p className="font-medium">Please read the following rules carefully before starting:</p>
+            <ul className="list-disc pl-6 space-y-2">
+              <li>
+                <span className="font-bold text-red-500">Time Bound:</span> The quiz has a strict time limit. It will auto-submit when time runs out.
+              </li>
+              <li>
+                <span className="font-bold text-blue-500">No Skipping:</span> You cannot skip questions. An answer is required to proceed.
+              </li>
+              <li>
+                <span className="font-bold text-orange-500">One Way:</span> You cannot go back to previous questions once answered.
+              </li>
+              <li>
+                <span className="font-bold text-gray-500">No Pausing:</span> Once started, the timer cannot be paused.
+              </li>
+              <li>
+                Click <span className="font-bold">Finish</span> on the last question to complete the quiz.
+              </li>
+            </ul>
+          </div>
+
+          <button
+            onClick={handleStartQuiz}
+            className="w-full py-4 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg font-bold text-lg shadow-lg hover:scale-[1.02] transition-transform"
+          >
+            Start Quiz &rarr;
+          </button>
+          
+          <div className="mt-4 text-center">
+            <Link href="/Dashboard" className="text-gray-400 hover:text-gray-600 text-sm">
+              Cancel and return to Dashboard
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ✅ 6B. LOADING SCREEN
+  if (loading) return <div className="min-h-screen flex items-center justify-center">Loading Quiz Question...</div>;
   
-  // ✅ RESULT VIEW
+  // ✅ 6C. RESULT VIEW
   if (result) {
     const percentage = Math.round((result.score / result.total_questions) * 100);
     
@@ -366,7 +404,7 @@ function QuizPage() {
     );
   }
 
-  // ✅ QUIZ VIEW
+  // ✅ 6D. ACTIVE QUIZ VIEW
   if (!assessment) return null;
 
   const currentQuestion = assessment.items[currentIndex];
@@ -424,7 +462,6 @@ function QuizPage() {
                         e.preventDefault();
                         if (isInputEmpty) return; // Block enter if empty
                         
-                        // FIX: Use if/else instead of ternary to fix lint error
                         if (isLastQuestion) {
                             handleFinish();
                         } else {
