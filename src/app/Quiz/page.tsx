@@ -66,9 +66,15 @@ function QuizPage() {
   // Timer State
   const [timeLeft, setTimeLeft] = useState<number>(20 * 60); 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
-
+ const hasInitialized = useRef(false);
   // --- 1. Initialize Quiz ---
+
   useEffect(() => {
+     // If we already started initializing, stop here.
+    if (hasInitialized.current) return;
+    
+    // Mark as initialized immediately
+    hasInitialized.current = true;
     const initQuiz = async () => {
       try {
         const res = await api.post("/assessments/start/", {
