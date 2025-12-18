@@ -20,7 +20,7 @@ interface QuestionItem {
   sequence_number: number;
   group_name: string;
   exercise_name: string;
-  question_text: string | any; // Updated for flexible data
+  question_text: string | any;
   user_response: string | null;
   is_attempted: boolean;
   time_taken: number | null;
@@ -52,7 +52,7 @@ export default function QuizPageWrapper() {
 
 function QuizPage() {
   const router = useRouter();
-  const inputRef = useRef<HTMLInputElement>(null); // Ref for auto-focus
+  const inputRef = useRef<HTMLInputElement>(null); // Ref to auto-focus input
 
   // Data State
   const [loading, setLoading] = useState(true);
@@ -72,7 +72,7 @@ function QuizPage() {
     const initQuiz = async () => {
       try {
         const res = await api.post("/assessments/start/", {
-          type: "QUIZ",
+          type: "TEST",
         });
         const data: AssessmentResponse = res.data;
         setAssessment(data);
@@ -119,7 +119,7 @@ function QuizPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loading, assessment, result]);
 
-  // --- Auto-focus effect ---
+  // --- Auto-focus effect when index changes ---
   useEffect(() => {
     if (inputRef.current) {
       inputRef.current.focus();
@@ -168,7 +168,7 @@ function QuizPage() {
     const currentItem = assessment.items[currentIndex];
     const currentAns = answers[currentItem.id] || "";
 
-    // 🔒 Validation
+    // 🔒 Validation: Prevent moving forward if empty
     if (!currentAns.trim()) {
         alert("Please enter an answer to proceed.");
         return;
@@ -186,7 +186,7 @@ function QuizPage() {
     const currentItem = assessment.items[currentIndex];
     const currentAns = answers[currentItem.id] || "";
 
-    // 🔒 Validation
+    // 🔒 Validation: Prevent finishing if last answer is empty
     if (!currentAns.trim()) {
         alert("Please enter an answer to finish.");
         return;
@@ -200,12 +200,12 @@ function QuizPage() {
     if (!assessment) return;
     const currentItem = assessment.items[currentIndex];
     const currentAns = answers[currentItem.id] || "";
-    // No validation for auto-submit
+    // No validation needed for auto-submit (time ran out)
     await submitSingleAnswer(currentItem.id, currentAns);
     await finishSession(assessment.id);
   };
 
-  // NOTE: handlePrev removed entirely
+  // Note: handlePrev removed entirely
 
   // --- 5. DYNAMIC CONTENT RENDERER ---
   const renderDynamicContent = () => {
@@ -295,7 +295,7 @@ function QuizPage() {
 
   // --- 6. RENDER LOGIC ---
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center">Loading Quiz...</div>;
+  if (loading) return <div className="min-h-screen flex items-center justify-center">Loading Test...</div>;
   
   // ✅ RESULT VIEW
   if (result) {
@@ -369,8 +369,8 @@ function QuizPage() {
   const progressPercent = ((currentIndex + 1) / assessment.total_questions) * 100;
   const isLastQuestion = currentIndex === assessment.items.length - 1;
   const timerColor = timeLeft < 60 ? "bg-red-100 text-red-600" : "bg-gray-100 text-gray-700";
-
-  // Validate input to enable/disable buttons
+  
+  // Logic to determine if buttons should be disabled
   const isInputEmpty = !currentAnswer || currentAnswer.trim() === "";
 
   return (
@@ -380,7 +380,7 @@ function QuizPage() {
         {/* Header */}
         <div className="flex justify-between items-center mb-4 border-b pb-4">
           <div>
-            <h1 className="text-xl font-bold">Quiz Mode</h1>
+            <h1 className="text-xl font-bold">Test Mode</h1>
             <span className="text-sm text-gray-500">
                 Question {currentIndex + 1} of {assessment.total_questions}
             </span>
@@ -417,7 +417,7 @@ function QuizPage() {
                 onKeyDown={(e) => {
                     if (e.key === 'Enter') {
                         e.preventDefault();
-                        if (isInputEmpty) return; // Block enter if empty
+                        if (isInputEmpty) return; // Block Enter if empty
                         isLastQuestion ? handleFinish() : handleNext();
                     }
                 }}
