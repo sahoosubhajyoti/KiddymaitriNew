@@ -20,7 +20,7 @@ interface QuestionItem {
   sequence_number: number;
   group_name: string;
   exercise_name: string;
-  question_text: string | any; // Updated for flexible data
+  question_text: string | number | object; // Updated for flexible data
   user_response: string | null;
   is_attempted: boolean;
   time_taken: number | null;
@@ -104,7 +104,7 @@ function QuizPage() {
       timerRef.current = setInterval(() => {
         setTimeLeft((prev) => {
           if (prev <= 1) {
-            clearInterval(timerRef.current!);
+            if (timerRef.current) clearInterval(timerRef.current);
             handleAutoSubmit();
             return 0;
           }
@@ -205,8 +205,6 @@ function QuizPage() {
     await finishSession(assessment.id);
   };
 
-  // NOTE: handlePrev removed entirely
-
   // --- 5. DYNAMIC CONTENT RENDERER ---
   const renderDynamicContent = () => {
     if (!assessment) return null;
@@ -278,15 +276,15 @@ function QuizPage() {
       case "arith":
         return (
           <div className="text-4xl font-bold text-gray-800 mb-6 text-center">
-             <InlineMath math={question.question_text || ""} />
+             <InlineMath math={(question.question_text as string) || ""} />
           </div>
         );
 
       default:
         return (
           <div className="text-center w-full">
-            <div className="text-4xl font-bold text-gray-800 mb-6">
-                <InlineMath math={question.question_text || ""} />
+            <div className="text-3xl font-bold text-gray-800 mb-6">
+                Q: {(question?.question_text as string) || ""}
             </div>
           </div>
         );
@@ -334,6 +332,7 @@ function QuizPage() {
                     {index + 1}
                   </span>
                   <div className="text-lg font-medium text-gray-800 w-full">
+                    {/* Safe check for rendering text vs object in result view */}
                     <InlineMath math={typeof item.question_text === 'string' ? item.question_text : "Visual Question"} />
                   </div>
                 </div>
@@ -418,7 +417,13 @@ function QuizPage() {
                     if (e.key === 'Enter') {
                         e.preventDefault();
                         if (isInputEmpty) return; // Block enter if empty
-                        isLastQuestion ? handleFinish() : handleNext();
+                        
+                        // FIX: Use if/else instead of ternary to fix lint error
+                        if (isLastQuestion) {
+                            handleFinish();
+                        } else {
+                            handleNext();
+                        }
                     }
                 }}
                 autoFocus

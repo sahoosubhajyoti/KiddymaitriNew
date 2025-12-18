@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+
 import Link from "next/link";
 import { useAuth } from "../../context/Authcontext";
 import api from "../../utility/axiosInstance"; 
@@ -10,7 +10,7 @@ import api from "../../utility/axiosInstance";
 
 export default function Dashboard() {
   const { user, loading } = useAuth();
-  const router = useRouter();
+  
   
   // Admin State
   const [totalUsers, setTotalUsers] = useState<number>(0);

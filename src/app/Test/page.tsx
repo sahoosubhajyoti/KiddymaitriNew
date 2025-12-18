@@ -20,7 +20,8 @@ interface QuestionItem {
   sequence_number: number;
   group_name: string;
   exercise_name: string;
-  question_text: string | any;
+  // FIX: Replaced 'any' with specific types to satisfy linter
+  question_text: string | number | object; 
   user_response: string | null;
   is_attempted: boolean;
   time_taken: number | null;
@@ -42,15 +43,15 @@ interface QuizResult {
   items: QuestionItem[];
 }
 
-export default function QuizPageWrapper() {
+export default function TestPageWrapper() {
   return (
-    <Suspense fallback={<div className="text-center p-6">Loading Quiz...</div>}>
-      <QuizPage />
+    <Suspense fallback={<div className="text-center p-6">Loading Test...</div>}>
+      <TestPage />
     </Suspense>
   );
 }
 
-function QuizPage() {
+function TestPage() {
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null); // Ref to auto-focus input
 
@@ -67,7 +68,7 @@ function QuizPage() {
   const [timeLeft, setTimeLeft] = useState<number>(20 * 60); 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // --- 1. Initialize Quiz ---
+  // --- 1. Initialize Test ---
   useEffect(() => {
     const initQuiz = async () => {
       try {
@@ -104,7 +105,7 @@ function QuizPage() {
       timerRef.current = setInterval(() => {
         setTimeLeft((prev) => {
           if (prev <= 1) {
-            clearInterval(timerRef.current!);
+            if (timerRef.current) clearInterval(timerRef.current);
             handleAutoSubmit();
             return 0;
           }
@@ -205,8 +206,6 @@ function QuizPage() {
     await finishSession(assessment.id);
   };
 
-  // Note: handlePrev removed entirely
-
   // --- 5. DYNAMIC CONTENT RENDERER ---
   const renderDynamicContent = () => {
     if (!assessment) return null;
@@ -278,15 +277,15 @@ function QuizPage() {
       case "arith":
         return (
           <div className="text-4xl font-bold text-gray-800 mb-6 text-center">
-             <InlineMath math={question.question_text || ""} />
+             <InlineMath math={(question.question_text as string) || ""} />
           </div>
         );
 
       default:
         return (
           <div className="text-center w-full">
-            <div className="text-4xl font-bold text-gray-800 mb-6">
-                <InlineMath math={question.question_text || ""} />
+            <div className="text-3xl font-bold text-gray-800 mb-6">
+               Q: {(question?.question_text as string) || ""}
             </div>
           </div>
         );
@@ -306,7 +305,7 @@ function QuizPage() {
         <div className="bg-white p-8 rounded-xl shadow-lg w-full max-w-3xl">
           
           <div className="text-center border-b pb-6 mb-6">
-            <h1 className="text-3xl font-bold text-gray-800 mb-2">Quiz Completed! 🎉</h1>
+            <h1 className="text-3xl font-bold text-gray-800 mb-2">Test Completed! 🎉</h1>
             <p className="text-gray-500">Here is your performance summary</p>
           </div>
 
@@ -334,6 +333,7 @@ function QuizPage() {
                     {index + 1}
                   </span>
                   <div className="text-lg font-medium text-gray-800 w-full">
+                    {/* Safe check for rendering text vs object in result view */}
                     <InlineMath math={typeof item.question_text === 'string' ? item.question_text : "Visual Question"} />
                   </div>
                 </div>
@@ -418,7 +418,13 @@ function QuizPage() {
                     if (e.key === 'Enter') {
                         e.preventDefault();
                         if (isInputEmpty) return; // Block Enter if empty
-                        isLastQuestion ? handleFinish() : handleNext();
+
+                        // FIX: Replaced ternary with if/else to allow Void return
+                        if (isLastQuestion) {
+                            handleFinish();
+                        } else {
+                            handleNext();
+                        }
                     }
                 }}
                 autoFocus

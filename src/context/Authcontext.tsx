@@ -25,44 +25,45 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
-  // Check authentication status
-  const checkAuth = async () => {
-    const storedUser = localStorage.getItem("user");
-    if (!storedUser) {
-      setLoading(false);
-      return;
-    }
-    try {
-      // ✅ Updated to use axios
-      const response = await api.get('/user');
-      const userData = response.data;
-      setUser(userData);
-      localStorage.setItem("user", JSON.stringify(userData));
-      const currentCookie = document.cookie
-    .split('; ')
-    .find(row => row.startsWith('MYNEXTAPP_LOCALE='))
-    ?.split('=')[1];
-
-  if (userData.language && userData.language !== currentCookie) {
-     document.cookie = `MYNEXTAPP_LOCALE=${userData.language}; path=/; max-age=31536000; SameSite=Lax`;
-     router.refresh();
-  }
-    } catch (error) {
-      console.error('Auth check error:', error);
-      setUser(null);
-      localStorage.removeItem("user");
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
+    // ✅ Function definition moved INSIDE useEffect to fix dependency warning
+    const checkAuth = async () => {
+      const storedUser = localStorage.getItem("user");
+      
+      if (!storedUser) {
+        setLoading(false);
+        return;
+      }
+      
+      try {
+        const response = await api.get('/user');
+        const userData = response.data;
+        setUser(userData);
+        localStorage.setItem("user", JSON.stringify(userData));
+
+        const currentCookie = document.cookie
+          .split('; ')
+          .find(row => row.startsWith('MYNEXTAPP_LOCALE='))
+          ?.split('=')[1];
+
+        if (userData.language && userData.language !== currentCookie) {
+          document.cookie = `MYNEXTAPP_LOCALE=${userData.language}; path=/; max-age=31536000; SameSite=Lax`;
+          router.refresh();
+        }
+      } catch (error) {
+        console.error('Auth check error:', error);
+        setUser(null);
+        localStorage.removeItem("user");
+      } finally {
+        setLoading(false);
+      }
+    };
+
     checkAuth();
-  }, []);
+  }, [router]); // router added as dependency
 
   const logout = async () => {
     try {
-      // ✅ Updated to use axios
       await api.post('/logout');
     } catch (error) {
       console.error('Logout error:', error);
