@@ -120,7 +120,7 @@ export default function QuizProgressPage() {
   );
 
   return (
-    <div className="min-h-screen bg-yellow-50 p-4 md:p-8 pt-24 font-sans">
+    <div className="min-h-screen bg-yellow-50 p-4 mt-20 font-sans">
       
       {/* Header */}
       <div className="max-w-2xl mx-auto mb-8 flex justify-between items-center">
