@@ -21,7 +21,7 @@ export default function ProgressPage() {
       <div className="w-full max-w-md space-y-6">
 
         {/* --- Card 1: Exercise Progress --- */}
-        <Link href="/progress/exercise" className="block group">
+        <Link href="/ProgressExercise" className="block group">
           {/* FIX: Removed the inner absolute div. Added shadow-[...] utility class */}
           <div className="bg-white border-4 border-black p-6 
                           shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] 
@@ -56,7 +56,7 @@ export default function ProgressPage() {
         </Link>
 
         {/* --- Card 2: Quiz/Test Progress --- */}
-        <Link href="/progress/quiz" className="block group">
+        <Link href="/ProgressQuizTest" className="block group">
           {/* FIX: Applied the same shadow fix here */}
           <div className="bg-white border-4 border-black p-6 
                           shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] 
