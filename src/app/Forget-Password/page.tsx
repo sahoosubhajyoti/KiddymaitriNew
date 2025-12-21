@@ -55,7 +55,7 @@ export default function ForgotPassword() {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/resend-otp`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email,type:"forgot-pass" }),
       });
 
       if (res.ok) {

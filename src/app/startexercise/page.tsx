@@ -59,6 +59,13 @@ function StartExercise() {
   
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
+ const [feedback, setFeedback] = useState<"correct" | "error" | null>(null);
+ useEffect(() => {
+    if (feedback) {
+      const timer = setTimeout(() => setFeedback(null), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [feedback]);
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
@@ -195,6 +202,14 @@ function StartExercise() {
 
       const data = response.data;
 
+      // START CHANGE: Set Feedback Flash
+      if (data.result === "correct") {
+        setFeedback("correct");
+      } else {
+        setFeedback("error");
+      }
+      // END CHANGE
+
       if (groupName?.toLowerCase() === "clock" && typeof data.question === "string") {
         data.options = generateClockOptions(data.question);
       }
@@ -273,7 +288,7 @@ function StartExercise() {
         return (
           <div className="my-6 flex-col">
             <p className="font-semibold text-center mb-4">
-              Q: Tell the time <span>(e.g. <b>12:20</b>)</span>
+              Q: Tell the time 
             </p>
             <div className="flex justify-center items-center">
               <Clock time={(question?.question as string) || "00:00"} />
@@ -350,7 +365,13 @@ function StartExercise() {
 
   return (
     <div className="min-h-screen bg-gray-100 p-6 flex justify-center items-center">
-      <div className="relative bg-white p-6 rounded-lg shadow-md w-full max-w-xl">
+      {/* START CHANGE: Dynamic Background Color */}
+      <div className={`relative p-6 rounded-lg shadow-md w-full max-w-xl transition-colors duration-500 ${
+        feedback === "correct" ? "bg-green-100 border-2 border-green-500" :
+        feedback === "error" ? "bg-red-100 border-2 border-red-500" :
+        "bg-white"
+      }`}>
+      {/* END CHANGE */}
         <h1 className="text-2xl font-bold mb-4">Start Exercise</h1>
 
         {loading && <p className="text-center py-10">Loading your session...</p>}
