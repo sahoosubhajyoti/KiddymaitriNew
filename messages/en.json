@@ -15,7 +15,17 @@
     "user": "User",
     "noUsers": "No users found",
     "welcomeMessage": "Welcome, superstar! What challenge will you master today? 🌟",
-    "start": "Start"
+    "selectMode": "Select a mode to continue your learning journey.",
+    "start": "Start",
+    "cardExercisesTitle": "Exercises",
+    "cardExercisesDesc": "Browse categories and practice specific coding challenges at your own pace.",
+    "cardExercisesBtn": "Start Practice",
+    "cardQuizTitle": "Quiz",
+    "cardQuizDesc": "Test your knowledge with quick-fire questions and instant feedback.",
+    "cardQuizBtn": "Take a Quiz",
+    "cardTestTitle": "Test",
+    "cardTestDesc": "Simulate a real exam environment with timed assessments.",
+    "cardTestBtn": "Start Test"
   },
   "Navbar": {
     "home": "Home",

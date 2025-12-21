@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useAuth } from "../../context/Authcontext";
 import api from "../../utility/axiosInstance"; 
+import { useLocale, useTranslations } from "next-intl";
 
 // Note: The ApiData interface for exercises is removed here 
 // because that data fetching will happen on the new /exercise page.
@@ -15,6 +16,10 @@ export default function Dashboard() {
   // Admin State
   const [totalUsers, setTotalUsers] = useState<number>(0);
   const [open, setOpen] = useState(false);
+
+  //language
+   const locale = useLocale();
+    const t = useTranslations("Dashboard");
 
   // Fetch data (Admin Only)
   useEffect(() => {
@@ -33,7 +38,7 @@ export default function Dashboard() {
 
 
   if (loading) {
-    return <div className="p-10 text-center">Loading...</div>;
+    return <div className="p-10 text-center">{t('loading')}</div>;
   }
 
   // ==========================================
@@ -44,58 +49,58 @@ export default function Dashboard() {
       <div className="min-h-[60vh] mt-14 bg-gray-100 p-6 space-y-4">
         <div className="rounded-lg p-4 flex justify-around items-center">
           <h1 className="text-4xl font-bold mb-4 underline-offset-8 underline">
-            Admin Dashboard
+            {t('adminDashboard')}
           </h1>
           <Link
             href="/Dashboard/export"
             className="bg-red-600 text-white px-4 py-3 rounded hover:bg-red-700"
           >
-            Export Data
+            {t('exportData')}
           </Link>
         </div>
 
         {/* User Activity Metadata */}
         <div className="bg-white shadow rounded-lg p-4 flex justify-between">
-          <span>User Activity Metadata</span>
+          <span>{t('userActivity')}</span>
           <Link
             href="/Dashboard/users"
             className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
           >
-            Get Report
+            {t('getReport')}
           </Link>
         </div>
 
         {/* Question Performance */}
         <div className="bg-white shadow rounded-lg p-4 flex justify-between">
-          <span>Question Performance</span>
+          <span>{t('questionPerformance')}</span>
           <Link
             href="/Dashboard/questions"
             className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
           >
-            Get Report
+            {t('getReport')}
           </Link>
         </div>
 
         {/* Time-Based Analytics */}
         <div className="bg-white shadow rounded-lg p-4 flex justify-between">
-          <span>Time-Based Analytics</span>
+          <span>{t('timeAnalytics')}</span>
           <Link
             href="/Dashboard/daily"
             className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
           >
-            Get Report
+            {t('getReport')}
           </Link>
         </div>
 
         {/* Single User Activity with dropdown */}
         <div className="bg-white shadow rounded-lg p-4 flex justify-between items-center">
-          <span className="font-semibold">Single User Activity</span>
+          <span className="font-semibold">{t('singleUserActivity')}</span>
           <div className="relative">
             <button
               onClick={() => setOpen(!open)}
               className="bg-green-600 text-white px-4 py-2 rounded"
             >
-              Get Report
+              {t('getReport')}
             </button>
 
             {open && (
@@ -108,7 +113,7 @@ export default function Dashboard() {
                         href={`/Dashboard/user/${id}`}
                         className="block px-4 py-2 hover:bg-gray-100"
                       >
-                        User {id}
+                        {t('user')} {id}
                       </Link>
                     )
                   )
@@ -130,10 +135,10 @@ export default function Dashboard() {
     <div className="min-h-screen mt-10 flex flex-col items-center bg-gray-50 p-6">
       <div className="bg-white p-6 rounded-lg shadow-md w-full max-w-4xl text-center mb-10">
         <h1 className="text-3xl font-bold text-gray-800">
-          Welcome back, {user?.name || "User"}! 👋
+         {t('welcomeMessage')} 
         </h1>
         <p className="text-gray-600 mt-2">
-          Select a mode to continue your learning journey.
+          {t('selectMode')}
         </p>
       </div>
 
@@ -147,11 +152,11 @@ export default function Dashboard() {
           <div className="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mb-4 text-2xl group-hover:bg-blue-600 group-hover:text-white transition-colors">
             📚
           </div>
-          <h2 className="text-2xl font-bold text-gray-800 mb-2">Exercises</h2>
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">{t('cardExercisesTitle')}</h2>
           <p className="text-gray-500">
-            Browse categories and practice specific coding challenges at your own pace.
+            {t('cardExercisesDesc')}
           </p>
-          <span className="mt-6 text-blue-600 font-semibold group-hover:underline">Start Practice &rarr;</span>
+          <span className="mt-6 text-blue-600 font-semibold group-hover:underline">{t('cardExercisesBtn')}&rarr;</span>
         </Link>
 
         {/* CARD 2: QUIZ */}
@@ -162,11 +167,11 @@ export default function Dashboard() {
           <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mb-4 text-2xl group-hover:bg-green-600 group-hover:text-white transition-colors">
             🧠
           </div>
-          <h2 className="text-2xl font-bold text-gray-800 mb-2">Quiz</h2>
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">{t('cardQuizTitle')}</h2>
           <p className="text-gray-500">
-            Test your knowledge with quick-fire questions and instant feedback.
+            {t('cardQuizDesc')}
           </p>
-          <span className="mt-6 text-green-600 font-semibold group-hover:underline">Take a Quiz &rarr;</span>
+          <span className="mt-6 text-green-600 font-semibold group-hover:underline">{t('cardQuizBtn')} &rarr;</span>
         </Link>
 
         {/* CARD 3: TEST */}
@@ -177,11 +182,11 @@ export default function Dashboard() {
           <div className="w-16 h-16 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center mb-4 text-2xl group-hover:bg-purple-600 group-hover:text-white transition-colors">
             ⏱️
           </div>
-          <h2 className="text-2xl font-bold text-gray-800 mb-2">Test</h2>
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">{t('cardTestTitle')}</h2>
           <p className="text-gray-500">
-            Simulate a real exam environment with timed assessments.
+            {t('cardTestDesc')}
           </p>
-          <span className="mt-6 text-purple-600 font-semibold group-hover:underline">Start Test &rarr;</span>
+          <span className="mt-6 text-purple-600 font-semibold group-hover:underline">{t('cardTestBtn')} &rarr;</span>
         </Link>
 
       </div>

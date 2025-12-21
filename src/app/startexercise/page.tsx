@@ -19,12 +19,13 @@ import DataChart from "@/components/DataChart";
 
 // --- Interfaces ---
 interface Question {
-  question: string | number | object; // Strict typing
+  question: string | number | object;
   text?: string;
   options?: string[];
   redirect?: string;
   type?: string;
   qns?: string;
+  debug?: { is_test_user?: boolean };
 }
 
 interface SelectionItem {
@@ -44,11 +45,9 @@ function StartExercise() {
   const router = useRouter();
   const searchParams = useSearchParams();
   
-  // Ref to prevent double initialization in Strict Mode
   const hasInitialized = useRef(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // State
   const [loading, setLoading] = useState(true);
   const [question, setQuestion] = useState<Question | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -60,7 +59,6 @@ function StartExercise() {
   
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  // --- Timer Logic ---
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
@@ -86,9 +84,30 @@ function StartExercise() {
     return pauseTimer;
   }, [isPaused, loading, error]);
 
-  // --- Initialization ---
+  const generateClockOptions = (correctTime: string) => {
+    const parts = correctTime.split(":");
+    if (parts.length < 2) return []; 
+    
+    const hStr = parts[0];
+    const mStr = parts[1];
+    const h = parseInt(hStr, 10);
+    
+    const opts = new Set<string>();
+    opts.add(correctTime);
+
+    while (opts.size < 4) {
+      const shift = Math.floor(Math.random() * 11) + 1;
+      let newH = (h + shift) % 12;
+      if (newH === 0) newH = 12;
+      
+      const newHStr = newH.toString().padStart(2, "0");
+      opts.add(`${newHStr}:${mStr}`);
+    }
+
+    return Array.from(opts).sort(() => Math.random() - 0.5);
+  };
+
   useEffect(() => {
-    // Prevent double invocation using ref
     if (hasInitialized.current) return;
     
     const initExerciseSession = async () => {
@@ -100,7 +119,6 @@ function StartExercise() {
         return;
       }
 
-      // Mark as initialized immediately to block subsequent calls
       hasInitialized.current = true;
 
       try {
@@ -115,14 +133,12 @@ function StartExercise() {
         const exercise_names = parsed.map((item) => item.sub.toUpperCase());
         const console_played_entered = 1;
 
-        // 1. Start Session
         await api.post('/start-session/', {
           group_name,
           exercise_names,
           console_played_entered,
         });
 
-        // 2. Fetch First Question
         await fetchQuestion(group_name, exercise_names);
 
       } catch (err) {
@@ -136,7 +152,6 @@ function StartExercise() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 
-  // --- API Handlers ---
   const fetchQuestion = async (group_name: string, exercise_names: string[]) => {
     try {
       const response = await api.post('/exercise/', {
@@ -146,6 +161,11 @@ function StartExercise() {
       });
 
       const data = response.data;
+
+      if (group_name?.toLowerCase() === "clock" && typeof data.question === "string") {
+        data.options = generateClockOptions(data.question);
+      }
+
       setQuestion(data);
       setGroupName(group_name || null);
       
@@ -153,7 +173,6 @@ function StartExercise() {
       setIsPaused(false);
       setLoading(false);
       
-      // Auto-focus input on new question
       setTimeout(() => inputRef.current?.focus(), 100);
 
     } catch (err) {
@@ -163,28 +182,33 @@ function StartExercise() {
     }
   };
 
-  const handleSubmit = async () => {
-    if (!answer.trim()) return; // Prevent empty submission
+  const handleSubmit = async (manualAnswer?: string) => {
+    const finalAnswer = typeof manualAnswer === "string" ? manualAnswer : answer;
+
+    if (!finalAnswer.trim()) return;
 
     try {
       const response = await api.post('/exercise/submit/', { 
         type: "submit", 
-        a: answer 
+        a: finalAnswer
       });
 
       const data = response.data;
+
+      if (groupName?.toLowerCase() === "clock" && typeof data.question === "string") {
+        data.options = generateClockOptions(data.question);
+      }
       
-      // Update with next question
       setQuestion({ 
           question: data.question,
           text: data.text,
           options: data.options,
-          type: data.type
+          type: data.type,
+          debug: data.debug
       });
       setAnswer("");
       setIsPaused(false);
       
-      // Auto-focus input
       setTimeout(() => inputRef.current?.focus(), 100);
 
       if (data.redirect) {
@@ -206,11 +230,17 @@ function StartExercise() {
       });
 
       const data = response.data;
+
+      if (groupName?.toLowerCase() === "clock" && typeof data.question === "string") {
+        data.options = generateClockOptions(data.question);
+      }
+
       setQuestion({ 
           question: data.question,
           text: data.text,
           options: data.options,
-          type: data.type
+          type: data.type,
+          debug: data.debug
       });
       setAnswer("");
       setIsPaused(false);
@@ -235,7 +265,6 @@ function StartExercise() {
     router.push("/Dashboard");
   };
 
-  // --- Dynamic Renderer ---
   const renderDynamicContent = () => {
     const group = groupName?.toLowerCase();
 
@@ -319,7 +348,6 @@ function StartExercise() {
     }
   };
 
-  // --- Render ---
   return (
     <div className="min-h-screen bg-gray-100 p-6 flex justify-center items-center">
       <div className="relative bg-white p-6 rounded-lg shadow-md w-full max-w-xl">
@@ -339,50 +367,62 @@ function StartExercise() {
             </div>
 
             {question.options && (
-              <ul className="space-y-2">
+              // UPDATED: Grid Layout (2 columns = 2 items per row)
+              <ul className="grid grid-cols-2 gap-4">
                 {question.options.map((opt: string, idx: number) => (
-                  <li key={idx} className="bg-gray-100 p-2 rounded hover:bg-gray-200 cursor-pointer" onClick={() => setAnswer(opt)}>
+                  <li 
+                    key={idx} 
+                    className="bg-gray-100 p-4 rounded-lg hover:bg-gray-200 cursor-pointer text-center font-bold shadow-sm transition-all hover:scale-105" 
+                    onClick={() => {
+                      setAnswer(opt);
+                      if (groupName?.toLowerCase() === "clock") {
+                        handleSubmit(opt);
+                      }
+                    }}
+                  >
                     {opt}
                   </li>
                 ))}
               </ul>
             )}
 
-            <input
-              ref={inputRef}
-              type="text"
-              className="w-full border p-3 rounded mt-2 shadow-sm text-center font-bold"
-              placeholder="Write your answer here..."
-              value={answer}
-              onChange={(e) => setAnswer(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && !isPaused) {
-                  e.preventDefault();
-                  handleSubmit();
-                }
-              }}
-              autoFocus
-            />
+            {groupName?.toLowerCase() !== "clock" && (
+              <input
+                ref={inputRef}
+                type="text"
+                className="w-full border p-3 rounded mt-2 shadow-sm text-center font-bold"
+                placeholder="Write your answer here..."
+                value={answer}
+                onChange={(e) => setAnswer(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !isPaused) {
+                    e.preventDefault();
+                    handleSubmit();
+                  }
+                }}
+                autoFocus
+              />
+            )}
 
             <div className="flex flex-wrap items-center justify-center cursor-pointer gap-3 mt-4">
               {isPaused ? (
                 <p className="text-gray-500 font-semibold">Please resume to continue</p>
               ) : (
-                <button
-                  onClick={handleSubmit}
-                  className="px-6 py-2 cursor-pointer hover:scale-105 transition duration-300 bg-gradient-to-r from-green-500 to-green-700 text-white rounded font-bold"
-                >
-                  Submit
-                </button>
+                groupName?.toLowerCase() !== "clock" && (
+                  <button
+                    onClick={() => handleSubmit()}
+                    className="px-6 py-2 cursor-pointer hover:scale-105 transition duration-300 bg-gradient-to-r from-green-500 to-green-700 text-white rounded font-bold"
+                  >
+                    Submit
+                  </button>
+                )
               )}
             </div>
           </div>
         )}
 
-        {/* Floating Controls */}
         <div className="absolute -bottom-16 left-1/2 -translate-x-1/2 flex gap-4">
           
-          {/* Pause/Resume */}
           <button
             onClick={handlePauseToggle}
             className="group relative flex items-center justify-center h-12 w-12 rounded-full bg-white shadow-lg hover:scale-110 transition-all text-gray-600"
@@ -393,7 +433,6 @@ function StartExercise() {
             </span>
           </button>
           
-          {/* Skip */}
           {!isPaused && (
             <button
                 onClick={handleSkip}
@@ -406,7 +445,6 @@ function StartExercise() {
             </button>
           )}
 
-          {/* Stop */}
           <button
             onClick={handleStop}
             className="group relative flex items-center justify-center h-12 w-12 rounded-full bg-white shadow-lg hover:scale-110 transition-all text-red-500"

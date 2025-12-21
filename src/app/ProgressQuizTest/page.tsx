@@ -130,7 +130,7 @@ export default function QuizProgressPage() {
           </h1>
           <p className="text-gray-600 font-medium">Your past quizzes and tests</p>
         </div>
-        <Link href="/progress" className="text-sm font-bold border-b-2 border-black hover:text-blue-600">
+        <Link href="/Progress" className="text-sm font-bold border-b-2 border-black hover:text-blue-600">
           &larr; Back
         </Link>
       </div>
