@@ -7,6 +7,9 @@ import "katex/dist/katex.min.css";
 import api from "../../utility/axiosInstance";
 import { FaHistory, FaCheckCircle, FaTimesCircle, FaClock, FaChevronLeft, FaChevronRight } from "react-icons/fa";
 
+// --- NEW IMPORT ---
+import Clock from "@/components/Clock"; 
+
 // --- Types ---
 
 interface HistoryItem {
@@ -263,9 +266,13 @@ export default function QuizProgressPage() {
                         </span>
                       </div>
                       
-                      <div className="text-lg font-bold text-center py-2 mb-3 bg-gray-50 rounded">
-                        {/* Rendering Math */}
-                        <InlineMath math={q.question_text || ""} />
+                      {/* --- UPDATED: Conditional Clock Rendering --- */}
+                      <div className="text-lg font-bold text-center py-4 mb-3 bg-gray-50 rounded flex justify-center items-center min-h-[100px]">
+                        {q.group_name === "Clock" || q.group_name === "clock" ? (
+                           <Clock time={q.question_text || "00:00"} />
+                        ) : (
+                           <InlineMath math={q.question_text || ""} />
+                        )}
                       </div>
 
                       <div className="flex items-center justify-between text-sm">
