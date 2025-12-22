@@ -282,7 +282,7 @@ function QuizPage() {
         return (
           <div className="text-center w-full">
             <div className="text-3xl font-bold text-gray-800 mb-6">
-                Q: {(question?.question_text as string) || ""}
+                Q: <InlineMath math={(question.question_text as string) || ""} />
             </div>
           </div>
         );

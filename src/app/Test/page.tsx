@@ -53,10 +53,13 @@ export default function TestPageWrapper() {
 function TestPage() {
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
+  
+  // Cache to store generated options so they don't change on re-renders
+  const optionsCache = useRef<{ [key: number]: string[] }>({});
 
   // --- State ---
-  const [hasStarted, setHasStarted] = useState(false); // New: Instruction barrier
-  const [loading, setLoading] = useState(false); // Default false, waits for user to start
+  const [hasStarted, setHasStarted] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [assessment, setAssessment] = useState<AssessmentResponse | null>(null);
   const [result, setResult] = useState<QuizResult | null>(null);
   
@@ -65,6 +68,35 @@ function TestPage() {
 
   const [timeLeft, setTimeLeft] = useState<number>(20 * 60); 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // --- Helper: Generate Clock Options ---
+  const generateClockOptions = (questionId: number, correctTime: string) => {
+    // Return cached options if they exist for this question ID
+    if (optionsCache.current[questionId]) return optionsCache.current[questionId];
+
+    const parts = correctTime.split(":");
+    if (parts.length < 2) return [];
+    
+    const hStr = parts[0];
+    const mStr = parts[1];
+    const h = parseInt(hStr, 10);
+    
+    const opts = new Set<string>();
+    opts.add(correctTime);
+
+    while (opts.size < 4) {
+      const shift = Math.floor(Math.random() * 11) + 1;
+      let newH = (h + shift) % 12;
+      if (newH === 0) newH = 12;
+      
+      const newHStr = newH.toString().padStart(2, "0");
+      opts.add(`${newHStr}:${mStr}`);
+    }
+
+    const shuffled = Array.from(opts).sort(() => Math.random() - 0.5);
+    optionsCache.current[questionId] = shuffled; // Cache results
+    return shuffled;
+  };
 
   // --- 1. Start Test Logic ---
   const handleStartTest = async () => {
@@ -120,6 +152,7 @@ function TestPage() {
 
   // --- Auto-focus effect ---
   useEffect(() => {
+    // Only focus if the input exists (i.e. not a clock question)
     if (inputRef.current) {
       inputRef.current.focus();
     }
@@ -212,7 +245,7 @@ function TestPage() {
         return (
           <div className="my-6 flex-col">
             <p className="font-semibold text-center mb-4">
-              Q: Tell the time <span>for example answer is <b>12:20</b></span>
+              Q: Tell the time 
             </p>
             <div className="flex justify-center items-center">
               <Clock time={(question.question_text as string) || "00:00"} />
@@ -280,7 +313,7 @@ function TestPage() {
         return (
           <div className="text-center w-full">
             <div className="text-3xl font-bold text-gray-800 mb-6">
-               Q: {(question?.question_text as string) || ""}
+               Q: <InlineMath math={(question.question_text as string) || ""} />
             </div>
           </div>
         );
@@ -379,10 +412,10 @@ function TestPage() {
                 </div>
                 
                 <div className="flex items-center gap-2 flex-shrink-0">
-                   <span className="text-sm text-gray-500 mr-2">Your Answer:</span>
-                   <span className={`px-4 py-1 rounded-full font-bold text-white ${item.user_response ? 'bg-blue-500' : 'bg-gray-400'}`}>
+                    <span className="text-sm text-gray-500 mr-2">Your Answer:</span>
+                    <span className={`px-4 py-1 rounded-full font-bold text-white ${item.user_response ? 'bg-blue-500' : 'bg-gray-400'}`}>
                       {item.user_response || "Skipped"}
-                   </span>
+                    </span>
                 </div>
               </div>
             ))}
@@ -442,31 +475,49 @@ function TestPage() {
             <div className="text-center w-full">
                 {renderDynamicContent()}
             </div>
-        </div>
-
-        {/* Input */}
-        <div className="mt-4">
-            <input
-                ref={inputRef}
-                type="text"
-                className="w-full border-2 border-gray-300 p-3 rounded-lg mt-2 shadow-sm text-lg text-center font-bold tracking-widest focus:border-green-500 focus:outline-none transition-colors"
-                placeholder="Enter Answer"
-                value={currentAnswer}
-                onChange={(e) => handleInputChange(e.target.value)}
-                onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                        e.preventDefault();
-                        if (isInputEmpty) return; 
-                        
-                        if (isLastQuestion) {
-                            handleFinish();
-                        } else {
-                            handleNext();
-                        }
-                    }
-                }}
-                autoFocus
-            />
+            
+            {/* Logic: Show Options if 'clock', else show Input */}
+            {currentQuestion.group_name?.toLowerCase() === "clock" ? (
+               <ul className="grid grid-cols-2 gap-4 mt-6 w-full max-w-md">
+                 {generateClockOptions(currentQuestion.id, currentQuestion.question_text as string).map((opt, idx) => {
+                   const isSelected = currentAnswer === opt;
+                   return (
+                     <li 
+                       key={idx} 
+                       className={`p-4 rounded-lg cursor-pointer text-center font-bold shadow-sm transition-all hover:scale-105 border-2
+                         ${isSelected 
+                           ? "bg-green-100 border-green-500 text-green-800 ring-2 ring-green-300" 
+                           : "bg-gray-100 border-transparent hover:bg-gray-200 text-gray-800"
+                         }`}
+                       onClick={() => handleInputChange(opt)}
+                     >
+                       {opt}
+                     </li>
+                   );
+                 })}
+               </ul>
+            ) : (
+               /* Standard Input for non-clock questions */
+               <div className="mt-4 w-full">
+                  <input
+                      ref={inputRef}
+                      type="text"
+                      className="w-full border-2 border-gray-300 p-3 rounded-lg mt-2 shadow-sm text-lg text-center font-bold tracking-widest focus:border-green-500 focus:outline-none transition-colors"
+                      placeholder="Enter Answer"
+                      value={currentAnswer}
+                      onChange={(e) => handleInputChange(e.target.value)}
+                      onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                              e.preventDefault();
+                              if (isInputEmpty) return; 
+                              if (isLastQuestion) handleFinish();
+                              else handleNext();
+                          }
+                      }}
+                      autoFocus
+                  />
+               </div>
+            )}
         </div>
 
         {/* Controls */}
