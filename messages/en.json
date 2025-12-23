@@ -18,13 +18,13 @@
     "selectMode": "Select a mode to continue your learning journey.",
     "start": "Start",
     "cardExercisesTitle": "Exercises",
-    "cardExercisesDesc": "Browse categories and practice specific coding challenges at your own pace.",
+    "cardExercisesDesc": "Learn new things by playing fun games!",
     "cardExercisesBtn": "Start Practice",
     "cardQuizTitle": "Quiz",
-    "cardQuizDesc": "Test your knowledge with quick-fire questions and instant feedback.",
+    "cardQuizDesc": "Answer quick questions and see your score!",
     "cardQuizBtn": "Take a Quiz",
     "cardTestTitle": "Test",
-    "cardTestDesc": "Simulate a real exam environment with timed assessments.",
+    "cardTestDesc": "Race against the clock in a big challenge!",
     "cardTestBtn": "Start Test"
   },
   "Navbar": {
