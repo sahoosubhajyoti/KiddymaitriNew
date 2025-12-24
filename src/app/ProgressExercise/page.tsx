@@ -80,7 +80,7 @@ export default function ExerciseProgressPage() {
           </h1>
           <p className="text-gray-600 font-medium">Tracking your daily practice details</p>
         </div>
-        <Link href="/progress" className="text-sm font-bold border-b-2 border-black hover:text-blue-600 transition-colors">
+        <Link href="/Progress" className="text-sm font-bold border-b-2 border-black hover:text-blue-600 transition-colors">
           &larr; Back to Stats
         </Link>
       </div>
