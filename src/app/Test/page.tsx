@@ -325,41 +325,56 @@ function TestPage() {
   // ✅ 6A. INSTRUCTION SCREEN
   if (!hasStarted) {
     return (
+     
+      
       <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
         <div className="bg-white p-8 rounded-xl shadow-xl w-full max-w-lg border-t-4 border-indigo-600">
-          <h1 className="text-3xl font-bold text-gray-800 mb-6 text-center">Test Instructions 📋</h1>
           
-          <div className="space-y-4 text-gray-700 mb-8">
-            <p className="font-medium">Please read the following rules carefully before starting:</p>
-            <ul className="list-disc pl-6 space-y-2">
-              <li>
-                <span className="font-bold text-red-500">Time Bound:</span> The test has a strict time limit. It will auto-submit when time runs out.
+          {/* Header */}
+          <h1 className="text-3xl font-black text-gray-800 mb-6 text-center tracking-tight">
+            Ready for the Test? 🚀
+          </h1>
+          
+          <div className="space-y-4 text-gray-700 mb-8 text-lg">
+            <p className="font-bold text-center text-indigo-600">Read these rules first:</p>
+            
+            <ul className="space-y-4 bg-indigo-50 p-4 rounded-lg">
+              <li className="flex items-start gap-3">
+                <span className="text-2xl">⏰</span>
+                <div>
+                    <span className="font-bold text-red-500 block">Watch the Clock</span>
+                    <span>Finish the test before the timer hits zero!</span>
+                </div>
               </li>
-              <li>
-                <span className="font-bold text-blue-500">Mandatory:</span> You cannot skip questions. An answer is required to proceed.
+              
+              <li className="flex items-start gap-3">
+                 <span className="text-2xl">🏃</span>
+                 <div>
+                    <span className="font-bold text-orange-500 block">Keep Going</span>
+                    <span>The timer does not stop, so don't pause!</span>
+                 </div>
               </li>
-              <li>
-                <span className="font-bold text-orange-500">One Way:</span> You cannot go back to review or change previous answers.
-              </li>
-              <li>
-                <span className="font-bold text-gray-500">No Pausing:</span> Once started, the timer runs continuously.
-              </li>
-              <li>
-                Click <span className="font-bold">Finish</span> on the last question to submit your test.
+              
+              <li className="flex items-start gap-3">
+                <span className="text-2xl">🏁</span>
+                <div>
+                    <span className="font-bold text-green-600 block">All Done?</span>
+                    <span>Click <b>Finish</b> on the last question to submit.</span>
+                </div>
               </li>
             </ul>
           </div>
 
           <button
             onClick={handleStartTest}
-            className="w-full py-4 bg-gradient-to-r from-indigo-600 to-indigo-700 text-white rounded-lg font-bold text-lg shadow-lg hover:scale-[1.02] transition-transform"
+            className="w-full py-4 bg-gradient-to-r from-indigo-600 to-indigo-700 text-white rounded-xl font-black text-xl shadow-lg hover:scale-[1.02] hover:shadow-xl transition-all active:scale-95"
           >
-            Start Test &rarr;
+            Start Test Now! &rarr;
           </button>
           
-          <div className="mt-4 text-center">
-            <Link href="/Dashboard" className="text-gray-400 hover:text-gray-600 text-sm">
-              Cancel and return to Dashboard
+          <div className="mt-6 text-center">
+            <Link href="/Dashboard" className="text-gray-400 hover:text-indigo-600 font-bold text-sm transition-colors">
+              Not ready? Go back to Dashboard
             </Link>
           </div>
         </div>
