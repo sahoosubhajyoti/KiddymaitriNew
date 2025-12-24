@@ -318,7 +318,7 @@ function QuizPage() {
                  <span className="text-2xl">🏃</span>
                  <div>
                     <span className="font-bold text-orange-500 block">Keep Going</span>
-                    <span>The timer does not stop, so don't pause!</span>
+                    <span>The timer does not stop, so don&apost pause!</span>
                  </div>
               </li>
               

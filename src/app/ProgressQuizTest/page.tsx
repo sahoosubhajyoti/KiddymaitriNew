@@ -5,7 +5,7 @@ import Link from "next/link";
 import { InlineMath } from "react-katex";
 import "katex/dist/katex.min.css";
 import api from "../../utility/axiosInstance";
-import { FaHistory, FaCheckCircle, FaTimesCircle, FaClock, FaChevronLeft, FaChevronRight } from "react-icons/fa";
+import { FaHistory, FaCheckCircle, FaClock, FaChevronLeft, FaChevronRight } from "react-icons/fa";
 
 // --- NEW IMPORT ---
 import Clock from "@/components/Clock"; 

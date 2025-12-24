@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useAuth } from "../../context/Authcontext";
 import api from "../../utility/axiosInstance"; 
-import { useLocale, useTranslations } from "next-intl";
+import { useTranslations } from "next-intl";
 
 // Note: The ApiData interface for exercises is removed here 
 // because that data fetching will happen on the new /exercise page.
@@ -18,7 +18,7 @@ export default function Dashboard() {
   const [open, setOpen] = useState(false);
 
   //language
-   const locale = useLocale();
+  
     const t = useTranslations("Dashboard");
 
   // Fetch data (Admin Only)

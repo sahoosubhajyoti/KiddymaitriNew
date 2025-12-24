@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { FaRunning, FaTrophy, FaArrowRight, FaChartLine } from "react-icons/fa";
+import { FaRunning, FaTrophy, FaArrowRight } from "react-icons/fa";
 
 export default function ProgressPage() {
   return (
