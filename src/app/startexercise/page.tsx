@@ -277,7 +277,7 @@ function StartExercise() {
   };
 
   const handleStop = () => {
-    router.push("/Dashboard");
+    router.push("/Exercise");
   };
 
   const renderDynamicContent = () => {
