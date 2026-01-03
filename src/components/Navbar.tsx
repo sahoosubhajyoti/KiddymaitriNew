@@ -298,7 +298,7 @@ const Navbar = () => {
                             <button
                             onClick={() => {
                                 setSidebarOpen(false);
-                                router.push("/AddExercise");
+                                router.push("/AdminAdd");
                                 setIsUserMenuOpen(false);
                             }}
                             className="w-full text-center py-1.5 bg-gray-100 rounded-full hover:bg-gray-200 text-xs font-semibold transition"
