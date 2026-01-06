@@ -150,7 +150,7 @@ export default function AddPictures() {
       {/* Header & Back Link */}
       <div className="flex justify-between items-center mb-8">
         <h2 className="text-2xl font-bold text-gray-800">Add Colouring Picture</h2>
-        <Link href="/dashboard" className="text-sm text-gray-500 hover:text-blue-600 flex items-center gap-1">
+        <Link href="/AdminAdd" className="text-sm text-gray-500 hover:text-blue-600 flex items-center gap-1">
            &larr; Back
         </Link>
       </div>

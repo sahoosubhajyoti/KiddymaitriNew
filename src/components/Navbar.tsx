@@ -23,7 +23,6 @@ interface NavLink {
   type: "route" | "scroll";
 }
 
-// 1. UPDATED: Added backendValue to match SettingsPage logic
 const languages = [
   { code: "en", label: "English", short: "EN", backendValue: "ENGLISH" },
   { code: "hin", label: "हिंदी", short: "HI", backendValue: "HINDI" },
@@ -33,7 +32,7 @@ const languages = [
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-   
+    
   // Dropdown States
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isLangMenuOpen, setIsLangMenuOpen] = useState(false);
@@ -42,7 +41,6 @@ const Navbar = () => {
   const pathname = usePathname();
   const { user, logout, loading } = useAuth();
    
-  // Refs for click-outside detection
   const menuRef = useRef<HTMLDivElement>(null);
   const langMenuRef = useRef<HTMLDivElement>(null);
 
@@ -50,20 +48,17 @@ const Navbar = () => {
   const t = useTranslations("Navbar");
   const [isPending, startTransition] = useTransition();
 
-  // Helper to get current language label
   const currentLang = languages.find((l) => l.code === locale) || languages[0];
 
-  // 2. UPDATED: changeLocale now syncs with Backend if user is logged in
   const changeLocale = async (newLocale: string) => {
-    // A. Immediate UI/Cookie Update
     document.cookie = `MYNEXTAPP_LOCALE=${newLocale}; path=/; max-age=31536000; SameSite=Lax`;
     
     startTransition(() => {
       router.refresh();
-      setIsLangMenuOpen(false); // Close desktop menu
+      setIsLangMenuOpen(false); 
     });
 
-    // B. Backend API Call (Only if user is logged in)
+   
     if (user) {
         const langData = languages.find((l) => l.code === newLocale);
         const medium = langData ? langData.backendValue : "ENGLISH";
@@ -74,7 +69,7 @@ const Navbar = () => {
                 headers: { 
                     "Content-Type": "application/json" 
                 },
-                credentials: "include", // Important for cookies/auth
+                credentials: "include", 
                 body: JSON.stringify({ medium: medium }),
             });
 
@@ -87,6 +82,7 @@ const Navbar = () => {
     }
   };
 
+  // ✅ 1. HOOKS MUST RUN FIRST (Moved useEffects UP)
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 50);
     const isHome = pathname === "/";
@@ -101,17 +97,12 @@ const Navbar = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, [pathname]);
 
-  // Unified Click Outside Effect
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       const target = event.target as Node;
-      
-      // Close User Menu
       if (menuRef.current && !menuRef.current.contains(target)) {
         setIsUserMenuOpen(false);
       }
-      
-      // Close Language Menu
       if (langMenuRef.current && !langMenuRef.current.contains(target)) {
         setIsLangMenuOpen(false);
       }
@@ -122,6 +113,11 @@ const Navbar = () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
+
+  // ✅ 2. EARLY RETURN CHECK (Placed AFTER all hooks)
+  if (pathname === "/Games") {
+    return null;
+  }
 
   const handleScrollOrRedirect = (link: NavLink) => {
     if (link.type === "scroll") {
@@ -140,6 +136,7 @@ const Navbar = () => {
   };
 
   const navLinks: NavLink[] = [
+    { name: t("games"), to: "/Games", type: "route" },
     { name: t("shop"), to: "/shop", type: "route" },
     { name: t("home"), to: "#home", type: "scroll" },
     { name: t("product"), to: "#product", type: "scroll" },
@@ -198,9 +195,7 @@ const Navbar = () => {
               </span>
             ))}
 
-            {/* --------------------------- */}
-            {/* Desktop Language Dropdown   */}
-            {/* --------------------------- */}
+            {/* Language Dropdown */}
             <div className="relative ml-4" ref={langMenuRef}>
               <button
                 onClick={() => setIsLangMenuOpen(!isLangMenuOpen)}
@@ -254,7 +249,6 @@ const Navbar = () => {
               </div>
             ) : (
               <div className="relative flex items-center gap-4" ref={menuRef}>
-                {/* Dashboard Link */}
                 <div className="relative group cursor-pointer">
                   <button
                     type="button"
@@ -266,7 +260,6 @@ const Navbar = () => {
                   <span className="absolute left-0 -bottom-1 w-0 h-0.5 bg-black transition-all duration-300 group-hover:w-full"></span>
                 </div>
 
-                {/* Profile Menu */}
                 <div
                   className="flex items-center gap-2 cursor-pointer"
                   onClick={() => setIsUserMenuOpen((prev) => !prev)}
@@ -376,9 +369,9 @@ const Navbar = () => {
             <RxCross1 size={24} />
           </button>
         </div>
-         
+          
         <div className="flex-grow flex flex-col p-6 space-y-6">
-          {/* Mobile Nav Links */}
+          {/* Mobile Nav Links - Automatically includes Games */}
           <div className="flex flex-col space-y-4">
             {navLinks.map((link) => (
                 <span
@@ -393,7 +386,7 @@ const Navbar = () => {
 
           <hr className="border-gray-200" />
 
-          {/* Mobile Language Section (Collapsible style) */}
+          {/* Mobile Language Section */}
           <div className="space-y-3">
              <h3 className="text-sm uppercase text-gray-400 font-bold tracking-wider flex items-center gap-2">
                 <IoMdGlobe /> Language
@@ -457,7 +450,7 @@ const Navbar = () => {
               >
                 Dashboard
               </button>
-               
+                
               <button
                 onClick={() => {
                   logout();
