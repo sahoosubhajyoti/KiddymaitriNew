@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Neon Math Arcade</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;700&family=Noto+Sans+Oriya:wght@400;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body { 
+            margin: 0; 
+            overflow: hidden; 
+            background: #000; 
+            /* Font Stack: Try Orbitron first, then Hindi/Odia fonts */
+            font-family: 'Orbitron', 'Noto Sans Devanagari', 'Noto Sans Oriya', sans-serif; 
+            touch-action: none; 
+        }
+        canvas { 
+            display: block; 
+            margin: 0 auto; 
+            box-shadow: 0 0 50px rgba(0, 243, 255, 0.2);
+        }
+        #restartBtn {
+            display: none; 
+            position: absolute; 
+            top: 60%; left: 50%; 
+            transform: translate(-50%, -50%); 
+            padding: 15px 40px; 
+            font-size: 24px; 
+            font-family: 'Orbitron', sans-serif;
+            background: rgba(0, 0, 0, 0.9); 
+            border: 2px solid #00f3ff; 
+            border-radius: 15px; 
+            color: #00f3ff; 
+            cursor: pointer; 
+            text-transform: uppercase;
+            box-shadow: 0 0 30px #00f3ff;
+            z-index: 100;
+        }
+    </style>
+</head>
+<body>
+
+<canvas id="gameCanvas"></canvas>
+<button id="restartBtn" onclick="location.reload()">System Failure<br><span style="font-size:16px">Tap to Reboot</span></button>
+
+<script>
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+    const restartBtn = document.getElementById("restartBtn");
+
+    canvas.width = window.innerWidth > 500 ? 400 : window.innerWidth; 
+    canvas.height = window.innerHeight;
+
+    // --- 🌐 LOCALIZATION SETUP ---
+    
+    // 1. Define Translations
+    const dictionary = {
+        en: {
+            score: "SCORE",
+            lives: "LIVES",
+            even: "EVEN",
+            odd: "ODD",
+            title: "NEON MATH",
+            howTo: "HOW TO PLAY:",
+            rule1: "Tap EVEN for: 0, 2, 4...",
+            rule2: "Tap ODD for: 1, 3, 5...",
+            start: "TAP TO START",
+            gameOver: "System Failure",
+            reboot: "Tap to Reboot",
+            font: "'Orbitron'" // Use Orbitron for English
+        },
+        hin: {
+            score: "स्कोर",
+            lives: "जीवन",
+            even: "सम",
+            odd: "विषम",
+            title: "नियोन गणित",
+            howTo: "कैसे खेलें:",
+            rule1: "सम संख्या चुनें: 0, 2, 4...",
+            rule2: "विषम संख्या चुनें: 1, 3, 5...",
+            start: "शुरू करने के लिए टैप करें",
+            gameOver: "खेल खत्म",
+            reboot: "पुनः आरंभ करें",
+            font: "'Noto Sans Devanagari'" // Use Noto for Hindi
+        },
+        odi: {
+            score: "ସ୍କୋର",
+            lives: "ଜୀବନ",
+            even: "ଯୁଗ୍ମ",
+            odd: "ଅଯୁଗ୍ମ",
+            title: "ନିଓନ୍ ଗଣିତ",
+            howTo: "କିପରି ଖେଳିବେ:",
+            rule1: "ଯୁଗ୍ମ ସଂଖ୍ୟା ବାଛନ୍ତୁ: 0, 2, 4...",
+            rule2: "ଅଯୁଗ୍ମ ସଂଖ୍ୟା ବାଛନ୍ତୁ: 1, 3, 5...",
+            start: "ଆରମ୍ଭ କରିବାକୁ ଟ୍ୟାପ୍ କରନ୍ତୁ",
+            gameOver: "ଖେଳ ଶେଷ",
+            reboot: "ପୁନଃ ଆରମ୍ଭ କରନ୍ତୁ",
+            font: "'Noto Sans Oriya'" // Use Noto for Odia
+        }
+    };
+
+    // 2. Get Language from URL (?lang=hin)
+    const urlParams = new URLSearchParams(window.location.search);
+    const langCode = urlParams.get('lang') || 'en'; // Default to English
+    const t = dictionary[langCode] || dictionary['en'];
+
+    // 3. Update HTML Button Text immediately
+    restartBtn.innerHTML = `${t.gameOver}<br><span style="font-size:16px">${t.reboot}</span>`;
+    restartBtn.style.fontFamily = t.font; // Apply correct font to button
+
+    // --- SYSTEMS ---
+    let stars = [];         
+    let explosions = [];    
+    let popups = [];        
+    let trail = [];         
+
+    // --- GAME STATE ---
+    let gameState = "INSTRUCTIONS"; 
+    let score = 0;
+    let lives = 5;
+    let gameSpeed = 4;
+    let gridOffset = 0;     
+
+    // The Ball
+    let ball = {
+        x: canvas.width / 2,
+        y: -100,
+        radius: 25,
+        number: generateNumber(),
+        state: "FALLING", 
+        targetBasket: null
+    };
+
+    // --- BUTTON SETTINGS ---
+    const btnHeight = 60; 
+    const btnRadius = 20; 
+    const btnY = canvas.height - btnHeight - 30; 
+
+    let baskets = [
+        // Use 't.even' and 't.odd' instead of hardcoded strings
+        { label: t.even, x: 20, y: btnY, width: (canvas.width/2)-25, height: btnHeight, color: "#00f3ff", active: false, type: "EVEN" },
+        { label: t.odd, x: (canvas.width/2)+5, y: btnY, width: (canvas.width/2)-25, height: btnHeight, color: "#ff0099", active: false, type: "ODD" }
+    ];
+
+    // --- SETUP STARFIELD ---
+    for(let i=0; i<80; i++) {
+        stars.push({
+            x: Math.random() * canvas.width,
+            y: Math.random() * canvas.height,
+            size: Math.random() * 2,
+            speed: Math.random() * 0.5 + 0.1,
+            alpha: Math.random()
+        });
+    }
+
+    // --- INPUT ---
+    canvas.addEventListener('pointerdown', (e) => {
+        if (gameState === "INSTRUCTIONS") {
+            gameState = "PLAYING";
+            return;
+        }
+
+        if (gameState === "GAMEOVER") return;
+        if (ball.state === "SUCKED") return;
+
+        const rect = canvas.getBoundingClientRect();
+        const clickX = e.clientX - rect.left;
+        const clickY = e.clientY - rect.top;
+
+        baskets.forEach(basket => {
+            if (clickX > basket.x && clickX < basket.x + basket.width &&
+                clickY > basket.y && clickY < basket.y + basket.height) {
+                
+                basket.active = true;
+                setTimeout(() => basket.active = false, 150);
+                startSuck(basket);
+            }
+        });
+    });
+
+    // --- LOGIC ---
+
+    function generateNumber() {
+        return Math.floor(Math.random() * 100);
+    }
+
+    function startSuck(basket) {
+        ball.state = "SUCKED";
+        ball.targetBasket = basket;
+    }
+
+    function createExplosion(x, y, color) {
+        for(let i=0; i<20; i++) {
+            explosions.push({
+                x: x, y: y,
+                vx: (Math.random() - 0.5) * 10,
+                vy: (Math.random() - 0.5) * 10,
+                life: 1.0,
+                color: color
+            });
+        }
+    }
+
+    function update() {
+        stars.forEach(p => {
+            p.y += p.speed;
+            if (p.y > canvas.height) p.y = 0;
+        });
+
+        gridOffset = (gridOffset + 1) % 40;
+
+        if (gameState !== "PLAYING") return;
+
+        if (ball.state === "FALLING") {
+            ball.y += gameSpeed;
+            
+            if (score > 0) { 
+                trail.push({x: ball.x, y: ball.y, size: ball.radius});
+                if (trail.length > 10) trail.shift();
+            }
+
+            if (ball.y > canvas.height + 50) {
+                loseLife();
+                resetBall();
+            }
+
+        } else if (ball.state === "SUCKED") {
+            let targetX = ball.targetBasket.x + ball.targetBasket.width / 2;
+            let targetY = ball.targetBasket.y + ball.targetBasket.height / 2;
+            
+            ball.x += (targetX - ball.x) * 0.25;
+            ball.y += (targetY - ball.y) * 0.25;
+            ball.radius *= 0.85;
+
+            if (ball.radius < 2) {
+                validateCatch(ball.targetBasket);
+                resetBall();
+            }
+        }
+
+        for (let i = explosions.length - 1; i >= 0; i--) {
+            explosions[i].x += explosions[i].vx;
+            explosions[i].y += explosions[i].vy;
+            explosions[i].life -= 0.05;
+            if (explosions[i].life <= 0) explosions.splice(i, 1);
+        }
+
+        for (let i = popups.length - 1; i >= 0; i--) {
+            popups[i].y -= 2;
+            popups[i].life -= 1;
+            if (popups[i].life <= 0) popups.splice(i, 1);
+        }
+    }
+
+    function validateCatch(basket) {
+        let isNumberEven = ball.number % 2 === 0;
+        // Use 'type' to check logic, because 'label' is now translated!
+        let isBasketEven = basket.type === "EVEN"; 
+
+        if ((isBasketEven && isNumberEven) || (!isBasketEven && !isNumberEven)) {
+            score += 10;
+            gameSpeed += 0.2;
+            createExplosion(basket.x + basket.width/2, basket.y, "#00ff00");
+            spawnPopup("+10", basket.x + basket.width/2, basket.y - 50, "#00ff00");
+        } else {
+            createExplosion(basket.x + basket.width/2, basket.y, "red");
+            spawnPopup("ERROR", basket.x + basket.width/2, basket.y - 50, "red");
+            loseLife();
+            shakeScreen();
+        }
+    }
+
+    function loseLife() {
+        lives--;
+        if (lives <= 0) endGame();
+        if (navigator.vibrate) navigator.vibrate(300);
+    }
+
+    function resetBall() {
+        ball.state = "FALLING";
+        ball.y = -60;
+        ball.x = Math.random() * (canvas.width - 60) + 30;
+        ball.radius = 25;
+        ball.number = generateNumber();
+        trail = [];
+        ball.targetBasket = null;
+    }
+
+    function spawnPopup(text, x, y, color) {
+        popups.push({ x: x, y: y, text: text, color: color, life: 40 });
+    }
+
+    function shakeScreen() {
+        canvas.style.transform = "translate(10px, 0)";
+        setTimeout(() => canvas.style.transform = "translate(-10px, 0)", 50);
+        setTimeout(() => canvas.style.transform = "translate(10px, 0)", 100);
+        setTimeout(() => canvas.style.transform = "translate(0, 0)", 150);
+    }
+
+    function endGame() {
+        gameState = "GAMEOVER";
+        restartBtn.style.display = "block";
+    }
+
+    function drawRoundedRect(ctx, x, y, width, height, radius) {
+        ctx.beginPath();
+        ctx.moveTo(x + radius, y);
+        ctx.lineTo(x + width - radius, y);
+        ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+        ctx.lineTo(x + width, y + height - radius);
+        ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+        ctx.lineTo(x + radius, y + height);
+        ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+        ctx.lineTo(x, y + radius);
+        ctx.quadraticCurveTo(x, y, x + radius, y);
+        ctx.closePath();
+    }
+
+    function drawInstructions() {
+        ctx.fillStyle = "rgba(0,0,0,0.7)";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        ctx.textAlign = "center";
+        
+        // TITLE
+        ctx.fillStyle = "#00f3ff";
+        ctx.font = "900 40px " + t.font; // Dynamic Font
+        ctx.shadowBlur = 20;
+        ctx.shadowColor = "#00f3ff";
+        ctx.fillText(t.title, canvas.width/2, 150);
+        ctx.shadowBlur = 0;
+
+        // HOW TO PLAY
+        ctx.fillStyle = "white";
+        ctx.font = "20px " + t.font;
+        ctx.fillText(t.howTo, canvas.width/2, 240);
+        
+        ctx.font = "16px " + t.font;
+        ctx.fillStyle = "#aaa";
+        ctx.fillText(t.rule1, canvas.width/2, 280);
+        ctx.fillText(t.rule2, canvas.width/2, 310);
+
+        // BLINKING TEXT
+        if (Math.floor(Date.now() / 500) % 2 === 0) {
+            ctx.fillStyle = "#00ff00";
+            ctx.font = "bold 24px " + t.font;
+            ctx.fillText(t.start, canvas.width/2, 450);
+        }
+    }
+
+    function draw() {
+        ctx.fillStyle = "black";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // Grid
+        ctx.strokeStyle = "rgba(0, 243, 255, 0.1)";
+        ctx.lineWidth = 1;
+        for(let x=0; x<=canvas.width; x+=40) {
+            ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke();
+        }
+        for(let y=0; y<=canvas.height; y+=40) {
+            let drawY = y + gridOffset;
+            if(drawY > canvas.height) drawY -= canvas.height;
+            ctx.beginPath(); ctx.moveTo(0, drawY); ctx.lineTo(canvas.width, drawY); ctx.stroke();
+        }
+
+        ctx.fillStyle = "white";
+        stars.forEach(p => {
+            ctx.globalAlpha = p.alpha * 0.5;
+            ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2); ctx.fill();
+        });
+        ctx.globalAlpha = 1.0;
+
+        if (gameState === "INSTRUCTIONS") {
+            drawInstructions();
+            return;
+        }
+
+        // Baskets
+        baskets.forEach(basket => {
+            ctx.fillStyle = basket.active ? "white" : "rgba(0,0,0,0.8)";
+            ctx.strokeStyle = basket.color;
+            ctx.lineWidth = 3;
+            ctx.shadowBlur = basket.active ? 40 : 15;
+            ctx.shadowColor = basket.color;
+
+            drawRoundedRect(ctx, basket.x, basket.y, basket.width, basket.height, btnRadius);
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.shadowBlur = 0;
+            ctx.fillStyle = basket.active ? "black" : basket.color;
+            // Use Translated Font
+            ctx.font = "900 24px " + t.font; 
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.fillText(basket.label, basket.x + basket.width / 2, basket.y + basket.height / 2 + 2);
+        });
+
+        // Ball
+        if (ball.state === "FALLING" || ball.state === "SUCKED") {
+            for(let i=0; i<trail.length; i++) {
+                let t = trail[i];
+                let alpha = i / trail.length;
+                ctx.fillStyle = `rgba(255, 87, 51, ${alpha * 0.5})`;
+                ctx.beginPath(); ctx.arc(t.x, t.y, t.size * (i/trail.length), 0, Math.PI * 2); ctx.fill();
+            }
+
+            let grad = ctx.createRadialGradient(ball.x - 5, ball.y - 5, 2, ball.x, ball.y, ball.radius);
+            grad.addColorStop(0, "#ff9933"); 
+            grad.addColorStop(0.3, "#ff5e00"); 
+            grad.addColorStop(1, "#a80000");   
+
+            ctx.fillStyle = grad;
+            ctx.shadowBlur = 20;
+            ctx.shadowColor = "#ff5e00";
+            ctx.beginPath(); ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2); ctx.fill();
+
+            ctx.shadowBlur = 0;
+            ctx.fillStyle = "white";
+            ctx.font = "bold 22px 'Orbitron'"; // Number is always Orbitron
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.fillText(ball.number, ball.x, ball.y + 2);
+        }
+
+        explosions.forEach(p => {
+            ctx.fillStyle = p.color;
+            ctx.globalAlpha = p.life;
+            ctx.fillRect(p.x, p.y, 4, 4);
+        });
+        ctx.globalAlpha = 1.0;
+
+        popups.forEach(p => {
+            ctx.fillStyle = p.color;
+            ctx.font = "bold 24px 'Orbitron'";
+            ctx.shadowBlur = 10;
+            ctx.shadowColor = p.color;
+            ctx.globalAlpha = p.life / 40;
+            ctx.fillText(p.text, p.x, p.y);
+        });
+        ctx.globalAlpha = 1.0; 
+        ctx.shadowBlur = 0;
+
+        // HUD - TRANSLATED
+        ctx.fillStyle = "white";
+        ctx.font = "20px " + t.font; 
+        ctx.textAlign = "left";
+        ctx.fillText(t.score + ": " + score, 20, 80); // Y=80 fix maintained
+        
+        let hearts = "❤️".repeat(lives);
+        ctx.textAlign = "right";
+        ctx.fillText(hearts, canvas.width - 20, 80); // Y=80 fix maintained
+    }
+
+    function gameLoop() {
+        update();
+        draw();
+        requestAnimationFrame(gameLoop);
+    }
+
+    gameLoop();
+
+</script>
+</body>
+</html>
