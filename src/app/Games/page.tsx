@@ -1,9 +1,9 @@
 "use client";
 
 import React from "react";
-import Link from "next/link";
+
 import GameEmbed from "../../components/GameEmbed"; // Make sure path is correct based on your folder structure
-import { IoArrowBack } from "react-icons/io5";
+
 
 export default function GamesPage() {
   return (

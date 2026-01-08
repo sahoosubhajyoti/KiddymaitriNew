@@ -7,6 +7,17 @@ import api from "../utility/axiosInstance";
 import Link from "next/link"; 
 import { IoArrowBack, IoTrophy, IoTime } from "react-icons/io5"; 
 
+// 1. Define the specific shape of a single history item
+interface BallHistoryItem {
+  number: number;
+  spawnTime: string;       // ISO String
+  endTime: string;         // ISO String
+  reactionTimeMs: number;
+  result: "CORRECT" | "WRONG"; // Union type is stricter/better than string
+  basketChosen: string;
+}
+
+// 2. Update the main interface to use BallHistoryItem[]
 interface GameSessionData {
   startTime: number;
   endTime: number;
@@ -14,7 +25,7 @@ interface GameSessionData {
   totalCorrect: number;
   totalWrong: number;
   totalMissed: number;
-  ballHistory: any[];
+  ballHistory: BallHistoryItem[]; // <--- Replaced 'any[]' with specific type
 }
 
 export default function GameEmbed() {
@@ -30,9 +41,7 @@ export default function GameEmbed() {
     if (user) {
       const fetchHighScore = async () => {
         try {
-          // Adjust this endpoint to match your actual backend route
           const res = await api.get('games/recent-high-score/'); 
-          // Assuming response is { high_score: 200 }
           setHighScore(res.data.high_score || 0);
         } catch (err) {
           console.error("Could not fetch high score", err);
@@ -67,8 +76,8 @@ export default function GameEmbed() {
                missed_moves: gameData.totalMissed,
                duration_seconds: gameData.duration,
                played_at: new Date(gameData.startTime).toISOString(),
-               ball_history: gameData.ballHistory ,
-               game_id:1,
+               ball_history: gameData.ballHistory,
+               game_id: 1,
             });
           } catch (error) {
             console.error("❌ Failed to save to backend:", error);
@@ -103,19 +112,19 @@ export default function GameEmbed() {
         {/* Right: Stats Display */}
         <div className="flex items-center gap-3">
            <div className="flex flex-col items-end">
-              {/* Dynamic Label: "GUEST" or User's Name */}
-              <span className="text-[10px] text-gray-500 font-['Orbitron'] uppercase tracking-widest mb-0.5">
-                {user ? user.name || "PLAYER STATS" : "GUEST SESSION"}
-              </span>
+             {/* Dynamic Label: "GUEST" or User's Name */}
+             <span className="text-[10px] text-gray-500 font-['Orbitron'] uppercase tracking-widest mb-0.5">
+               {user ? user.name || "PLAYER STATS" : "GUEST SESSION"}
+             </span>
 
-              <div className="flex items-center gap-1 text-[#00f3ff] text-xs font-bold font-['Orbitron']">
-                  <IoTrophy size={12} />
-                  <span>HI: {highScore}</span>
-              </div>
-              <div className="flex items-center gap-1 text-gray-400 text-[10px] font-['Orbitron']">
-                  <IoTime size={10} />
-                  <span>LAST: {lastScore}</span>
-              </div>
+             <div className="flex items-center gap-1 text-[#00f3ff] text-xs font-bold font-['Orbitron']">
+                 <IoTrophy size={12} />
+                 <span>HI: {highScore}</span>
+             </div>
+             <div className="flex items-center gap-1 text-gray-400 text-[10px] font-['Orbitron']">
+                 <IoTime size={10} />
+                 <span>LAST: {lastScore}</span>
+             </div>
            </div>
         </div>
 
