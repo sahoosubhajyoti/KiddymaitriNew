@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation"; // 1. Import SearchParams
+import { useAuth } from "../../context/Authcontext"; // 2. Import Auth Context
 import api from "../../utility/axiosInstance";
 import { FaClock, FaCheckCircle, FaTimesCircle, FaCalendarAlt, FaDumbbell } from "react-icons/fa";
 
@@ -25,14 +27,23 @@ export default function ExerciseProgressPage() {
   const [progress, setProgress] = useState<ProgressEntry[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // 3. Get Auth and URL Params
+  const { user } = useAuth();
+  const searchParams = useSearchParams();
+  const userId = searchParams.get("userId");
+
   // --- 1. Fetch Data ---
   useEffect(() => {
     const fetchProgress = async () => {
       try {
-        // Updated to use the axios instance
-        // Assuming endpoint is /data/ based on your previous code, 
-        // or update to '/analytics/user/progress' if needed.
-        const res = await api.get('/data/'); 
+        let endpoint = '/data/'; // Default for normal user
+
+        // 4. Logic to switch API if Admin is viewing a specific user
+        if (user?.type === "admin" && userId) {
+             endpoint = `/assessments/admin/history/${userId}/`;
+        }
+
+        const res = await api.get(endpoint);
         const json: ApiResponse = res.data;
         
         // Ensure we set an array, even if API returns null/undefined
@@ -44,8 +55,11 @@ export default function ExerciseProgressPage() {
       }
     };
 
-    fetchProgress();
-  }, []);
+    // Only run fetch if we know the user type (wait for auth to load)
+    if (user) {
+        fetchProgress();
+    }
+  }, [user, userId]); // Re-run if user or userId changes
 
   // --- Helper: Format Seconds ---
   const formatTime = (seconds: number) => {
@@ -69,6 +83,11 @@ export default function ExerciseProgressPage() {
     "Time",
   ];
 
+  // Helper for Back Link
+  const backLink = user?.type === "admin" && userId 
+    ? `/Progress?userId=${userId}` 
+    : "/Progress";
+
   return (
     <div className="min-h-screen bg-yellow-50 p-4 md:p-8 pt-24 font-sans">
       
@@ -76,11 +95,12 @@ export default function ExerciseProgressPage() {
       <div className="max-w-4xl mx-auto mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className="text-3xl font-black text-black uppercase tracking-tighter flex items-center gap-2">
-            Exercise Log <FaDumbbell className="text-blue-600"/>
+            {user?.type === "admin" && userId ? `User ${userId} Exercise Log` : "Exercise Log"} 
+            <FaDumbbell className="text-blue-600"/>
           </h1>
-          <p className="text-gray-600 font-medium">Tracking your daily practice details</p>
+          <p className="text-gray-600 font-medium">Tracking daily practice details</p>
         </div>
-        <Link href="/Progress" className="text-sm font-bold border-b-2 border-black hover:text-blue-600 transition-colors">
+        <Link href={backLink} className="text-sm font-bold border-b-2 border-black hover:text-blue-600 transition-colors">
           &larr; Back to Stats
         </Link>
       </div>
@@ -95,9 +115,7 @@ export default function ExerciseProgressPage() {
           </div>
         ) : (
           <>
-            {/* === MOBILE VIEW (Cards) === 
-              Hidden on md (medium) screens and up
-            */}
+            {/* === MOBILE VIEW (Cards) === */}
             <div className="md:hidden space-y-4">
               {progress.map((entry, index) => (
                 <div 
@@ -142,9 +160,7 @@ export default function ExerciseProgressPage() {
               ))}
             </div>
 
-            {/* === DESKTOP VIEW (Table) === 
-              Hidden on small screens, visible on md and up
-            */}
+            {/* === DESKTOP VIEW (Table) === */}
             <div className="hidden md:block overflow-hidden border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
               <table className="min-w-full text-sm bg-white">
                 <thead className="bg-black text-white">

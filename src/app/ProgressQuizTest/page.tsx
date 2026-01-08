@@ -2,16 +2,16 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation"; // 1. Import SearchParams
+import { useAuth } from "../../context/Authcontext"; // 2. Import Auth Context
 import { InlineMath } from "react-katex";
 import "katex/dist/katex.min.css";
 import api from "../../utility/axiosInstance";
 import { FaHistory, FaCheckCircle, FaClock, FaChevronLeft, FaChevronRight } from "react-icons/fa";
 
-// --- NEW IMPORT ---
 import Clock from "@/components/Clock"; 
 
 // --- Types ---
-
 interface HistoryItem {
   id: number;
   assessment_type: "QUIZ" | "TEST";
@@ -58,16 +58,27 @@ export default function QuizProgressPage() {
   const [detailData, setDetailData] = useState<AssessmentDetail | null>(null);
   const [loadingDetail, setLoadingDetail] = useState(false);
 
+  // 3. Get Auth and URL Params
+  const { user } = useAuth();
+  const searchParams = useSearchParams();
+  const userId = searchParams.get("userId");
+
   // --- Fetch History List ---
   useEffect(() => {
     const fetchHistory = async () => {
       setLoading(true);
       try {
-        const res = await api.get(`/assessments/history/?page=${page}`);
+        // 4. Determine Endpoint (Normal vs Admin)
+        let endpoint = `/assessments/history/?page=${page}`; // Default
+        
+        if (user?.type === "admin" && userId) {
+            endpoint = `/assessments/admin/history/${userId}/?page=${page}`;
+        }
+
+        const res = await api.get(endpoint);
         const data: HistoryResponse = res.data;
         
         setHistory(data.results);
-        // Assuming default page size of 10 or 20 from your count
         setTotalPages(Math.ceil(data.count / 20)); 
       } catch (err) {
         console.error("Failed to fetch history", err);
@@ -76,22 +87,27 @@ export default function QuizProgressPage() {
       }
     };
 
-    fetchHistory();
-  }, [page]);
+    // Only fetch if we have user info loaded
+    if(user) {
+        fetchHistory();
+    }
+  }, [page, user, userId]); // Add user dependencies
 
   // --- Fetch Single Detail ---
   const handleCardClick = async (id: number) => {
     setSelectedId(id);
     setLoadingDetail(true);
-    setDetailData(null); // Reset previous data
+    setDetailData(null); 
 
     try {
+      // Note: Assuming standard endpoint works for Admin to view details by ID
+      // If a specific Admin detail endpoint exists (e.g., /assessments/admin/attempt/${id}), change it here.
       const res = await api.get(`/assessments/history/${id}/`);
       setDetailData(res.data);
     } catch (err) {
       console.error("Failed to fetch details", err);
       alert("Could not load details.");
-      setSelectedId(null); // Close modal on error
+      setSelectedId(null); 
     } finally {
       setLoadingDetail(false);
     }
@@ -116,11 +132,15 @@ export default function QuizProgressPage() {
     return `${m}m ${s}s`;
   };
 
-  // Filter Logic (Client-side filtering for display, API for pagination)
-  // Note: Ideally API should handle filtering, but if API returns mixed, we filter here.
+  // Filter Logic
   const filteredHistory = history.filter(item => 
     filter === "ALL" ? true : item.assessment_type === filter
   );
+
+  // Helper for Back Link
+  const backLink = user?.type === "admin" && userId 
+    ? `/Progress?userId=${userId}` 
+    : "/Progress";
 
   return (
     <div className="min-h-screen bg-yellow-50 p-4 mt-20 font-sans">
@@ -129,11 +149,13 @@ export default function QuizProgressPage() {
       <div className="max-w-2xl mx-auto mb-8 flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-black text-black uppercase tracking-tighter">
-            History 📜
+            {user?.type === "admin" && userId ? `User ${userId} History` : "History 📜"}
           </h1>
-          <p className="text-gray-600 font-medium">Your past quizzes and tests</p>
+          <p className="text-gray-600 font-medium">
+             {user?.type === "admin" && userId ? "Viewing student records" : "Your past quizzes and tests"}
+          </p>
         </div>
-        <Link href="/Progress" className="text-sm font-bold border-b-2 border-black hover:text-blue-600">
+        <Link href={backLink} className="text-sm font-bold border-b-2 border-black hover:text-blue-600">
           &larr; Back
         </Link>
       </div>
@@ -155,7 +177,7 @@ export default function QuizProgressPage() {
       {/* List Container */}
       <div className="max-w-2xl mx-auto space-y-4">
         {loading ? (
-          <div className="text-center py-10 font-bold text-gray-500">Loading records...</div>
+          <div className="text-center py-10 font-bold text-gray-500 animate-pulse">Loading records...</div>
         ) : filteredHistory.length === 0 ? (
           <div className="text-center py-10 border-2 border-dashed border-gray-400 rounded bg-white">
             No records found.
@@ -266,7 +288,6 @@ export default function QuizProgressPage() {
                         </span>
                       </div>
                       
-                      {/* --- UPDATED: Conditional Clock Rendering --- */}
                       <div className="text-lg font-bold text-center py-4 mb-3 bg-gray-50 rounded flex justify-center items-center min-h-[100px]">
                         {q.group_name === "Clock" || q.group_name === "clock" ? (
                            <Clock time={q.question_text || "00:00"} />

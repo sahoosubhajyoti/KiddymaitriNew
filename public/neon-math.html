@@ -64,16 +64,8 @@
     restartBtn.innerHTML = `${t.gameOver}<br><span style="font-size:16px">${t.reboot}</span>`;
     restartBtn.style.fontFamily = t.font;
 
-    // --- 📊 DETAILED ANALYTICS ---
-    let sessionData = {
-        startTime: null,
-        endTime: null,
-        duration: 0,
-        totalCorrect: 0,
-        totalWrong: 0,
-        totalMissed: 0,
-        ballHistory: [] // Will store detailed object for each ball
-    };
+    // --- 📊 ANALYTICS ---
+    let sessionData = { startTime: null, endTime: null, duration: 0, totalCorrect: 0, totalWrong: 0, totalMissed: 0, ballHistory: [] };
 
     // --- GAME STATE ---
     let stars = [], explosions = [], popups = [], trail = [];         
@@ -83,19 +75,21 @@
     let gameSpeed = 4;
     let gridOffset = 0;     
 
-    // Initial Ball Setup
+    // 🪨 ASTEROID SETUP
     let ball = { 
         x: canvas.width / 2, 
         y: -100, 
-        radius: 25, 
+        radius: 30, 
         number: generateNumber(), 
         state: "FALLING", 
         targetBasket: null,
-        spawnTime: null // Will be set when game starts
+        spawnTime: null,
+        angle: 0,
+        rotationSpeed: 0.02,
+        vertices: [] 
     };
 
     const btnHeight = 60; 
-    const btnRadius = 20; 
     const btnY = canvas.height - btnHeight - 30; 
 
     let baskets = [
@@ -112,11 +106,17 @@
         if (gameState === "INSTRUCTIONS") {
             gameState = "PLAYING";
             sessionData.startTime = Date.now();
-            ball.spawnTime = Date.now(); // Mark the first ball's start time
+            generateAsteroidShape(); 
+            ball.spawnTime = Date.now(); 
             return;
         }
 
         if (gameState === "GAMEOVER" || ball.state === "SUCKED") return;
+
+        // 🛑 SUCTION DISABLE (If too close to shield)
+        if (ball.y + ball.radius > btnY - 20) {
+            return; 
+        }
 
         const rect = canvas.getBoundingClientRect();
         const clickX = e.clientX - rect.left;
@@ -135,11 +135,32 @@
 
     // --- LOGIC ---
     function generateNumber() { return Math.floor(Math.random() * 100); }
+    
+    function generateAsteroidShape() {
+        ball.vertices = [];
+        const segments = 12;
+        for (let i = 0; i < segments; i++) {
+            const angle = (Math.PI * 2 * i) / segments;
+            const r = ball.radius * (0.7 + Math.random() * 0.6); 
+            ball.vertices.push({
+                x: Math.cos(angle) * r,
+                y: Math.sin(angle) * r
+            });
+        }
+    }
+
     function startSuck(basket) { ball.state = "SUCKED"; ball.targetBasket = basket; }
 
     function createExplosion(x, y, color) {
-        for(let i=0; i<20; i++) {
-            explosions.push({ x: x, y: y, vx: (Math.random() - 0.5) * 10, vy: (Math.random() - 0.5) * 10, life: 1.0, color: color });
+        for(let i=0; i<25; i++) {
+            explosions.push({ 
+                x: x, y: y, 
+                vx: (Math.random() - 0.5) * 15, 
+                vy: (Math.random() - 0.5) * 15, 
+                life: 1.0, 
+                color: color,
+                size: Math.random() * 5 
+            });
         }
     }
 
@@ -151,11 +172,22 @@
 
         if (ball.state === "FALLING") {
             ball.y += gameSpeed;
-            if (score > 0) { trail.push({x: ball.x, y: ball.y, size: ball.radius}); if (trail.length > 10) trail.shift(); }
+            ball.angle += ball.rotationSpeed; 
+
+            // 💨 NEW SPACE DUST TRAIL LOGIC (Replaces Droplet)
+            if (Math.random() > 0.4) { // Chance to spawn dust
+                trail.push({
+                    x: ball.x + (Math.random() - 0.5) * ball.radius, 
+                    y: ball.y - ball.radius * 0.5, 
+                    size: Math.random() * 3 + 1,
+                    alpha: 0.8,
+                    speedX: (Math.random() - 0.5),
+                    speedY: Math.random() * 2 // Dust drifts up/back
+                });
+            }
             
-            // MISSED BALL LOGIC
             if (ball.y > canvas.height + 50) {
-                recordBallEvent("MISSED", null); // Log Miss
+                recordBallEvent("MISSED", null);
                 sessionData.totalMissed++;
                 loseLife();
                 resetBall();
@@ -165,6 +197,7 @@
             let targetX = ball.targetBasket.x + ball.targetBasket.width / 2;
             let targetY = ball.targetBasket.y + ball.targetBasket.height / 2;
             ball.x += (targetX - ball.x) * 0.25; ball.y += (targetY - ball.y) * 0.25; ball.radius *= 0.85;
+            ball.angle += 0.2; 
 
             if (ball.radius < 2) {
                 validateCatch(ball.targetBasket);
@@ -172,26 +205,29 @@
             }
         }
 
+        // Update Dust Particles
+        for (let i = trail.length - 1; i >= 0; i--) {
+            trail[i].y -= trail[i].speedY; // Drift back
+            trail[i].x += trail[i].speedX; // Spread
+            trail[i].alpha -= 0.04; // Fade out
+            if (trail[i].alpha <= 0) trail.splice(i, 1);
+        }
+
         for (let i = explosions.length - 1; i >= 0; i--) { explosions[i].x += explosions[i].vx; explosions[i].y += explosions[i].vy; explosions[i].life -= 0.05; if (explosions[i].life <= 0) explosions.splice(i, 1); }
         for (let i = popups.length - 1; i >= 0; i--) { popups[i].y -= 2; popups[i].life -= 1; if (popups[i].life <= 0) popups.splice(i, 1); }
     }
 
-    // 📝 DATA RECORDER FUNCTION
     function recordBallEvent(result, basketChosen) {
         const endTime = Date.now();
-        // If spawnTime is somehow null (glitch protection), assume 0 duration
         const startTime = ball.spawnTime || endTime; 
-
-        const ballRecord = {
+        sessionData.ballHistory.push({
             number: ball.number,
             spawnTime: new Date(startTime).toISOString(),
             endTime: new Date(endTime).toISOString(),
-            reactionTimeMs: endTime - startTime, // How long ball was alive
-            result: result, // "CORRECT", "WRONG", "MISSED"
-            basketChosen: basketChosen // "EVEN", "ODD", or null
-        };
-
-        sessionData.ballHistory.push(ballRecord);
+            reactionTimeMs: endTime - startTime,
+            result: result,
+            basketChosen: basketChosen
+        });
     }
 
     function validateCatch(basket) {
@@ -199,7 +235,6 @@
         let isBasketEven = basket.type === "EVEN"; 
 
         if ((isBasketEven && isNumberEven) || (!isBasketEven && !isNumberEven)) {
-            // CORRECT
             recordBallEvent("CORRECT", basket.type);
             sessionData.totalCorrect++;
             score += 10;
@@ -207,7 +242,6 @@
             createExplosion(basket.x + basket.width/2, basket.y, "#00ff00");
             spawnPopup("+10", basket.x + basket.width/2, basket.y - 50, "#00ff00");
         } else {
-            // WRONG
             recordBallEvent("WRONG", basket.type);
             sessionData.totalWrong++;
             createExplosion(basket.x + basket.width/2, basket.y, "red");
@@ -227,10 +261,13 @@
         ball.state = "FALLING"; 
         ball.y = -60; 
         ball.x = Math.random() * (canvas.width - 60) + 30; 
-        ball.radius = 25; 
+        ball.radius = 30; 
         ball.number = generateNumber(); 
-        ball.spawnTime = Date.now(); // ⏱️ Start timer for NEW ball
-        trail = []; 
+        ball.spawnTime = Date.now();
+        ball.angle = 0;
+        ball.rotationSpeed = (Math.random() - 0.5) * 0.1; 
+        generateAsteroidShape(); 
+        trail = []; // Clear dust
         ball.targetBasket = null;
     }
 
@@ -241,19 +278,117 @@
         gameState = "GAMEOVER";
         sessionData.endTime = Date.now();
         sessionData.duration = (sessionData.endTime - sessionData.startTime) / 1000;
-        
-        console.log("=== FINAL BALL HISTORY ===");
-        console.table(sessionData.ballHistory); // Prints nice table in browser console
-
+        console.log("=== FINAL BALL HISTORY ===", sessionData.ballHistory); 
         window.parent.postMessage({ type: 'GAME_OVER', data: sessionData }, '*');
-
         restartBtn.style.display = "block";
     }
 
-    // ... Drawing functions same as before ...
-    function drawRoundedRect(ctx, x, y, width, height, radius) { ctx.beginPath(); ctx.moveTo(x + radius, y); ctx.lineTo(x + width - radius, y); ctx.quadraticCurveTo(x + width, y, x + width, y + radius); ctx.lineTo(x + width, y + height - radius); ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height); ctx.lineTo(x + radius, y + height); ctx.quadraticCurveTo(x, y + height, x, y + height - radius); ctx.lineTo(x, y + radius); ctx.quadraticCurveTo(x, y, x + radius, y); ctx.closePath(); }
-    function drawInstructions() { ctx.fillStyle = "rgba(0,0,0,0.7)"; ctx.fillRect(0, 0, canvas.width, canvas.height); ctx.textAlign = "center"; ctx.fillStyle = "#00f3ff"; ctx.font = "900 40px " + t.font; ctx.shadowBlur = 20; ctx.shadowColor = "#00f3ff"; ctx.fillText(t.title, canvas.width/2, 150); ctx.shadowBlur = 0; ctx.fillStyle = "white"; ctx.font = "20px " + t.font; ctx.fillText(t.howTo, canvas.width/2, 240); ctx.font = "16px " + t.font; ctx.fillStyle = "#aaa"; ctx.fillText(t.rule1, canvas.width/2, 280); ctx.fillText(t.rule2, canvas.width/2, 310); if (Math.floor(Date.now() / 500) % 2 === 0) { ctx.fillStyle = "#00ff00"; ctx.font = "bold 24px " + t.font; ctx.fillText(t.start, canvas.width/2, 450); } }
-    function draw() { ctx.fillStyle = "black"; ctx.fillRect(0, 0, canvas.width, canvas.height); ctx.strokeStyle = "rgba(0, 243, 255, 0.1)"; ctx.lineWidth = 1; for(let x=0; x<=canvas.width; x+=40) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke(); } for(let y=0; y<=canvas.height; y+=40) { let drawY = y + gridOffset; if(drawY > canvas.height) drawY -= canvas.height; ctx.beginPath(); ctx.moveTo(0, drawY); ctx.lineTo(canvas.width, drawY); ctx.stroke(); } ctx.fillStyle = "white"; stars.forEach(p => { ctx.globalAlpha = p.alpha * 0.5; ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2); ctx.fill(); }); ctx.globalAlpha = 1.0; if (gameState === "INSTRUCTIONS") { drawInstructions(); return; } baskets.forEach(basket => { ctx.fillStyle = basket.active ? "white" : "rgba(0,0,0,0.8)"; ctx.strokeStyle = basket.color; ctx.lineWidth = 3; ctx.shadowBlur = basket.active ? 40 : 15; ctx.shadowColor = basket.color; drawRoundedRect(ctx, basket.x, basket.y, basket.width, basket.height, btnRadius); ctx.fill(); ctx.stroke(); ctx.shadowBlur = 0; ctx.fillStyle = basket.active ? "black" : basket.color; ctx.font = "900 24px " + t.font; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(basket.label, basket.x + basket.width / 2, basket.y + basket.height / 2 + 2); }); if (ball.state === "FALLING" || ball.state === "SUCKED") { for(let i=0; i<trail.length; i++) { let t = trail[i]; let alpha = i / trail.length; ctx.fillStyle = `rgba(255, 87, 51, ${alpha * 0.5})`; ctx.beginPath(); ctx.arc(t.x, t.y, t.size * (i/trail.length), 0, Math.PI * 2); ctx.fill(); } let grad = ctx.createRadialGradient(ball.x - 5, ball.y - 5, 2, ball.x, ball.y, ball.radius); grad.addColorStop(0, "#ff9933"); grad.addColorStop(0.3, "#ff5e00"); grad.addColorStop(1, "#a80000"); ctx.fillStyle = grad; ctx.shadowBlur = 20; ctx.shadowColor = "#ff5e00"; ctx.beginPath(); ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2); ctx.fill(); ctx.shadowBlur = 0; ctx.fillStyle = "white"; ctx.font = "bold 22px 'Orbitron'"; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(ball.number, ball.x, ball.y + 2); } explosions.forEach(p => { ctx.fillStyle = p.color; ctx.globalAlpha = p.life; ctx.fillRect(p.x, p.y, 4, 4); }); ctx.globalAlpha = 1.0; popups.forEach(p => { ctx.fillStyle = p.color; ctx.font = "bold 24px 'Orbitron'"; ctx.shadowBlur = 10; ctx.shadowColor = p.color; ctx.globalAlpha = p.life / 40; ctx.fillText(p.text, p.x, p.y); }); ctx.globalAlpha = 1.0; ctx.shadowBlur = 0; ctx.fillStyle = "white"; ctx.font = "20px " + t.font; ctx.textAlign = "left"; ctx.fillText(t.score + ": " + score, 20, 80); let hearts = "❤️".repeat(lives); ctx.textAlign = "right"; ctx.fillText(hearts, canvas.width - 20, 80); }
+    // 🛡️ DRAW SHIELD
+    function drawShield(ctx, x, y, width, height, color, isActive) {
+        ctx.shadowBlur = isActive ? 50 : 20;
+        ctx.shadowColor = color;
+        
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 5;
+        ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + width, y); ctx.stroke();
+
+        let grad = ctx.createLinearGradient(x, y, x, y + height);
+        grad.addColorStop(0, color); 
+        grad.addColorStop(1, "rgba(0,0,0,0)"); 
+
+        ctx.fillStyle = isActive ? "white" : grad;
+        ctx.globalAlpha = isActive ? 0.8 : 0.3; 
+        ctx.fillRect(x, y, width, height);
+        
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(x, y); ctx.lineTo(x, y + height);
+        ctx.moveTo(x + width, y); ctx.lineTo(x + width, y + height);
+        ctx.stroke();
+
+        ctx.globalAlpha = 1.0;
+        ctx.shadowBlur = 0;
+    }
+
+    // 🪨 DRAW ASTEROID
+    function drawAsteroid(ctx, ball) {
+        ctx.save();
+        ctx.translate(ball.x, ball.y);
+        ctx.rotate(ball.angle);
+
+        let grad = ctx.createRadialGradient(-10, -10, 5, 0, 0, ball.radius);
+        grad.addColorStop(0, "#887766"); 
+        grad.addColorStop(1, "#332211"); 
+
+        ctx.fillStyle = grad;
+        ctx.strokeStyle = "#554433";
+        ctx.lineWidth = 2;
+
+        ctx.beginPath();
+        if (ball.vertices.length > 0) {
+            ball.vertices.forEach((v, i) => {
+                if (i === 0) ctx.moveTo(v.x, v.y);
+                else ctx.lineTo(v.x, v.y);
+            });
+            ctx.closePath();
+        }
+        ctx.fill();
+        ctx.stroke();
+        ctx.restore();
+
+        ctx.fillStyle = "white";
+        ctx.shadowColor = "black";
+        ctx.shadowBlur = 5;
+        ctx.font = "bold 24px 'Orbitron'";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(ball.number, ball.x, ball.y + 2);
+        ctx.shadowBlur = 0;
+    }
+
+    function drawInstructions() {
+        ctx.fillStyle = "rgba(0,0,0,0.8)"; ctx.fillRect(0, 0, canvas.width, canvas.height); ctx.textAlign = "center";
+        ctx.fillStyle = "#00f3ff"; ctx.font = "900 40px " + t.font; ctx.shadowBlur = 20; ctx.shadowColor = "#00f3ff"; ctx.fillText(t.title, canvas.width/2, 150); ctx.shadowBlur = 0;
+        ctx.fillStyle = "white"; ctx.font = "20px " + t.font; ctx.fillText(t.howTo, canvas.width/2, 240);
+        ctx.font = "16px " + t.font; ctx.fillStyle = "#aaa"; ctx.fillText(t.rule1, canvas.width/2, 280); ctx.fillText(t.rule2, canvas.width/2, 310);
+        if (Math.floor(Date.now() / 500) % 2 === 0) { ctx.fillStyle = "#00ff00"; ctx.font = "bold 24px " + t.font; ctx.fillText(t.start, canvas.width/2, 450); }
+    }
+
+    function draw() {
+        ctx.fillStyle = "black"; ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        ctx.strokeStyle = "rgba(0, 243, 255, 0.1)"; ctx.lineWidth = 1;
+        for(let x=0; x<=canvas.width; x+=40) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke(); }
+        for(let y=0; y<=canvas.height; y+=40) { let drawY = y + gridOffset; if(drawY > canvas.height) drawY -= canvas.height; ctx.beginPath(); ctx.moveTo(0, drawY); ctx.lineTo(canvas.width, drawY); ctx.stroke(); }
+
+        ctx.fillStyle = "white"; stars.forEach(p => { ctx.globalAlpha = p.alpha * 0.5; ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2); ctx.fill(); }); ctx.globalAlpha = 1.0;
+
+        if (gameState === "INSTRUCTIONS") { drawInstructions(); return; }
+
+        baskets.forEach(basket => {
+            drawShield(ctx, basket.x, basket.y, basket.width, basket.height, basket.color, basket.active);
+            ctx.fillStyle = basket.active ? "black" : basket.color;
+            ctx.font = "900 24px " + t.font; ctx.textAlign = "center"; ctx.textBaseline = "middle"; 
+            ctx.fillText(basket.label, basket.x + basket.width / 2, basket.y + basket.height / 2 + 2);
+        });
+
+        if (ball.state === "FALLING" || ball.state === "SUCKED") {
+            // 💨 DRAW SPACE DUST TRAIL
+            trail.forEach(t => {
+                ctx.fillStyle = `rgba(139, 130, 120, ${t.alpha})`; // Greyish/Brown dust
+                ctx.beginPath(); 
+                ctx.arc(t.x, t.y, t.size, 0, Math.PI * 2); 
+                ctx.fill(); 
+            });
+            drawAsteroid(ctx, ball);
+        }
+
+        explosions.forEach(p => { ctx.fillStyle = p.color; ctx.globalAlpha = p.life; ctx.fillRect(p.x, p.y, p.size, p.size); }); ctx.globalAlpha = 1.0;
+        popups.forEach(p => { ctx.fillStyle = p.color; ctx.font = "bold 24px 'Orbitron'"; ctx.shadowBlur = 10; ctx.shadowColor = p.color; ctx.globalAlpha = p.life / 40; ctx.fillText(p.text, p.x, p.y); }); ctx.globalAlpha = 1.0; ctx.shadowBlur = 0;
+
+        ctx.fillStyle = "white"; ctx.font = "20px " + t.font; ctx.textAlign = "left"; ctx.fillText(t.score + ": " + score, 20, 80);
+        let hearts = "❤️".repeat(lives); ctx.textAlign = "right"; ctx.fillText(hearts, canvas.width - 20, 80);
+    }
 
     function gameLoop() { update(); draw(); requestAnimationFrame(gameLoop); }
     gameLoop();
