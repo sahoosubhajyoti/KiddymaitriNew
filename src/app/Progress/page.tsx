@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { FaRunning, FaTrophy, FaArrowRight } from "react-icons/fa";
+// Added FaGamepad to the imports
+import { FaRunning, FaTrophy, FaArrowRight, FaGamepad } from "react-icons/fa";
 
 export default function ProgressPage() {
   return (
@@ -22,7 +23,6 @@ export default function ProgressPage() {
 
         {/* --- Card 1: Exercise Progress --- */}
         <Link href="/ProgressExercise" className="block group">
-          {/* FIX: Removed the inner absolute div. Added shadow-[...] utility class */}
           <div className="bg-white border-4 border-black p-6 
                           shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] 
                           transition-all duration-200 
@@ -57,7 +57,6 @@ export default function ProgressPage() {
 
         {/* --- Card 2: Quiz/Test Progress --- */}
         <Link href="/ProgressQuizTest" className="block group">
-          {/* FIX: Applied the same shadow fix here */}
           <div className="bg-white border-4 border-black p-6 
                           shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] 
                           transition-all duration-200 
@@ -85,6 +84,40 @@ export default function ProgressPage() {
                 <div className="flex-1 bg-gray-50 border-2 border-black p-2 text-center">
                     <span className="block text-xs text-gray-500 font-bold uppercase">Tests Taken</span>
                     <span className="block text-xl font-black text-black">14</span>
+                </div>
+            </div>
+          </div>
+        </Link>
+
+        {/* --- Card 3: Game Progress (NEW) --- */}
+        <Link href="/ProgressGame" className="block group">
+          <div className="bg-white border-4 border-black p-6 
+                          shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] 
+                          transition-all duration-200 
+                          group-hover:-translate-y-1 group-hover:-translate-x-1 
+                          group-hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+            
+            <div className="flex justify-between items-start">
+              <div className="bg-purple-100 p-3 border-2 border-black inline-block mb-4">
+                <FaGamepad className="text-2xl text-purple-600" />
+              </div>
+              <FaArrowRight className="text-xl text-gray-400 group-hover:text-black transition-colors" />
+            </div>
+
+            <h2 className="text-2xl font-bold text-black mb-2">Arcade Stats</h2>
+            <p className="text-gray-600 mb-4 text-sm font-medium">
+              Check your high scores, lives remaining, and badges.
+            </p>
+
+            {/* Mini Stat Badge (Dark Mode style for Game vibe) */}
+            <div className="bg-gray-900 border-2 border-black p-3 flex justify-between items-center">
+                <div>
+                   <span className="block text-[10px] text-gray-400 font-bold uppercase tracking-wider">Highest Score</span>
+                   <span className="block text-xl font-black text-yellow-400 tracking-widest">24,500</span>
+                </div>
+                <div className="text-right">
+                   <span className="block text-[10px] text-gray-400 font-bold uppercase tracking-wider">Rank</span>
+                   <span className="block text-xl font-black text-white">#04</span>
                 </div>
             </div>
           </div>

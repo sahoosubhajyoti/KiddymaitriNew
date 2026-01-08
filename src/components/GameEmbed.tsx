@@ -31,7 +31,7 @@ export default function GameEmbed() {
       const fetchHighScore = async () => {
         try {
           // Adjust this endpoint to match your actual backend route
-          const res = await api.get('/analytics/game/highscore'); 
+          const res = await api.get('games/recent-high-score/'); 
           // Assuming response is { high_score: 200 }
           setHighScore(res.data.high_score || 0);
         } catch (err) {
@@ -60,14 +60,15 @@ export default function GameEmbed() {
 
           // 2. Send Data to Backend
           try {
-            await api.post('/analytics/game', {
+            await api.post('/games/sessions/', {
                score: currentScore,
                correct_moves: gameData.totalCorrect,
                wrong_moves: gameData.totalWrong,
                missed_moves: gameData.totalMissed,
                duration_seconds: gameData.duration,
                played_at: new Date(gameData.startTime).toISOString(),
-               ball_history: gameData.ballHistory 
+               ball_history: gameData.ballHistory ,
+               game_id:1,
             });
           } catch (error) {
             console.error("❌ Failed to save to backend:", error);
