@@ -348,12 +348,34 @@
         ctx.shadowBlur = 0;
     }
 
-    function drawInstructions() {
-        ctx.fillStyle = "rgba(0,0,0,0.8)"; ctx.fillRect(0, 0, canvas.width, canvas.height); ctx.textAlign = "center";
-        ctx.fillStyle = "#00f3ff"; ctx.font = "900 40px " + t.font; ctx.shadowBlur = 20; ctx.shadowColor = "#00f3ff"; ctx.fillText(t.title, canvas.width/2, 150); ctx.shadowBlur = 0;
-        ctx.fillStyle = "white"; ctx.font = "20px " + t.font; ctx.fillText(t.howTo, canvas.width/2, 240);
-        ctx.font = "16px " + t.font; ctx.fillStyle = "#aaa"; ctx.fillText(t.rule1, canvas.width/2, 280); ctx.fillText(t.rule2, canvas.width/2, 310);
-        if (Math.floor(Date.now() / 500) % 2 === 0) { ctx.fillStyle = "#00ff00"; ctx.font = "bold 24px " + t.font; ctx.fillText(t.start, canvas.width/2, 450); }
+   function drawInstructions() {
+        ctx.fillStyle = "rgba(0,0,0,0.8)"; 
+        ctx.fillRect(0, 0, canvas.width, canvas.height); 
+        ctx.textAlign = "center";
+        
+        // Moved Title Down to Y=200 to clear header
+        ctx.fillStyle = "#00f3ff"; 
+        ctx.font = "900 40px " + t.font; 
+        ctx.shadowBlur = 20; 
+        ctx.shadowColor = "#00f3ff"; 
+        ctx.fillText(t.title, canvas.width/2, 200); // <--- CHANGED to 200
+        ctx.shadowBlur = 0;
+        
+        // Moved Instructions Down
+        ctx.fillStyle = "white"; 
+        ctx.font = "20px " + t.font; 
+        ctx.fillText(t.howTo, canvas.width/2, 280); // <--- CHANGED to 280
+        
+        ctx.font = "16px " + t.font; 
+        ctx.fillStyle = "#aaa"; 
+        ctx.fillText(t.rule1, canvas.width/2, 320); // <--- CHANGED to 320
+        ctx.fillText(t.rule2, canvas.width/2, 350); // <--- CHANGED to 350
+        
+        if (Math.floor(Date.now() / 500) % 2 === 0) { 
+            ctx.fillStyle = "#00ff00"; 
+            ctx.font = "bold 24px " + t.font; 
+            ctx.fillText(t.start, canvas.width/2, 500); // <--- CHANGED to 500
+        }
     }
 
     function draw() {
@@ -387,8 +409,14 @@
         explosions.forEach(p => { ctx.fillStyle = p.color; ctx.globalAlpha = p.life; ctx.fillRect(p.x, p.y, p.size, p.size); }); ctx.globalAlpha = 1.0;
         popups.forEach(p => { ctx.fillStyle = p.color; ctx.font = "bold 24px 'Orbitron'"; ctx.shadowBlur = 10; ctx.shadowColor = p.color; ctx.globalAlpha = p.life / 40; ctx.fillText(p.text, p.x, p.y); }); ctx.globalAlpha = 1.0; ctx.shadowBlur = 0;
 
-        ctx.fillStyle = "white"; ctx.font = "20px " + t.font; ctx.textAlign = "left"; ctx.fillText(t.score + ": " + score, 20, 80);
-        let hearts = "❤️".repeat(lives); ctx.textAlign = "right"; ctx.fillText(hearts, canvas.width - 20, 80);
+        ctx.fillStyle = "white"; 
+        ctx.font = "20px " + t.font; 
+        ctx.textAlign = "left"; 
+        ctx.fillText(t.score + ": " + score, 20, 120); // <--- CHANGED to 120
+        
+        let hearts = "❤️".repeat(lives); 
+        ctx.textAlign = "right"; 
+        ctx.fillText(hearts, canvas.width - 20, 120); // <--- CHANGED to 120
     }
 
     function gameLoop() { update(); draw(); requestAnimationFrame(gameLoop); }
