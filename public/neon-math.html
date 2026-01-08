@@ -65,7 +65,7 @@
     restartBtn.style.fontFamily = t.font;
 
     // --- 📊 ANALYTICS ---
-    let sessionData = { startTime: null, endTime: null, duration: 0, totalCorrect: 0, totalWrong: 0, totalMissed: 0, ballHistory: [] };
+    let sessionData = { sessionId : 1,startTime: null, endTime: null, duration: 0, totalCorrect: 0, totalWrong: 0, totalMissed: 0, ballHistory: [] };
 
     // --- GAME STATE ---
     let stars = [], explosions = [], popups = [], trail = [];         
@@ -73,7 +73,8 @@
     let score = 0;
     let lives = 3; 
     let gameSpeed = 4;
-    let gridOffset = 0;     
+    let gridOffset = 0;   
+    let sessionId = 1;  
 
     // 🪨 ASTEROID SETUP
     let ball = { 
@@ -174,15 +175,15 @@
             ball.y += gameSpeed;
             ball.angle += ball.rotationSpeed; 
 
-            // 💨 NEW SPACE DUST TRAIL LOGIC (Replaces Droplet)
-            if (Math.random() > 0.4) { // Chance to spawn dust
+            // 💨 DUST TRAIL
+            if (Math.random() > 0.4) { 
                 trail.push({
                     x: ball.x + (Math.random() - 0.5) * ball.radius, 
                     y: ball.y - ball.radius * 0.5, 
                     size: Math.random() * 3 + 1,
                     alpha: 0.8,
                     speedX: (Math.random() - 0.5),
-                    speedY: Math.random() * 2 // Dust drifts up/back
+                    speedY: Math.random() * 2 
                 });
             }
             
@@ -207,9 +208,9 @@
 
         // Update Dust Particles
         for (let i = trail.length - 1; i >= 0; i--) {
-            trail[i].y -= trail[i].speedY; // Drift back
-            trail[i].x += trail[i].speedX; // Spread
-            trail[i].alpha -= 0.04; // Fade out
+            trail[i].y -= trail[i].speedY; 
+            trail[i].x += trail[i].speedX; 
+            trail[i].alpha -= 0.04; 
             if (trail[i].alpha <= 0) trail.splice(i, 1);
         }
 
@@ -245,7 +246,10 @@
             recordBallEvent("WRONG", basket.type);
             sessionData.totalWrong++;
             createExplosion(basket.x + basket.width/2, basket.y, "red");
-            spawnPopup("ERROR", basket.x + basket.width/2, basket.y - 50, "red");
+            
+            // ❌ CHANGED HERE: Show Symbol instead of Text
+            spawnPopup("✖", basket.x + basket.width/2, basket.y - 50, "red");
+            
             loseLife();
             shakeScreen();
         }
@@ -267,7 +271,7 @@
         ball.angle = 0;
         ball.rotationSpeed = (Math.random() - 0.5) * 0.1; 
         generateAsteroidShape(); 
-        trail = []; // Clear dust
+        trail = []; 
         ball.targetBasket = null;
     }
 
@@ -283,7 +287,6 @@
         restartBtn.style.display = "block";
     }
 
-    // 🛡️ DRAW SHIELD
     function drawShield(ctx, x, y, width, height, color, isActive) {
         ctx.shadowBlur = isActive ? 50 : 20;
         ctx.shadowColor = color;
@@ -310,7 +313,6 @@
         ctx.shadowBlur = 0;
     }
 
-    // 🪨 DRAW ASTEROID
     function drawAsteroid(ctx, ball) {
         ctx.save();
         ctx.translate(ball.x, ball.y);
@@ -373,9 +375,8 @@
         });
 
         if (ball.state === "FALLING" || ball.state === "SUCKED") {
-            // 💨 DRAW SPACE DUST TRAIL
             trail.forEach(t => {
-                ctx.fillStyle = `rgba(139, 130, 120, ${t.alpha})`; // Greyish/Brown dust
+                ctx.fillStyle = `rgba(139, 130, 120, ${t.alpha})`; 
                 ctx.beginPath(); 
                 ctx.arc(t.x, t.y, t.size, 0, Math.PI * 2); 
                 ctx.fill(); 

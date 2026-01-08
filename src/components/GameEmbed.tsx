@@ -43,6 +43,7 @@ export default function GameEmbed() {
              missed_moves: gameData.totalMissed, // New Field
              duration_seconds: gameData.duration,
              played_at: new Date(gameData.startTime).toISOString(),
+             session_id: 1,
              
              // 🔥 The Detailed Log (JSON Array) 🔥
              ball_history: gameData.ballHistory 
