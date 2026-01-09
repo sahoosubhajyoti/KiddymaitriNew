@@ -121,7 +121,7 @@ export default function ProgressGame() {
       {!loading && sessions.length === 0 && (
         <div className="text-center p-10 border-4 border-gray-300 rounded-xl border-dashed">
             <p className="text-gray-400 font-bold text-lg">No games played yet.</p>
-            <Link href="/GameZone" className="text-purple-600 underline mt-2 block">Go play something!</Link>
+            <Link href="/Games" className="text-purple-600 underline mt-2 block">Go play something!</Link>
         </div>
       )}
 

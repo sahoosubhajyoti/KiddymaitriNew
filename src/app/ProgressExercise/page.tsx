@@ -31,6 +31,7 @@ export default function ExerciseProgressPage() {
   const { user } = useAuth();
   const searchParams = useSearchParams();
   const userId = searchParams.get("userId");
+  console.log(userId,"exercise");
 
   // --- 1. Fetch Data ---
   useEffect(() => {

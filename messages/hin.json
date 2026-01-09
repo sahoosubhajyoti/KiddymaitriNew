@@ -28,7 +28,11 @@
 
     "cardTestTitle": "परीक्षा",
     "cardTestDesc": "घड़ी के साथ दौड़ लगाएं और बड़ी चुनौती पूरी करें!",
-    "cardTestBtn": "परीक्षा शुरू करें"
+    "cardTestBtn": "परीक्षा शुरू करें",
+
+    "cardColoringTitle": "रंग भरना",
+  "cardColoringDesc": "रंगों के साथ अपनी रचनात्मकता को उजागर करें।",
+  "cardColoringBtn": "रंग भरना शुरू करें"
   },
   "Navbar": {
     "home": "होम",

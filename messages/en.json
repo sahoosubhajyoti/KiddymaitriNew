@@ -25,7 +25,10 @@
     "cardQuizBtn": "Take a Quiz",
     "cardTestTitle": "Test",
     "cardTestDesc": "Race against the clock in a big challenge!",
-    "cardTestBtn": "Start Test"
+    "cardTestBtn": "Start Test",
+    "cardColoringTitle": "Coloring",
+  "cardColoringDesc": "Unleash your creativity with colors.",
+  "cardColoringBtn": "Start Coloring"
   },
   "Navbar": {
     "home": "Home",

@@ -2,7 +2,7 @@
 <html>
 <head>
     <title>Neon Math Arcade</title>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;700&family=Noto+Sans+Oriya:wght@400;700&display=swap" rel="stylesheet">
     
     <style>
@@ -10,7 +10,8 @@
             margin: 0; 
             overflow: hidden; 
             background: #000; 
-            font-family: 'Orbitron', 'Noto Sans Devanagari', 'Noto Sans Oriya', sans-serif; 
+            /* Updated font stack */
+            font-family: 'Chakra Petch', 'Noto Sans Devanagari', 'Noto Sans Oriya', sans-serif; 
             touch-action: none; 
         }
         canvas { 
@@ -25,7 +26,7 @@
             transform: translate(-50%, -50%); 
             padding: 15px 40px; 
             font-size: 24px; 
-            font-family: 'Orbitron', sans-serif;
+            font-family: 'Chakra Petch', sans-serif; /* Updated font */
             background: rgba(0, 0, 0, 0.9); 
             border: 2px solid #00f3ff; 
             border-radius: 15px; 
@@ -51,8 +52,9 @@
     canvas.height = window.innerHeight;
 
     // --- 🌐 LOCALIZATION ---
+    // Updated English Font to 'Chakra Petch'
     const dictionary = {
-        en: { score: "SCORE", lives: "LIVES", even: "EVEN", odd: "ODD", title: "NEON MATH", howTo: "HOW TO PLAY:", rule1: "Tap EVEN for: 0, 2, 4...", rule2: "Tap ODD for: 1, 3, 5...", start: "TAP TO START", gameOver: "Game End", reboot: "Tap to Reboot", font: "'Orbitron'" },
+        en: { score: "SCORE", lives: "LIVES", even: "EVEN", odd: "ODD", title: "NEON MATH", howTo: "HOW TO PLAY:", rule1: "Tap EVEN for: 0, 2, 4...", rule2: "Tap ODD for: 1, 3, 5...", start: "TAP TO START", gameOver: "Game End", reboot: "Tap to Reboot", font: "'Chakra Petch'" },
         hin: { score: "स्कोर", lives: "जीवन", even: "सम", odd: "विषम", title: "नियोन गणित", howTo: "कैसे खेलें:", rule1: "सम संख्या चुनें: 0, 2, 4...", rule2: "विषम संख्या चुनें: 1, 3, 5...", start: "शुरू करने के लिए टैप करें", gameOver: "खेल खत्म", reboot: "पुनः आरंभ करें", font: "'Noto Sans Devanagari'" },
         odi: { score: "ସ୍କୋର", lives: "ଜୀବନ", even: "ଯୁଗ୍ମ", odd: "ଅଯୁଗ୍ମ", title: "ନିଓନ୍ ଗଣିତ", howTo: "କିପରି ଖେଳିବେ:", rule1: "ଯୁଗ୍ମ ସଂଖ୍ୟା ବାଛନ୍ତୁ: 0, 2, 4...", rule2: "ଅଯୁଗ୍ମ ସଂଖ୍ୟା ବାଛନ୍ତୁ: 1, 3, 5...", start: "ଆରମ୍ଭ କରିବାକୁ ଟ୍ୟାପ୍ କରନ୍ତୁ", gameOver: "ଖେଳ ଶେଷ", reboot: "ପୁନଃ ଆରମ୍ଭ କରନ୍ତୁ", font: "'Noto Sans Oriya'" }
     };
@@ -64,7 +66,6 @@
     restartBtn.innerHTML = `${t.gameOver}<br><span style="font-size:16px">${t.reboot}</span>`;
     restartBtn.style.fontFamily = t.font;
 
-    // --- 📊 ANALYTICS ---
     let sessionData = { sessionId : 1,startTime: null, endTime: null, duration: 0, totalCorrect: 0, totalWrong: 0, totalMissed: 0, ballHistory: [] };
 
     // --- GAME STATE ---
@@ -91,7 +92,10 @@
     };
 
     const btnHeight = 60; 
-    const btnY = canvas.height - btnHeight - 30; 
+    
+    // 🔥 MOBILE FIX: Increased bottom margin from 30 to 100
+    // This pushes the shields UP, away from system navigation bars
+    const btnY = canvas.height - btnHeight - 100; 
 
     let baskets = [
         { label: t.even, x: 20, y: btnY, width: (canvas.width/2)-25, height: btnHeight, color: "#00f3ff", active: false, type: "EVEN" },
@@ -246,10 +250,7 @@
             recordBallEvent("WRONG", basket.type);
             sessionData.totalWrong++;
             createExplosion(basket.x + basket.width/2, basket.y, "red");
-            
-            // ❌ CHANGED HERE: Show Symbol instead of Text
             spawnPopup("✖", basket.x + basket.width/2, basket.y - 50, "red");
-            
             loseLife();
             shakeScreen();
         }
@@ -341,40 +342,39 @@
         ctx.fillStyle = "white";
         ctx.shadowColor = "black";
         ctx.shadowBlur = 5;
-        ctx.font = "bold 24px 'Orbitron'";
+        // Use updated font here too
+        ctx.font = "bold 24px " + t.font;
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
         ctx.fillText(ball.number, ball.x, ball.y + 2);
         ctx.shadowBlur = 0;
     }
 
-   function drawInstructions() {
+    function drawInstructions() {
         ctx.fillStyle = "rgba(0,0,0,0.8)"; 
         ctx.fillRect(0, 0, canvas.width, canvas.height); 
         ctx.textAlign = "center";
         
-        // Moved Title Down to Y=200 to clear header
         ctx.fillStyle = "#00f3ff"; 
         ctx.font = "900 40px " + t.font; 
         ctx.shadowBlur = 20; 
         ctx.shadowColor = "#00f3ff"; 
-        ctx.fillText(t.title, canvas.width/2, 200); // <--- CHANGED to 200
+        ctx.fillText(t.title, canvas.width/2, 200); 
         ctx.shadowBlur = 0;
         
-        // Moved Instructions Down
         ctx.fillStyle = "white"; 
         ctx.font = "20px " + t.font; 
-        ctx.fillText(t.howTo, canvas.width/2, 280); // <--- CHANGED to 280
+        ctx.fillText(t.howTo, canvas.width/2, 280); 
         
         ctx.font = "16px " + t.font; 
         ctx.fillStyle = "#aaa"; 
-        ctx.fillText(t.rule1, canvas.width/2, 320); // <--- CHANGED to 320
-        ctx.fillText(t.rule2, canvas.width/2, 350); // <--- CHANGED to 350
+        ctx.fillText(t.rule1, canvas.width/2, 320); 
+        ctx.fillText(t.rule2, canvas.width/2, 350); 
         
         if (Math.floor(Date.now() / 500) % 2 === 0) { 
             ctx.fillStyle = "#00ff00"; 
             ctx.font = "bold 24px " + t.font; 
-            ctx.fillText(t.start, canvas.width/2, 500); // <--- CHANGED to 500
+            ctx.fillText(t.start, canvas.width/2, 500); 
         }
     }
 
@@ -407,16 +407,16 @@
         }
 
         explosions.forEach(p => { ctx.fillStyle = p.color; ctx.globalAlpha = p.life; ctx.fillRect(p.x, p.y, p.size, p.size); }); ctx.globalAlpha = 1.0;
-        popups.forEach(p => { ctx.fillStyle = p.color; ctx.font = "bold 24px 'Orbitron'"; ctx.shadowBlur = 10; ctx.shadowColor = p.color; ctx.globalAlpha = p.life / 40; ctx.fillText(p.text, p.x, p.y); }); ctx.globalAlpha = 1.0; ctx.shadowBlur = 0;
+        popups.forEach(p => { ctx.fillStyle = p.color; ctx.font = "bold 24px 'Chakra Petch'"; ctx.shadowBlur = 10; ctx.shadowColor = p.color; ctx.globalAlpha = p.life / 40; ctx.fillText(p.text, p.x, p.y); }); ctx.globalAlpha = 1.0; ctx.shadowBlur = 0;
 
         ctx.fillStyle = "white"; 
         ctx.font = "20px " + t.font; 
         ctx.textAlign = "left"; 
-        ctx.fillText(t.score + ": " + score, 20, 120); // <--- CHANGED to 120
+        ctx.fillText(t.score + ": " + score, 20, 120); 
         
         let hearts = "❤️".repeat(lives); 
         ctx.textAlign = "right"; 
-        ctx.fillText(hearts, canvas.width - 20, 120); // <--- CHANGED to 120
+        ctx.fillText(hearts, canvas.width - 20, 120); 
     }
 
     function gameLoop() { update(); draw(); requestAnimationFrame(gameLoop); }

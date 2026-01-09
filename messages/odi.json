@@ -28,7 +28,10 @@
 
     "cardTestTitle": "ପରୀକ୍ଷା",
     "cardTestDesc": "ସମୟ ସହିତ ପ୍ରତିଯୋଗିତା କରି ବଡ଼ ଚ୍ୟାଲେଞ୍ଜ୍ ପୂରା କରନ୍ତୁ!",
-    "cardTestBtn": "ପରୀକ୍ଷା ଆରମ୍ଭ କରନ୍ତୁ"
+    "cardTestBtn": "ପରୀକ୍ଷା ଆରମ୍ଭ କରନ୍ତୁ",
+    "cardColoringTitle": "ରଙ୍ଗ ଭରିବା",
+  "cardColoringDesc": "ରଙ୍ଗ ସହିତ ଆପଣଙ୍କର ସୃଜନଶୀଳତା ପ୍ରକାଶ କରନ୍ତୁ |",
+  "cardColoringBtn": "ରଙ୍ଗ ଦେବା ଆରମ୍ଭ କରନ୍ତୁ"
   },
   "Navbar": {
     "home": "ହୋମ୍",
