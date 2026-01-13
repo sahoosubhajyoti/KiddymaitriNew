@@ -102,7 +102,7 @@ export default function GameEmbed() {
         
         {/* Left: Back Button */}
         <Link 
-          href="/Dashboard" 
+          href="#home" 
           className="pointer-events-auto flex items-center gap-2 px-3 py-1.5 bg-white/10 text-white rounded-full hover:bg-white/20 transition backdrop-blur-md border border-white/10 text-xs font-medium"
         >
           <IoArrowBack size={16} />

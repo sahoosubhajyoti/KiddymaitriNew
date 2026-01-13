@@ -7,18 +7,17 @@ import ColoringWorkspace from '@/components/ColoringWorkspace';
 // Import your custom axios instance
 import api from "../../utility/axiosInstance"; 
 
-// --- Types ---
-interface Group {
-  id: number;
-  name: string;
-  slug: string;
-}
+// --- Updated Interfaces to match your Backend ---
+
+// Groups are just strings now (e.g., ["Object", "Animals"])
+// No interface needed for Group, we will use string[]
 
 interface ImageItem {
   id: number;
-  title: string;
-  svg_url: string;
-  group: number;
+  name: string;        // Changed from 'title' to 'name'
+  image: string;       // Changed from 'svg_url' to 'image'
+  group_name: string;  // Changed from 'group' to 'group_name'
+  is_active: boolean;
 }
 
 export default function ColoringPage() {
@@ -28,22 +27,22 @@ export default function ColoringPage() {
   const [error, setError] = useState<string | null>(null);
 
   // Data storage
-  const [groups, setGroups] = useState<Group[]>([]);
+  const [groups, setGroups] = useState<string[]>([]); // Array of strings
   const [images, setImages] = useState<ImageItem[]>([]);
   
   // Selection state
-  const [selectedGroup, setSelectedGroup] = useState<Group | null>(null);
+  const [selectedGroup, setSelectedGroup] = useState<string | null>(null); // Single string
   const [selectedImage, setSelectedImage] = useState<ImageItem | null>(null);
   const [svgContent, setSvgContent] = useState<string>('');
 
-  // --- 1. Fetch Groups on Load (Using your API instance) ---
+  // --- 1. Fetch Groups on Load ---
   useEffect(() => {
     setLoading(true);
-    // Matches your reference code pattern
     api
       .get("/colouring/groups/")
       .then((res) => {
-        setGroups(res.data);
+        // Backend returns ["Object", "Animals"...]
+        setGroups(res.data); 
         setLoading(false);
       })
       .catch((err) => {
@@ -54,22 +53,25 @@ export default function ColoringPage() {
   }, []);
 
   // --- 2. Handle Group Selection -> Fetch Images ---
-  const handleSelectGroup = (group: Group) => {
-    setSelectedGroup(group);
+  const handleSelectGroup = (groupName: string) => {
+    setSelectedGroup(groupName);
     setLoading(true);
     setError(null);
     
-    // Using your API instance
+    // Fetch all images (or you can append ?group=groupName if your API supports it)
     api
       .get(`/colouring/images/`)
       .then((res) => {
         const data = res.data;
-        // Handle pagination if your API returns { results: [...] } or just [...]
-        const imageList = Array.isArray(data) ? data : data.results || [];
+        const allImages = Array.isArray(data) ? data : data.results || [];
         
-        setImages(imageList);
+        // Optional: Client-side filter to ensure we only show images for this group
+        // If your API already filters this, you can remove the .filter() part
+        const filteredImages = allImages.filter((img: ImageItem) => img.group_name === groupName);
         
-        if (imageList.length === 0) {
+        setImages(filteredImages);
+        
+        if (filteredImages.length === 0) {
             setError("No images found in this category.");
         } else {
             setView('IMAGES');
@@ -85,24 +87,26 @@ export default function ColoringPage() {
 
   // --- 3. Handle Image Selection -> Fetch SVG Content ---
   const handleSelectImage = (image: ImageItem) => {
+    // Safety check: ensure image object and URL exist
+    if (!image || !image.image) {
+      console.error("Image data is incomplete:", image);
+      return;
+    }
+
     setSelectedImage(image);
     setLoading(true);
     setError(null);
 
-    // Prepare the URL. If the API returns a full URL (http...), use it directly.
-    // If it returns a relative path (/media/...), combine it with your backend base URL if needed.
-    // NOTE: If 'svg_url' is a full URL, api.get might append it to baseURL. 
-    // We check if it starts with http.
-    const url = image.svg_url;
+    const url = image.image;
 
-    // We must tell axios to expect 'text' response, not JSON, because it's an SVG file.
+    // Fetch the raw SVG text
     api.get(url, { 
         responseType: 'text',
-        // If the URL is absolute (http...), we might need to override the baseURL of the instance
+        // If URL is absolute (http://...), override baseURL so axios doesn't double it
         baseURL: url.startsWith('http') ? '' : undefined 
       })
       .then((res) => {
-        setSvgContent(res.data); // res.data will be the raw SVG string
+        setSvgContent(res.data); // Save the raw SVG string
         setView('WORKSPACE');
         setLoading(false);
       })
@@ -127,17 +131,18 @@ export default function ColoringPage() {
           {error && <div className="text-red-500 mb-4">{error}</div>}
 
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {groups.map((group) => (
+            {groups.map((groupName, index) => (
               <button
-                key={group.id}
-                onClick={() => handleSelectGroup(group)}
+                // Use the name as key since it's unique, or index as fallback
+                key={groupName || index}
+                onClick={() => handleSelectGroup(groupName)}
                 className="bg-white rounded-xl shadow-sm hover:shadow-lg transition-all border border-slate-100 hover:border-indigo-100 p-8 flex flex-col items-center gap-4 group"
               >
                 <div className="p-4 bg-indigo-50 text-indigo-600 rounded-full group-hover:scale-110 transition-transform">
                   <Layers size={32} />
                 </div>
                 <h3 className="font-semibold text-lg text-slate-700 capitalize group-hover:text-indigo-600">
-                  {group.name}
+                  {groupName}
                 </h3>
               </button>
             ))}
@@ -159,7 +164,7 @@ export default function ColoringPage() {
             >
               <ArrowLeft size={20} className="text-slate-600" />
             </button>
-            <h1 className="text-3xl font-bold text-slate-800 capitalize">{selectedGroup?.name}</h1>
+            <h1 className="text-3xl font-bold text-slate-800 capitalize">{selectedGroup}</h1>
           </div>
 
           {loading && <div className="flex justify-center"><Loader2 className="animate-spin text-indigo-600" size={40} /></div>}
@@ -174,13 +179,13 @@ export default function ColoringPage() {
               >
                 <div className="aspect-square flex items-center justify-center mb-4 bg-slate-50 rounded-lg relative overflow-hidden">
                   <img 
-                    src={img.svg_url} 
-                    alt={img.title} 
+                    src={img.image}  // FIXED: using .image
+                    alt={img.name}   // FIXED: using .name
                     className="w-3/4 h-3/4 object-contain opacity-70 group-hover:opacity-100 transition-opacity" 
                   />
                 </div>
                 <h3 className="font-semibold text-slate-700 truncate group-hover:text-indigo-600">
-                  {img.title}
+                  {img.name}
                 </h3>
               </button>
             ))}
@@ -197,7 +202,7 @@ export default function ColoringPage() {
          {/* Pass onBack so the component knows how to return to the list */}
         <ColoringWorkspace 
             initialSvgContent={svgContent} 
-            title={selectedImage.title} 
+            title={selectedImage.name} // FIXED: using .name
             onBack={() => setView('IMAGES')}
         />
       </div>
