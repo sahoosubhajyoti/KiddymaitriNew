@@ -5,6 +5,7 @@ import { useAuth } from "../../context/Authcontext";
 import Link from "next/link";
 // Import your axios instance
 import api from "../../utility/axiosInstance"; 
+import { AxiosError } from "axios";
 
 export default function AddPictures() {
   const { user } = useAuth();
@@ -117,10 +118,13 @@ export default function AddPictures() {
         setFormData(prev => ({ ...prev, name: "" })); 
         setFile(null);
       } 
-    } catch (err: any) {
+    } catch (error) {
+      // 1. Cast the error to AxiosError to get type safety for .response
+      const err = error as AxiosError;
+      
       console.error("Upload error:", err);
       
-      // Extract error message from Backend (Django)
+      // 2. Now TypeScript knows 'err' might have a 'response' property
       if (err.response && err.response.data) {
           setMessage(`Error: ${JSON.stringify(err.response.data)}`);
       } else {

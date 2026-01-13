@@ -7,6 +7,7 @@ import ColoringWorkspace from '@/components/ColoringWorkspace';
 // Import your custom axios instance
 import api from "../../utility/axiosInstance"; 
 
+
 // --- Updated Interfaces to match your Backend ---
 
 // Groups are just strings now (e.g., ["Object", "Animals"])
