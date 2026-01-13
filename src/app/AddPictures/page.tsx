@@ -3,6 +3,8 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../../context/Authcontext"; 
 import Link from "next/link";
+// Import your axios instance
+import api from "../../utility/axiosInstance"; 
 
 export default function AddPictures() {
   const { user } = useAuth();
@@ -17,35 +19,29 @@ export default function AddPictures() {
 
   const [file, setFile] = useState<File | null>(null);
   const [existingGroups, setExistingGroups] = useState<string[]>([]);
-  const [isNewGroupMode, setIsNewGroupMode] = useState(false); // Controls Dropdown vs Input
+  const [isNewGroupMode, setIsNewGroupMode] = useState(false); 
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
 
-  // --- 1. FETCH GROUPS ON LOAD ---
+  // --- 1. FETCH GROUPS ON LOAD (AXIOS) ---
   useEffect(() => {
     const fetchGroups = async () => {
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/colouring/groups/`,
-            {method:"GET",
-            credentials:"include",
-            }
-        );
-        if (res.ok) {
-          const data = await res.json();
-          // Assuming the API returns an array of strings: ["Animals", "Vehicles", ...]
-          // If it returns objects like [{name: "Animals"}], change to data.map(g => g.name)
-          if (Array.isArray(data) && data.length > 0) {
-            setExistingGroups(data);
-            setFormData(prev => ({ ...prev, group_name: data[0] })); // Default to first group
-            setIsNewGroupMode(false);
-          } else {
-            // No groups found, force manual entry
-            setIsNewGroupMode(true);
-          }
+        // Axios automatically handles the Base URL if configured in your instance
+        const res = await api.get("/colouring/groups/");
+        
+        const data = res.data;
+        
+        if (Array.isArray(data) && data.length > 0) {
+          setExistingGroups(data);
+          setFormData(prev => ({ ...prev, group_name: data[0] })); 
+          setIsNewGroupMode(false);
+        } else {
+          setIsNewGroupMode(true);
         }
       } catch (err) {
         console.error("Error fetching groups:", err);
-        setIsNewGroupMode(true); // Fallback to manual mode on error
+        setIsNewGroupMode(true); 
       }
     };
 
@@ -80,16 +76,14 @@ export default function AddPictures() {
 
   const toggleGroupMode = () => {
     setIsNewGroupMode(!isNewGroupMode);
-    // Clear group name when switching so user doesn't accidentally submit wrong data
     setFormData(prev => ({ ...prev, group_name: "" }));
     
-    // If switching BACK to dropdown, select the first existing group again
     if (isNewGroupMode && existingGroups.length > 0) {
       setFormData(prev => ({ ...prev, group_name: existingGroups[0] }));
     }
   };
 
-  // --- SUBMIT ---
+  // --- SUBMIT (AXIOS) ---
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return router.push("/login");
@@ -112,33 +106,26 @@ export default function AddPictures() {
       dataToSend.append("group_name", formData.group_name);
       dataToSend.append("name", formData.name);
       dataToSend.append("image", file);
-      // Convert boolean to string for FormData (Python handles 'true'/'True' usually, or use 'True' if strict)
       dataToSend.append("is_active", formData.is_active ? "True" : "False");
 
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/colouring/add/`,
-        {
-          method: "POST",
-           
-          // Content-Type is set automatically by browser for FormData
-           credentials: "include",
-          body: dataToSend,
-        }
-      );
+      // Axios Post Request
+      // NOTE: Content-Type: multipart/form-data is set automatically by axios when passing FormData
+      const response = await api.post("/colouring/add/", dataToSend);
 
-      if (response.ok) {
+      if (response.status === 200 || response.status === 201) {
         setMessage("Success: Picture added!");
-        // Reset specific fields
         setFormData(prev => ({ ...prev, name: "" })); 
         setFile(null);
-        // We do NOT reset group_name here so they can easily add another to the same group
-      } else {
-        const errorData = await response.json();
-        setMessage(`Error: ${JSON.stringify(errorData)}`);
-      }
-    } catch (err) {
+      } 
+    } catch (err: any) {
       console.error("Upload error:", err);
-      setMessage("Something went wrong connecting to server.");
+      
+      // Extract error message from Backend (Django)
+      if (err.response && err.response.data) {
+          setMessage(`Error: ${JSON.stringify(err.response.data)}`);
+      } else {
+          setMessage("Something went wrong connecting to server.");
+      }
     } finally {
       setLoading(false);
     }
@@ -171,12 +158,11 @@ export default function AddPictures() {
           />
         </div>
 
-        {/* 2. Group Selection (The Logic Catch) */}
+        {/* 2. Group Selection */}
         <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
           <div className="flex justify-between items-center mb-2">
             <label className="block text-sm font-medium text-gray-700">Group Category</label>
             
-            {/* Toggle Button (Only show if we actually have existing groups) */}
             {existingGroups.length > 0 && (
               <button 
                 type="button"
@@ -188,7 +174,6 @@ export default function AddPictures() {
             )}
           </div>
 
-          {/* Logic: Show Input if New Mode OR No Groups Exist. Otherwise show Dropdown. */}
           {isNewGroupMode || existingGroups.length === 0 ? (
             <input
               type="text"
