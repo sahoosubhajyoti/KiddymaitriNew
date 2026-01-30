@@ -517,6 +517,8 @@ function TestPage() {
                   <input
                       ref={inputRef}
                       type="text"
+                      inputMode="decimal" // <--- ADDED: Triggers mobile numeric keypad
+                      pattern="[0-9]*"    // <--- ADDED: iOS specific trigger for numpad
                       className="w-full border-2 border-gray-300 p-3 rounded-lg mt-2 shadow-sm text-lg text-center font-bold tracking-widest focus:border-green-500 focus:outline-none transition-colors"
                       placeholder="Enter Answer"
                       value={currentAnswer}
