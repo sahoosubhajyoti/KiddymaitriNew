@@ -189,7 +189,7 @@ function StartExercise() {
     }
   };
 
-  const handleSubmit = async (manualAnswer?: string) => {
+ const handleSubmit = async (manualAnswer?: string) => {
     const finalAnswer = typeof manualAnswer === "string" ? manualAnswer : answer;
 
     if (!finalAnswer.trim()) return;
@@ -202,14 +202,20 @@ function StartExercise() {
 
       const data = response.data;
 
-      // START CHANGE: Set Feedback Flash
+      // 1. Handle Feedback Visuals
       if (data.result === "correct") {
         setFeedback("correct");
       } else {
         setFeedback("error");
+        // OPTIONAL: Focus input again so user can type immediately
+        setTimeout(() => inputRef.current?.focus(), 100);
+        
+        // --- CRITICAL CHANGE ---
+        // If answer is WRONG, stop here. Do not update question.
+        return; 
       }
-      // END CHANGE
 
+      // 2. Logic below only runs if result === "correct"
       if (groupName?.toLowerCase() === "clock" && typeof data.question === "string") {
         data.options = generateClockOptions(data.question);
       }
@@ -221,7 +227,8 @@ function StartExercise() {
           type: data.type,
           debug: data.debug
       });
-      setAnswer("");
+      
+      setAnswer(""); // Clear answer only on success
       setIsPaused(false);
       
       setTimeout(() => inputRef.current?.focus(), 100);
@@ -411,6 +418,8 @@ function StartExercise() {
               <input
                 ref={inputRef}
                 type="text"
+                inputMode="decimal" // <--- ADDED: Triggers mobile numeric keypad
+                pattern="[0-9]*"    // <--- ADDED: iOS specific trigger for numpad
                 className="w-full border p-3 rounded mt-2 shadow-sm text-center font-bold"
                 placeholder="Write your answer here..."
                 value={answer}

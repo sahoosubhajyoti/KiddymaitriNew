@@ -32,7 +32,7 @@ const languages = [
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-    
+
   // Dropdown States
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isLangMenuOpen, setIsLangMenuOpen] = useState(false);
@@ -40,7 +40,7 @@ const Navbar = () => {
   const router = useRouter();
   const pathname = usePathname();
   const { user, logout, loading } = useAuth();
-   
+
   const menuRef = useRef<HTMLDivElement>(null);
   const langMenuRef = useRef<HTMLDivElement>(null);
 
@@ -52,33 +52,35 @@ const Navbar = () => {
 
   const changeLocale = async (newLocale: string) => {
     document.cookie = `MYNEXTAPP_LOCALE=${newLocale}; path=/; max-age=31536000; SameSite=Lax`;
-    
+
     startTransition(() => {
       router.refresh();
-      setIsLangMenuOpen(false); 
+      setIsLangMenuOpen(false);
     });
 
-   
     if (user) {
-        const langData = languages.find((l) => l.code === newLocale);
-        const medium = langData ? langData.backendValue : "ENGLISH";
+      const langData = languages.find((l) => l.code === newLocale);
+      const medium = langData ? langData.backendValue : "ENGLISH";
 
-        try {
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/profile`, {
-                method: "PATCH",
-                headers: { 
-                    "Content-Type": "application/json" 
-                },
-                credentials: "include", 
-                body: JSON.stringify({ medium: medium }),
-            });
+      try {
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_API_BASE_URL}/profile`,
+          {
+            method: "PATCH",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            credentials: "include",
+            body: JSON.stringify({ medium: medium }),
+          },
+        );
 
-            if (!response.ok) {
-                console.error("Failed to update language preference on backend");
-            }
-        } catch (error) {
-            console.error("Error syncing language preference:", error);
+        if (!response.ok) {
+          console.error("Failed to update language preference on backend");
         }
+      } catch (error) {
+        console.error("Error syncing language preference:", error);
+      }
     }
   };
 
@@ -137,7 +139,7 @@ const Navbar = () => {
 
   const navLinks: NavLink[] = [
     { name: t("games"), to: "/Games", type: "route" },
-    { name: t("shop"), to: "/shop", type: "route" },
+    //{ name: t("shop"), to: "/shop", type: "route" },
     { name: t("home"), to: "#home", type: "scroll" },
     { name: t("product"), to: "#product", type: "scroll" },
     { name: t("testimonials"), to: "#testimonials", type: "scroll" },
@@ -200,16 +202,18 @@ const Navbar = () => {
               <button
                 onClick={() => setIsLangMenuOpen(!isLangMenuOpen)}
                 className={`flex items-center gap-1 px-3 py-1.5 rounded-full border transition-all duration-200 ${
-                  pathname === "/" && !isScrolled 
-                    ? "border-white/50 hover:bg-white/10" 
+                  pathname === "/" && !isScrolled
+                    ? "border-white/50 hover:bg-white/10"
                     : "border-gray-300 hover:bg-gray-100"
                 }`}
               >
                 <IoMdGlobe size={18} />
-                <span className="text-sm font-medium mx-1">{currentLang.label}</span>
-                <RxChevronDown 
-                    size={16} 
-                    className={`transition-transform duration-200 ${isLangMenuOpen ? "rotate-180" : ""}`}
+                <span className="text-sm font-medium mx-1">
+                  {currentLang.label}
+                </span>
+                <RxChevronDown
+                  size={16}
+                  className={`transition-transform duration-200 ${isLangMenuOpen ? "rotate-180" : ""}`}
                 />
               </button>
 
@@ -221,7 +225,9 @@ const Navbar = () => {
                       onClick={() => changeLocale(lang.code)}
                       disabled={isPending}
                       className={`block w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition-colors ${
-                        locale === lang.code ? "text-blue-600 font-semibold bg-blue-50" : "text-gray-700"
+                        locale === lang.code
+                          ? "text-blue-600 font-semibold bg-blue-50"
+                          : "text-gray-700"
                       } ${isPending ? "opacity-50 cursor-not-allowed" : ""}`}
                     >
                       {lang.label}
@@ -238,13 +244,13 @@ const Navbar = () => {
                   onClick={() => router.push("/Login")}
                   className="transition duration-300 hover:text-red-500"
                 >
-                  {t('login')}
+                  {t("login")}
                 </button>
                 <button
                   onClick={() => router.push("/Signup")}
                   className="px-4 py-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition duration-300"
                 >
-                  {t('signup')}
+                  {t("signup")}
                 </button>
               </div>
             ) : (
@@ -255,7 +261,7 @@ const Navbar = () => {
                     onClick={() => router.push("/Dashboard")}
                     className="transition duration-300 cursor-pointer"
                   >
-                    {t('dashboard')}
+                    {t("dashboard")}
                   </button>
                   <span className="absolute left-0 -bottom-1 w-0 h-0.5 bg-black transition-all duration-300 group-hover:w-full"></span>
                 </div>
@@ -288,16 +294,16 @@ const Navbar = () => {
                       </li>
                       {user.type === "admin" && (
                         <li className="px-4 py-2">
-                            <button
+                          <button
                             onClick={() => {
-                                setSidebarOpen(false);
-                                router.push("/AdminAdd");
-                                setIsUserMenuOpen(false);
+                              setSidebarOpen(false);
+                              router.push("/AdminAdd");
+                              setIsUserMenuOpen(false);
                             }}
                             className="w-full text-center py-1.5 bg-gray-100 rounded-full hover:bg-gray-200 text-xs font-semibold transition"
-                            >
+                          >
                             Add Exercise
-                            </button>
+                          </button>
                         </li>
                       )}
                       <li
@@ -369,18 +375,18 @@ const Navbar = () => {
             <RxCross1 size={24} />
           </button>
         </div>
-          
+
         <div className="flex-grow flex flex-col p-6 space-y-6">
           {/* Mobile Nav Links - Automatically includes Games */}
           <div className="flex flex-col space-y-4">
             {navLinks.map((link) => (
-                <span
+              <span
                 key={link.name}
                 onClick={() => handleScrollOrRedirect(link)}
                 className="text-lg font-medium text-gray-800 hover:text-red-500 transition cursor-pointer"
-                >
+              >
                 {link.name}
-                </span>
+              </span>
             ))}
           </div>
 
@@ -388,29 +394,30 @@ const Navbar = () => {
 
           {/* Mobile Language Section */}
           <div className="space-y-3">
-             <h3 className="text-sm uppercase text-gray-400 font-bold tracking-wider flex items-center gap-2">
-                <IoMdGlobe /> Language
-             </h3>
-             <div className="grid grid-cols-2 gap-2">
-                {languages.map((lang) => (
-                    <button
-                        key={lang.code}
-                        onClick={() => changeLocale(lang.code)}
-                        disabled={isPending}
-                        className={`px-3 py-2 text-sm font-medium rounded-md border transition-all ${
-                            locale === lang.code 
-                            ? "bg-blue-600 text-white border-blue-600 shadow-md" 
-                            : "bg-white text-gray-700 border-gray-200 hover:bg-gray-50"
-                        }`}
-                    >
-                        {lang.label}
-                    </button>
-                ))}
-             </div>
+            <h3 className="text-sm uppercase text-gray-400 font-bold tracking-wider flex items-center gap-2">
+              <IoMdGlobe /> Language
+            </h3>
+            <div className="grid grid-cols-2 gap-2">
+              {languages.map((lang) => (
+                <button
+                  key={lang.code}
+                  onClick={() => changeLocale(lang.code)}
+                  disabled={isPending}
+                  className={`px-3 py-2 text-sm font-medium rounded-md border transition-all ${
+                    locale === lang.code
+                      ? "bg-blue-600 text-white border-blue-600 shadow-md"
+                      : "bg-white text-gray-700 border-gray-200 hover:bg-gray-50"
+                  }`}
+                >
+                  {lang.label}
+                </button>
+              ))}
+            </div>
           </div>
 
           <hr className="border-gray-200" />
 
+          {/* Mobile user menu */}
           {/* Mobile user menu */}
           {!user ? (
             <div className="flex flex-col space-y-3">
@@ -429,7 +436,8 @@ const Navbar = () => {
             </div>
           ) : (
             <div className="flex flex-col space-y-4">
-               <div className="flex items-center gap-3 bg-gray-50 p-3 rounded-lg">
+              {/* User Profile Header */}
+              <div className="flex items-center gap-3 bg-gray-50 p-3 rounded-lg">
                 <Image
                   src={user.image || dummyAvatar}
                   alt="user"
@@ -438,26 +446,83 @@ const Navbar = () => {
                   className="rounded-full object-cover border border-gray-200"
                 />
                 <div className="flex flex-col">
-                    <span className="font-semibold text-gray-800">{user.name}</span>
-                    <span className="text-xs text-gray-500">Logged in</span>
+                  <span className="font-semibold text-gray-800">
+                    {user.name}
+                  </span>
+                  <span className="text-xs text-gray-500">Logged in</span>
                 </div>
               </div>
 
-              <button
-                type="button"
-                onClick={() => { router.push("/Dashboard"); setSidebarOpen(false); }}
-                className="text-left font-medium text-gray-700 hover:text-blue-600"
-              >
-                Dashboard
-              </button>
-                
+              {/* Menu Links */}
+              <div className="flex flex-col space-y-4 pl-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    router.push("/Dashboard");
+                    setSidebarOpen(false);
+                  }}
+                  className="flex items-center gap-3 text-left font-medium text-gray-700 hover:text-blue-600 transition"
+                >
+                  <IoHome size={20} />
+                  <span>Dashboard</span>
+                </button>
+
+                {/* Admin Add (Matches Desktop Logic) */}
+                {user.type === "admin" && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      router.push("/AdminAdd");
+                      setSidebarOpen(false);
+                    }}
+                    className="flex items-center gap-3 text-left font-medium text-gray-700 hover:text-blue-600 transition"
+                  >
+                    {/* You might want to import a specific icon for this, or reuse one */}
+                    <span className="w-5 h-5 flex items-center justify-center font-bold text-lg">
+                      +
+                    </span>
+                    <span>Add Exercise</span>
+                  </button>
+                )}
+
+                {/* Progress */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    router.push("/Progress");
+                    setSidebarOpen(false);
+                  }}
+                  className="flex items-center gap-3 text-left font-medium text-gray-700 hover:text-blue-600 transition"
+                >
+                  <GiProgression size={20} />
+                  <span>Progress</span>
+                </button>
+
+                {/* Setting */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    router.push("/Setting");
+                    setSidebarOpen(false);
+                  }}
+                  className="flex items-center gap-3 text-left font-medium text-gray-700 hover:text-blue-600 transition"
+                >
+                  <IoMdSettings size={20} />
+                  <span>Setting</span>
+                </button>
+              </div>
+
+              <hr className="border-gray-100" />
+
+              {/* Logout */}
               <button
                 onClick={() => {
                   logout();
                   router.push("/Login");
                 }}
-                className="w-full py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition font-medium"
+                className="flex items-center justify-center gap-2 w-full py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition font-medium"
               >
+                <TbLogout size={18} />
                 Logout
               </button>
             </div>
