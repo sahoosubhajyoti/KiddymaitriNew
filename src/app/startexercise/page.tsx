@@ -18,22 +18,27 @@ import Fraction from "@/components/Fraction";
 import DataChart from "@/components/DataChart";
 
 // --- Interfaces ---
+
+interface OptionItem {
+  key: string;   
+  value: string; 
+}
+
 interface Question {
   id?: string | number; 
   question: string | number | object;
   text?: string;
-  options?: string[];
+  options?: OptionItem[]; 
   redirect?: string;
   type?: string;
   qns?: string;
   debug?: { is_test_user?: boolean };
 }
 
-// Interface for the raw API response structure
 interface McqApiResponse {
     id: number;
     question_text: string;
-    option_a: string;
+    option_a: string; 
     option_b: string;
     option_c: string;
     option_d: string;
@@ -63,12 +68,13 @@ function StartExercise() {
   const [question, setQuestion] = useState<Question | null>(null);
   const [error, setError] = useState<string | null>(null);
   
-  // New State for MCQ Mode
   const [isMcqMode, setIsMcqMode] = useState(false);
+  const [sessionId, setSessionId] = useState<number | string | null>(null);
 
   const [timer, setTimer] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
-  const [answer, setAnswer] = useState("");
+  
+  const [answer, setAnswer] = useState(""); 
   const [groupName, setGroupName] = useState<string | null>(null);
   
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -107,22 +113,30 @@ function StartExercise() {
     return pauseTimer;
   }, [isPaused, loading, error]);
 
-  // --- HELPER: Map API MCQ format to Frontend format ---
+  // --- HELPER: Map API MCQ format to Frontend Key-Value format ---
   const mapMcqToQuestion = (apiData: McqApiResponse): Question => {
+    const mappedOptions: OptionItem[] = [];
+    if (apiData.option_a) mappedOptions.push({ key: "a", value: apiData.option_a });
+    if (apiData.option_b) mappedOptions.push({ key: "b", value: apiData.option_b });
+    if (apiData.option_c) mappedOptions.push({ key: "c", value: apiData.option_c });
+    if (apiData.option_d) mappedOptions.push({ key: "d", value: apiData.option_d });
+
     return {
       id: apiData.id,
-      question: apiData.question_text, // Map question_text -> question
-      options: [
-        apiData.option_a, 
-        apiData.option_b, 
-        apiData.option_c, 
-        apiData.option_d
-      ].filter(Boolean), // Create array and remove null/undefined
+      question: apiData.question_text,
+      options: mappedOptions,
       type: "mcq"
     };
   };
 
-  const generateClockOptions = (correctTime: string) => {
+  const normalizeOptions = (data: any) => {
+    if (data.options && Array.isArray(data.options) && typeof data.options[0] === 'string') {
+        data.options = data.options.map((str: string) => ({ key: str, value: str }));
+    }
+    return data;
+  };
+
+  const generateClockOptions = (correctTime: string): OptionItem[] => {
     const parts = correctTime.split(":");
     if (parts.length < 2) return []; 
     
@@ -142,7 +156,9 @@ function StartExercise() {
       opts.add(`${newHStr}:${mStr}`);
     }
 
-    return Array.from(opts).sort(() => Math.random() - 0.5);
+    return Array.from(opts)
+      .sort(() => Math.random() - 0.5)
+      .map(time => ({ key: time, value: time }));
   };
 
   // --- INITIALIZATION LOGIC ---
@@ -156,30 +172,26 @@ function StartExercise() {
       hasInitialized.current = true;
 
       try {
-        // --- PATH A: MCQ SESSION ---
         if (chapterId) {
           setIsMcqMode(true);
           setGroupName("MCQ");
 
-          // 1. Start Session & Get First Question Immediately
           const res = await api.post('/mcq/user/start-session', {
             chapter_id: chapterId
           });
 
-          // The API returns: { session_id, created, question: { ... } }
-          if (res.data && res.data.question) {
-            const formattedQuestion = mapMcqToQuestion(res.data.question);
-            setQuestion(formattedQuestion);
-          } else {
-            setError("No questions found in this chapter.");
+          if (res.data) {
+             if (res.data.session_id) setSessionId(res.data.session_id);
+             if (res.data.question) {
+                const formattedQuestion = mapMcqToQuestion(res.data.question);
+                setQuestion(formattedQuestion);
+             } else {
+                setError("No questions found in this chapter.");
+             }
           }
-
           setLoading(false);
           setIsPaused(false);
-        } 
-        
-        // --- PATH B: STANDARD EXERCISE SESSION ---
-        else if (data) {
+        } else if (data) {
           const parsed: SelectionItem[] = JSON.parse(data);
           if (parsed.length === 0) {
             setError("No exercises selected.");
@@ -202,7 +214,6 @@ function StartExercise() {
           setError("No exercise data provided.");
           setLoading(false);
         }
-
       } catch (err) {
         console.error(err);
         setError("Failed to start session.");
@@ -222,19 +233,19 @@ function StartExercise() {
         console_played_entered: "0",
       });
 
-      const data = response.data;
+      let data = response.data;
 
       if (group_name?.toLowerCase() === "clock" && typeof data.question === "string") {
         data.options = generateClockOptions(data.question);
+      } else {
+        data = normalizeOptions(data);
       }
 
       setQuestion(data);
       setGroupName(group_name || null);
-      
       setAnswer("");
       setIsPaused(false);
       setLoading(false);
-      
       setTimeout(() => inputRef.current?.focus(), 100);
 
     } catch (err) {
@@ -253,27 +264,27 @@ function StartExercise() {
     try {
       let data; 
 
-      // 1. MCQ Submission
       if (isMcqMode) {
+        if (!sessionId) { 
+            setError("Session invalid. Please restart."); 
+            return; 
+        }
+
         const response = await api.post('/mcq/user/submit-answer', {
-            answer: finalAnswer,
-            question_id: question?.id ,
+            session_id: sessionId,
+            question_id: question?.id,
+            answer: finalAnswer, 
             type: "submit"
         });
         
-        // Handle MCQ specific response structure if needed
-        // Assuming response structure is: { result: "correct", question: { ...nextQuestion... }, redirect: ... }
         data = response.data;
         
-        // If the backend returns the raw question object again (like start-session), map it:
+        // Map the NEXT question if it exists
         if (data.question && data.question.question_text) {
              const mappedQ = mapMcqToQuestion(data.question);
-             // Merge formatted question back into data object for processing below
              data = { ...data, ...mappedQ }; 
         }
-      } 
-      // 2. Standard Submission
-      else {
+      } else {
         const response = await api.post('/exercise/submit/', { 
           type: "submit", 
           a: finalAnswer
@@ -281,22 +292,29 @@ function StartExercise() {
         data = response.data;
       }
 
-      // --- Handle Result & Feedback ---
-      if (data.result === "correct") {
+      // --- 1. CHECK FOR BOTH SUCCESS KEYS ---
+      // Standard uses 'result', MCQ uses 'prev_qn_status'
+      const isCorrect = data.result === "correct" || data.prev_qn_status === "correct";
+
+      if (isCorrect) {
         setFeedback("correct");
       } else {
         setFeedback("error");
         setTimeout(() => inputRef.current?.focus(), 100);
-        return; // Stop if wrong
+        // Important: Return here to stop loading next question on error (if that is desired behavior)
+        // If you want next question even on wrong answer, remove this return.
+        return; 
       }
 
-      // --- Prepare Next Question ---
+      // --- 2. PREPARE NEXT QUESTION ---
       if (!isMcqMode && groupName?.toLowerCase() === "clock" && typeof data.question === "string") {
         data.options = generateClockOptions(data.question);
+      } else {
+        data = normalizeOptions(data);
       }
       
       setQuestion({ 
-          id: data.id, // Ensure ID is passed for MCQ
+          id: data.id, 
           question: data.question,
           text: data.text,
           options: data.options,
@@ -306,10 +324,8 @@ function StartExercise() {
       
       setAnswer(""); 
       setIsPaused(false);
-      
       setTimeout(() => inputRef.current?.focus(), 100);
 
-      // Handle Redirect/Completion
       if (data.redirect) {
         if(data.debug?.is_test_user) {
           alert("Test user limit reached.");
@@ -327,9 +343,13 @@ function StartExercise() {
       let data;
       
       if(isMcqMode) {
-         // Assuming skip endpoint or logic returns the next question similarly
-         // If skip is just getting next question:
-         const response = await api.get('/mcq/user/get-question/?action=skip');
+         if (!sessionId) return;
+         const response = await api.post('/mcq/user/submit-answer', {
+             session_id: sessionId,
+             question_id: question?.id,
+             answer: "", 
+             type: "skip"
+         });
          data = response.data;
          
          if (data.question && data.question.question_text) {
@@ -345,6 +365,8 @@ function StartExercise() {
 
       if (!isMcqMode && groupName?.toLowerCase() === "clock" && typeof data.question === "string") {
         data.options = generateClockOptions(data.question);
+      } else {
+        data = normalizeOptions(data);
       }
 
       setQuestion(data);
@@ -376,12 +398,10 @@ function StartExercise() {
   const renderDynamicContent = () => {
     const group = groupName?.toLowerCase();
 
-    // Specific MCQ rendering
     if (isMcqMode) {
          return (
             <div className="text-center w-full">
               <div className="text-3xl font-bold text-gray-800 mb-6">
-                {/* Check for LaTeX or Standard String */}
                 {typeof question?.question === 'string' && question.question.includes('\\') ? 
                   <InlineMath math={question.question} /> : 
                   (question?.question as string) || question?.text
@@ -391,7 +411,6 @@ function StartExercise() {
          );
     }
 
-    // Standard Rendering Switch
     switch (group) {
       case "clock":
         return (
@@ -462,7 +481,7 @@ function StartExercise() {
         feedback === "error" ? "bg-red-100 border-2 border-red-500" :
         "bg-white"
       }`}>
-        <h1 className="text-2xl font-bold mb-4">{isMcqMode ? "Quiz" : "Start Exercise"}</h1>
+        <h1 className="text-2xl font-bold mb-4">{isMcqMode ? "Start MCQ Exercise" : "Start Exercise"}</h1>
 
         {loading && <p className="text-center py-10">Loading your session...</p>}
         {error && <p className="text-red-600 text-center py-10">{error}</p>}
@@ -477,30 +496,29 @@ function StartExercise() {
                 {renderDynamicContent()}
             </div>
 
-            {/* Options Grid */}
+            {/* OPTIONS RENDERING */}
             {question.options && question.options.length > 0 && (
               <ul className="grid grid-cols-2 gap-4">
-                {question.options.map((opt: string, idx: number) => (
+                {question.options.map((opt: OptionItem, idx: number) => (
                   <li 
                     key={idx} 
                     className="bg-gray-100 p-4 rounded-lg hover:bg-gray-200 cursor-pointer text-center font-bold shadow-sm transition-all hover:scale-105" 
                     onClick={() => {
-                      setAnswer(opt);
-                      // Auto-submit for Clock (standard) OR MCQ Mode (if you want single-click answer)
-                      // If you prefer MCQ to require a separate "Submit" button, remove `|| isMcqMode`
+                      setAnswer(opt.key); 
+                      
+                      // 3. UPDATED: Auto-submit for BOTH Clock AND MCQ
                       if (groupName?.toLowerCase() === "clock" || isMcqMode) {
-                        handleSubmit(opt);
+                        handleSubmit(opt.key);
                       }
                     }}
-                    style={answer === opt ? { border: '2px solid #3b82f6', backgroundColor: '#eeffff' } : {}}
+                    style={answer === opt.key ? { border: '2px solid #3b82f6', backgroundColor: '#eeffff' } : {}}
                   >
-                    {opt}
+                    {opt.value} 
                   </li>
                 ))}
               </ul>
             )}
 
-            {/* Input Box: Only show if NO options exist */}
             {(!question.options || question.options.length === 0) && (
               <input
                 ref={inputRef}
@@ -525,10 +543,7 @@ function StartExercise() {
               {isPaused ? (
                 <p className="text-gray-500 font-semibold">Please resume to continue</p>
               ) : (
-                // Submit Button Logic
-                // 1. Hide for Clock (auto-submit)
-                // 2. Hide for MCQ (if you are using auto-submit on click above)
-                // If you want manual submit for MCQ, remove `&& !isMcqMode`
+                // 4. UPDATED: Hide Submit button for MCQ as well
                 (groupName?.toLowerCase() !== "clock" && !isMcqMode) && (
                   <button
                     onClick={() => handleSubmit()}
@@ -543,39 +558,21 @@ function StartExercise() {
         )}
 
         <div className="absolute -bottom-16 left-1/2 -translate-x-1/2 flex gap-4">
-          <button
-            onClick={handlePauseToggle}
-            className="group relative flex items-center justify-center h-12 w-12 rounded-full bg-white shadow-lg hover:scale-110 transition-all text-gray-600"
-          >
+          <button onClick={handlePauseToggle} className="group relative flex items-center justify-center h-12 w-12 rounded-full bg-white shadow-lg hover:scale-110 transition-all text-gray-600">
             {isPaused ? <GrResume /> : <FaPause />}
-            <span className="absolute bottom-full mb-2 bg-gray-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">
-               {isPaused ? "Resume" : "Pause"}
-            </span>
+            <span className="absolute bottom-full mb-2 bg-gray-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">{isPaused ? "Resume" : "Pause"}</span>
           </button>
-          
           {!isPaused && (
-            <button
-                onClick={handleSkip}
-                className="group relative flex items-center justify-center h-12 w-12 rounded-full bg-white shadow-lg hover:scale-110 transition-all text-gray-600"
-            >
+            <button onClick={handleSkip} className="group relative flex items-center justify-center h-12 w-12 rounded-full bg-white shadow-lg hover:scale-110 transition-all text-gray-600">
                 <IoMdSkipForward />
-                <span className="absolute bottom-full mb-2 bg-gray-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">
-                   Skip
-                </span>
+                <span className="absolute bottom-full mb-2 bg-gray-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">Skip</span>
             </button>
           )}
-
-          <button
-            onClick={handleStop}
-            className="group relative flex items-center justify-center h-12 w-12 rounded-full bg-white shadow-lg hover:scale-110 transition-all text-red-500"
-          >
+          <button onClick={handleStop} className="group relative flex items-center justify-center h-12 w-12 rounded-full bg-white shadow-lg hover:scale-110 transition-all text-red-500">
             <FaStop />
-            <span className="absolute bottom-full mb-2 bg-gray-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">
-               Stop
-            </span>
+            <span className="absolute bottom-full mb-2 bg-gray-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">Stop</span>
           </button>
         </div>
-
       </div>
     </div>
   );
