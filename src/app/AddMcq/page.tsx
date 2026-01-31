@@ -110,7 +110,7 @@ const AddQuestionsPage = () => {
     };
 
     try {
-      const response = await api.post("/questions/bulk-upload", payload);
+      const response = await api.post("/mcq/admin/bulk-upload", payload);
       alert("Questions uploaded successfully!");
       setStep(1);
       setQuestions([]);

@@ -19,6 +19,7 @@ import DataChart from "@/components/DataChart";
 
 // --- Interfaces ---
 interface Question {
+  id?: string | number; 
   question: string | number | object;
   text?: string;
   options?: string[];
@@ -26,6 +27,16 @@ interface Question {
   type?: string;
   qns?: string;
   debug?: { is_test_user?: boolean };
+}
+
+// Interface for the raw API response structure
+interface McqApiResponse {
+    id: number;
+    question_text: string;
+    option_a: string;
+    option_b: string;
+    option_c: string;
+    option_d: string;
 }
 
 interface SelectionItem {
@@ -52,6 +63,9 @@ function StartExercise() {
   const [question, setQuestion] = useState<Question | null>(null);
   const [error, setError] = useState<string | null>(null);
   
+  // New State for MCQ Mode
+  const [isMcqMode, setIsMcqMode] = useState(false);
+
   const [timer, setTimer] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const [answer, setAnswer] = useState("");
@@ -59,13 +73,15 @@ function StartExercise() {
   
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
- const [feedback, setFeedback] = useState<"correct" | "error" | null>(null);
- useEffect(() => {
+  const [feedback, setFeedback] = useState<"correct" | "error" | null>(null);
+  
+  useEffect(() => {
     if (feedback) {
       const timer = setTimeout(() => setFeedback(null), 1000);
       return () => clearTimeout(timer);
     }
   }, [feedback]);
+
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
@@ -91,6 +107,21 @@ function StartExercise() {
     return pauseTimer;
   }, [isPaused, loading, error]);
 
+  // --- HELPER: Map API MCQ format to Frontend format ---
+  const mapMcqToQuestion = (apiData: McqApiResponse): Question => {
+    return {
+      id: apiData.id,
+      question: apiData.question_text, // Map question_text -> question
+      options: [
+        apiData.option_a, 
+        apiData.option_b, 
+        apiData.option_c, 
+        apiData.option_d
+      ].filter(Boolean), // Create array and remove null/undefined
+      type: "mcq"
+    };
+  };
+
   const generateClockOptions = (correctTime: string) => {
     const parts = correctTime.split(":");
     if (parts.length < 2) return []; 
@@ -114,39 +145,63 @@ function StartExercise() {
     return Array.from(opts).sort(() => Math.random() - 0.5);
   };
 
+  // --- INITIALIZATION LOGIC ---
   useEffect(() => {
     if (hasInitialized.current) return;
     
     const initExerciseSession = async () => {
       const data = searchParams.get("data");
-
-      if (!data) {
-        setError("No exercise data provided.");
-        setLoading(false);
-        return;
-      }
+      const chapterId = searchParams.get("chapterId");
 
       hasInitialized.current = true;
 
       try {
-        const parsed: SelectionItem[] = JSON.parse(data);
-        if (parsed.length === 0) {
-          setError("No exercises selected.");
+        // --- PATH A: MCQ SESSION ---
+        if (chapterId) {
+          setIsMcqMode(true);
+          setGroupName("MCQ");
+
+          // 1. Start Session & Get First Question Immediately
+          const res = await api.post('/mcq/user/start-session', {
+            chapter_id: chapterId
+          });
+
+          // The API returns: { session_id, created, question: { ... } }
+          if (res.data && res.data.question) {
+            const formattedQuestion = mapMcqToQuestion(res.data.question);
+            setQuestion(formattedQuestion);
+          } else {
+            setError("No questions found in this chapter.");
+          }
+
           setLoading(false);
-          return;
+          setIsPaused(false);
+        } 
+        
+        // --- PATH B: STANDARD EXERCISE SESSION ---
+        else if (data) {
+          const parsed: SelectionItem[] = JSON.parse(data);
+          if (parsed.length === 0) {
+            setError("No exercises selected.");
+            setLoading(false);
+            return;
+          }
+
+          const group_name = parsed[0].category;
+          const exercise_names = parsed.map((item) => item.sub.toUpperCase());
+          const console_played_entered = 1;
+
+          await api.post('/start-session/', {
+            group_name,
+            exercise_names,
+            console_played_entered,
+          });
+
+          await fetchStandardQuestion(group_name, exercise_names);
+        } else {
+          setError("No exercise data provided.");
+          setLoading(false);
         }
-
-        const group_name = parsed[0].category;
-        const exercise_names = parsed.map((item) => item.sub.toUpperCase());
-        const console_played_entered = 1;
-
-        await api.post('/start-session/', {
-          group_name,
-          exercise_names,
-          console_played_entered,
-        });
-
-        await fetchQuestion(group_name, exercise_names);
 
       } catch (err) {
         console.error(err);
@@ -159,7 +214,7 @@ function StartExercise() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 
-  const fetchQuestion = async (group_name: string, exercise_names: string[]) => {
+  const fetchStandardQuestion = async (group_name: string, exercise_names: string[]) => {
     try {
       const response = await api.post('/exercise/', {
         group_name,
@@ -189,38 +244,59 @@ function StartExercise() {
     }
   };
 
- const handleSubmit = async (manualAnswer?: string) => {
+  // --- SUBMIT LOGIC ---
+  const handleSubmit = async (manualAnswer?: string) => {
     const finalAnswer = typeof manualAnswer === "string" ? manualAnswer : answer;
 
     if (!finalAnswer.trim()) return;
 
     try {
-      const response = await api.post('/exercise/submit/', { 
-        type: "submit", 
-        a: finalAnswer
-      });
+      let data; 
 
-      const data = response.data;
+      // 1. MCQ Submission
+      if (isMcqMode) {
+        const response = await api.post('/mcq/user/submit-answer', {
+            answer: finalAnswer,
+            question_id: question?.id ,
+            type: "submit"
+        });
+        
+        // Handle MCQ specific response structure if needed
+        // Assuming response structure is: { result: "correct", question: { ...nextQuestion... }, redirect: ... }
+        data = response.data;
+        
+        // If the backend returns the raw question object again (like start-session), map it:
+        if (data.question && data.question.question_text) {
+             const mappedQ = mapMcqToQuestion(data.question);
+             // Merge formatted question back into data object for processing below
+             data = { ...data, ...mappedQ }; 
+        }
+      } 
+      // 2. Standard Submission
+      else {
+        const response = await api.post('/exercise/submit/', { 
+          type: "submit", 
+          a: finalAnswer
+        });
+        data = response.data;
+      }
 
-      // 1. Handle Feedback Visuals
+      // --- Handle Result & Feedback ---
       if (data.result === "correct") {
         setFeedback("correct");
       } else {
         setFeedback("error");
-        // OPTIONAL: Focus input again so user can type immediately
         setTimeout(() => inputRef.current?.focus(), 100);
-        
-        // --- CRITICAL CHANGE ---
-        // If answer is WRONG, stop here. Do not update question.
-        return; 
+        return; // Stop if wrong
       }
 
-      // 2. Logic below only runs if result === "correct"
-      if (groupName?.toLowerCase() === "clock" && typeof data.question === "string") {
+      // --- Prepare Next Question ---
+      if (!isMcqMode && groupName?.toLowerCase() === "clock" && typeof data.question === "string") {
         data.options = generateClockOptions(data.question);
       }
       
       setQuestion({ 
+          id: data.id, // Ensure ID is passed for MCQ
           question: data.question,
           text: data.text,
           options: data.options,
@@ -228,11 +304,12 @@ function StartExercise() {
           debug: data.debug
       });
       
-      setAnswer(""); // Clear answer only on success
+      setAnswer(""); 
       setIsPaused(false);
       
       setTimeout(() => inputRef.current?.focus(), 100);
 
+      // Handle Redirect/Completion
       if (data.redirect) {
         if(data.debug?.is_test_user) {
           alert("Test user limit reached.");
@@ -247,23 +324,30 @@ function StartExercise() {
 
   const handleSkip = async () => {
     try {
-      const response = await api.post('/exercise/submit/', { 
-        type: "skip" 
-      });
+      let data;
+      
+      if(isMcqMode) {
+         // Assuming skip endpoint or logic returns the next question similarly
+         // If skip is just getting next question:
+         const response = await api.get('/mcq/user/get-question/?action=skip');
+         data = response.data;
+         
+         if (data.question && data.question.question_text) {
+             const mappedQ = mapMcqToQuestion(data.question);
+             data = { ...data, ...mappedQ };
+         }
+      } else {
+        const response = await api.post('/exercise/submit/', { 
+          type: "skip" 
+        });
+        data = response.data;
+      }
 
-      const data = response.data;
-
-      if (groupName?.toLowerCase() === "clock" && typeof data.question === "string") {
+      if (!isMcqMode && groupName?.toLowerCase() === "clock" && typeof data.question === "string") {
         data.options = generateClockOptions(data.question);
       }
 
-      setQuestion({ 
-          question: data.question,
-          text: data.text,
-          options: data.options,
-          type: data.type,
-          debug: data.debug
-      });
+      setQuestion(data);
       setAnswer("");
       setIsPaused(false);
       setTimeout(() => inputRef.current?.focus(), 100);
@@ -275,12 +359,14 @@ function StartExercise() {
 
   const handlePauseToggle = async () => {
     const type = isPaused ? "resume" : "pause";
-    try {
-      await api.post('/exercise/submit/', { type });
-      setIsPaused((prev) => !prev);
-    } catch (err) {
-      console.error("Failed to toggle pause", err);
+    if (!isMcqMode) {
+        try {
+            await api.post('/exercise/submit/', { type });
+        } catch (err) {
+            console.error("Failed to toggle pause", err);
+        }
     }
+    setIsPaused((prev) => !prev);
   };
 
   const handleStop = () => {
@@ -290,75 +376,74 @@ function StartExercise() {
   const renderDynamicContent = () => {
     const group = groupName?.toLowerCase();
 
+    // Specific MCQ rendering
+    if (isMcqMode) {
+         return (
+            <div className="text-center w-full">
+              <div className="text-3xl font-bold text-gray-800 mb-6">
+                {/* Check for LaTeX or Standard String */}
+                {typeof question?.question === 'string' && question.question.includes('\\') ? 
+                  <InlineMath math={question.question} /> : 
+                  (question?.question as string) || question?.text
+                }
+              </div>
+            </div>
+         );
+    }
+
+    // Standard Rendering Switch
     switch (group) {
       case "clock":
         return (
           <div className="my-6 flex-col">
-            <p className="font-semibold text-center mb-4">
-              Q: Tell the time 
-            </p>
+            <p className="font-semibold text-center mb-4">Q: Tell the time</p>
             <div className="flex justify-center items-center">
               <Clock time={(question?.question as string) || "00:00"} />
             </div>
           </div>
         );
-
       case "shape":
         return (
           <div className="my-6 flex-col">
-            <p className="font-semibold text-center mb-4">
-              Q: Tell the shape
-            </p>
+            <p className="font-semibold text-center mb-4">Q: Tell the shape</p>
             <div className="flex justify-center items-center">
               <ShapeComponent shape={(question?.question as string) || null} />
             </div>
           </div>
         );
-
       case "counting":
         return (
           <div className="my-6 flex-col">
-            <p className="font-semibold text-center mb-4">
-              Q: Count the number of sticks
-            </p>
+            <p className="font-semibold text-center mb-4">Q: Count the number of sticks</p>
             <div className="flex justify-center items-center">
               <StickComponent count={(question?.question as string) || null} />
             </div>
           </div>
         );
-
       case "fraction":
         return (
           <div className="my-6 flex-col">
-            <p className="font-semibold text-center mb-4">
-              Q: Tell the fraction of colored region
-            </p>
+            <p className="font-semibold text-center mb-4">Q: Tell the fraction of colored region</p>
             <div className="flex justify-center items-center">
               <Fraction frac={(question?.question as string) || "00:00"} />
             </div>
           </div>
         );
-
       case "datachart2":
       case "datachart":
         return (
           <div className="my-6 flex justify-center items-center w-full">
              <DataChart 
-              data={question?.question as { 
-                data_values: Record<string, number | string>; 
-                find_type: string; 
-              }} 
+              data={question?.question as any} 
             />
           </div>
         );
-
       case "arith":
         return (
           <div className="text-4xl font-bold text-gray-800 mb-6 text-center">
              <InlineMath math={(question?.question as string) || question?.text || ""} />
           </div>
         );
-
       default:
         return (
           <div className="text-center w-full">
@@ -372,14 +457,12 @@ function StartExercise() {
 
   return (
     <div className="min-h-screen bg-gray-100 p-6 flex justify-center items-center">
-      {/* START CHANGE: Dynamic Background Color */}
       <div className={`relative p-6 rounded-lg shadow-md w-full max-w-xl transition-colors duration-500 ${
         feedback === "correct" ? "bg-green-100 border-2 border-green-500" :
         feedback === "error" ? "bg-red-100 border-2 border-red-500" :
         "bg-white"
       }`}>
-      {/* END CHANGE */}
-        <h1 className="text-2xl font-bold mb-4">Start Exercise</h1>
+        <h1 className="text-2xl font-bold mb-4">{isMcqMode ? "Quiz" : "Start Exercise"}</h1>
 
         {loading && <p className="text-center py-10">Loading your session...</p>}
         {error && <p className="text-red-600 text-center py-10">{error}</p>}
@@ -394,8 +477,8 @@ function StartExercise() {
                 {renderDynamicContent()}
             </div>
 
-            {question.options && (
-              // UPDATED: Grid Layout (2 columns = 2 items per row)
+            {/* Options Grid */}
+            {question.options && question.options.length > 0 && (
               <ul className="grid grid-cols-2 gap-4">
                 {question.options.map((opt: string, idx: number) => (
                   <li 
@@ -403,10 +486,13 @@ function StartExercise() {
                     className="bg-gray-100 p-4 rounded-lg hover:bg-gray-200 cursor-pointer text-center font-bold shadow-sm transition-all hover:scale-105" 
                     onClick={() => {
                       setAnswer(opt);
-                      if (groupName?.toLowerCase() === "clock") {
+                      // Auto-submit for Clock (standard) OR MCQ Mode (if you want single-click answer)
+                      // If you prefer MCQ to require a separate "Submit" button, remove `|| isMcqMode`
+                      if (groupName?.toLowerCase() === "clock" || isMcqMode) {
                         handleSubmit(opt);
                       }
                     }}
+                    style={answer === opt ? { border: '2px solid #3b82f6', backgroundColor: '#eeffff' } : {}}
                   >
                     {opt}
                   </li>
@@ -414,12 +500,13 @@ function StartExercise() {
               </ul>
             )}
 
-            {groupName?.toLowerCase() !== "clock" && (
+            {/* Input Box: Only show if NO options exist */}
+            {(!question.options || question.options.length === 0) && (
               <input
                 ref={inputRef}
                 type="text"
-                inputMode="decimal" // <--- ADDED: Triggers mobile numeric keypad
-                pattern="[0-9]*"    // <--- ADDED: iOS specific trigger for numpad
+                inputMode="decimal"
+                pattern="[0-9]*"
                 className="w-full border p-3 rounded mt-2 shadow-sm text-center font-bold"
                 placeholder="Write your answer here..."
                 value={answer}
@@ -438,7 +525,11 @@ function StartExercise() {
               {isPaused ? (
                 <p className="text-gray-500 font-semibold">Please resume to continue</p>
               ) : (
-                groupName?.toLowerCase() !== "clock" && (
+                // Submit Button Logic
+                // 1. Hide for Clock (auto-submit)
+                // 2. Hide for MCQ (if you are using auto-submit on click above)
+                // If you want manual submit for MCQ, remove `&& !isMcqMode`
+                (groupName?.toLowerCase() !== "clock" && !isMcqMode) && (
                   <button
                     onClick={() => handleSubmit()}
                     className="px-6 py-2 cursor-pointer hover:scale-105 transition duration-300 bg-gradient-to-r from-green-500 to-green-700 text-white rounded font-bold"
@@ -452,7 +543,6 @@ function StartExercise() {
         )}
 
         <div className="absolute -bottom-16 left-1/2 -translate-x-1/2 flex gap-4">
-          
           <button
             onClick={handlePauseToggle}
             className="group relative flex items-center justify-center h-12 w-12 rounded-full bg-white shadow-lg hover:scale-110 transition-all text-gray-600"
