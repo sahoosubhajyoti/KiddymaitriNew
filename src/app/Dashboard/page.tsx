@@ -108,6 +108,18 @@ export default function Dashboard() {
               <span className="mt-4 text-orange-600 font-semibold group-hover:underline">{t('getReport')} &rarr;</span>
             </Link>
 
+           <Link 
+  href="/Dashboard/feedback" 
+  className="group bg-white border border-gray-200 rounded-xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 cursor-pointer flex flex-col items-center text-center"
+>
+  <div className="w-14 h-14 bg-teal-100 text-teal-600 rounded-full flex items-center justify-center mb-4 text-2xl group-hover:bg-teal-600 group-hover:text-white transition-colors">
+    💬
+  </div>
+  <h2 className="text-xl font-bold text-gray-800 mb-2">User Feedback</h2>
+  <p className="text-gray-500 text-sm">View and manage user reviews and suggestions.</p>
+  <span className="mt-4 text-teal-600 font-semibold group-hover:underline">View All &rarr;</span>
+</Link>
+
             {/* Card 5: Single User (Dropdown) */}
             <div className="group relative bg-white border border-gray-200 rounded-xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300 flex flex-col items-center text-center">
               <div className="w-14 h-14 bg-teal-100 text-teal-600 rounded-full flex items-center justify-center mb-4 text-2xl group-hover:bg-teal-600 group-hover:text-white transition-colors">
