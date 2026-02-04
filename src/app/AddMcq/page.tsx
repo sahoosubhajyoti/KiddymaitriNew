@@ -70,7 +70,8 @@ const AddQuestionsPage = () => {
       const ws = workbook.Sheets[wsname];
 
       // Convert to JSON (Typing raw data as any[] to allow mapping)
-     const data: any[] = XLSX.utils.sheet_to_json(ws);
+    // pass the interface as a generic to the function
+const data = XLSX.utils.sheet_to_json<ExcelRow>(ws);
 
       // Map Excel headers to your state structure
       const formattedQuestions: QuestionData[] = data.map((row) => ({
