@@ -17,6 +17,15 @@ interface QuestionData {
   correctAnswer: string;
 }
 
+interface ExcelRow {
+  question: string;
+  optionA: string;
+  optionB: string;
+  optionC: string;
+  optionD: string;
+  answer: string;
+}
+
 interface MetaData {
   className: string;
   subject: string;
@@ -61,7 +70,7 @@ const AddQuestionsPage = () => {
       const ws = workbook.Sheets[wsname];
 
       // Convert to JSON (Typing raw data as any[] to allow mapping)
-      const data: any[] = XLSX.utils.sheet_to_json(ws);
+     const data: any[] = XLSX.utils.sheet_to_json(ws);
 
       // Map Excel headers to your state structure
       const formattedQuestions: QuestionData[] = data.map((row) => ({
