@@ -129,13 +129,22 @@ function StartExercise() {
     };
   };
 
-  const normalizeOptions = (data: any) => {
+ const normalizeOptions = (data: Question | { options?: (string | OptionItem)[] }) => {
+    // Check if options exists, is an array, and the first item is a string
     if (data.options && Array.isArray(data.options) && typeof data.options[0] === 'string') {
-        data.options = data.options.map((str: string) => ({ key: str, value: str }));
+        
+        // 1. Cast 'data.options' to string[] for the mapping (Right hand side)
+        const stringOptions = data.options as string[];
+        
+        // 2. Cast 'data' to an object that EXPECTS OptionItem[] (Left hand side)
+        // This removes 'any' while telling TypeScript: "I am about to put OptionItem[] into this object"
+        (data as { options: OptionItem[] }).options = stringOptions.map((str) => ({ 
+            key: str, 
+            value: str 
+        }));
     }
-    return data;
+    return data as Question;
   };
-
   const generateClockOptions = (correctTime: string): OptionItem[] => {
     const parts = correctTime.split(":");
     if (parts.length < 2) return []; 
@@ -453,7 +462,10 @@ function StartExercise() {
         return (
           <div className="my-6 flex justify-center items-center w-full">
              <DataChart 
-              data={question?.question as any} 
+              data={question?.question as {
+  data_values: Record<string, number | string>;
+  find_type: string;
+}} 
             />
           </div>
         );

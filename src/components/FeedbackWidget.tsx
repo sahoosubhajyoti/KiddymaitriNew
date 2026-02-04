@@ -123,7 +123,7 @@ export default function FeedbackWidget() {
         <div className="mb-4 w-80 bg-white rounded-lg shadow-2xl border border-gray-200 overflow-hidden animate-fade-in-up">
           <div className="bg-gradient-to-r from-gray-900 to-pink-500 p-4">
             <h3 className="text-white font-bold text-lg">Send Feedback</h3>
-            <p className="text-purple-100 text-sm">We'd love to hear from you!</p>
+           <p className="text-purple-100 text-sm">We&apos;d love to hear from you!</p>
           </div>
           
           <form onSubmit={handleSubmit} className="p-4 space-y-3">

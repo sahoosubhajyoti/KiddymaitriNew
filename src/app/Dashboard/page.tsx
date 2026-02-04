@@ -18,7 +18,7 @@ export default function Dashboard() {
   // Fetch data (Admin Only)
   useEffect(() => {
     if (user?.type === "admin") {
-      api.get('/analytics/metadata/users')
+      api.get('/exercise-analysis/metadata/users')
         .then((response) => {
           setTotalUsers(response.data.total_users || 0);
         })
