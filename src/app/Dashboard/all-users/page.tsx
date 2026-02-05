@@ -25,7 +25,7 @@ export default function AllUsersPage() {
   useEffect(() => {
     if (user?.type === "admin") {
       api
-        .get("/analytics/metadata/all-users/")
+        .get("/exercise-analysis/metadata/all-users/")
         .then((res) => {
           setUsers(res.data);
           setLoading(false);

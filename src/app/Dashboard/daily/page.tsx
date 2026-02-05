@@ -13,7 +13,7 @@ export default function DailyActivity() {
 
   useEffect(() => {
       fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/analytics/metadata/daily/`,
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/exercise-analysis/metadata/daily/`,
         {
           method: "GET",
           headers: { "Content-Type": "application/json" },
