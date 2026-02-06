@@ -2,73 +2,142 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation"; // 1. Import SearchParams
-import { useAuth } from "../../context/Authcontext"; // 2. Import Auth Context
+import { useSearchParams } from "next/navigation";
+import { useAuth } from "../../context/Authcontext";
 import api from "../../utility/axiosInstance";
 import { FaClock, FaCheckCircle, FaTimesCircle, FaCalendarAlt, FaDumbbell } from "react-icons/fa";
 
 // --- Interfaces ---
+
+// 1. Existing UI Interface
 interface ProgressEntry {
-  "S.No.": number;
+  "S.No."?: number; // Made optional as we might generate it dynamically or ignore it
   Date: string;
   Exercise: string;
   Questions: number;
   Skipped: number;
   Correct_Attempts: number;
   Incorrect_Attempts: number;
-  Total_time: number;
+  Total_time: number; // In seconds
 }
 
 interface ApiResponse {
   data: ProgressEntry[];
 }
 
+// 2. New Interface for MCQ API Data
+interface McqHistoryItem {
+  id: number;
+  date: string;
+  chapter_name: string;
+  total_questions: number;
+  skipped_questions: number;
+  correct_answers: number;
+  wrong_answers: number;
+  total_time: string; // "HH:MM:SS" or "In Progress"
+  is_completed: boolean;
+}
+
+interface McqApiResponse {
+  results: McqHistoryItem[];
+}
+
 export default function ExerciseProgressPage() {
   const [progress, setProgress] = useState<ProgressEntry[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // 3. Get Auth and URL Params
   const { user } = useAuth();
   const searchParams = useSearchParams();
   const userId = searchParams.get("userId");
-  console.log(userId,"exercise");
 
-  // --- 1. Fetch Data ---
+  // --- Helper: Convert "HH:MM:SS" to Seconds ---
+  const parseTimeStringToSeconds = (timeStr: string): number => {
+    if (!timeStr || timeStr === "In Progress") return 0;
+    
+    const parts = timeStr.split(":").map(Number);
+    if (parts.length === 3) {
+      // HH:MM:SS
+      return parts[0] * 3600 + parts[1] * 60 + parts[2];
+    }
+    return 0;
+  };
+
+  // --- Fetch Data ---
   useEffect(() => {
     const fetchProgress = async () => {
       try {
-        let endpoint = '/data/'; // Default for normal user
+        setLoading(true);
 
-        // 4. Logic to switch API if Admin is viewing a specific user
+        // 1. Determine Endpoints
+        let exerciseEndpoint = "/data/"; // Default exercise endpoint
+        const mcqEndpoint = "/mcq/user/history"; // New MCQ endpoint
+
+        // Admin logic for specific user (Only applies to exercise endpoint based on your logic)
+        // If there is an admin endpoint for MCQs, update it here similarly.
         if (user?.type === "admin" && userId) {
-             endpoint = `/assessments/admin/history/${userId}/`;
+          exerciseEndpoint = `/assessments/admin/history/${userId}/`;
         }
 
-        const res = await api.get(endpoint);
-        const json: ApiResponse = res.data;
-        
-        // Ensure we set an array, even if API returns null/undefined
-        setProgress(json.data || []);
+        // 2. Fetch Both APIs in Parallel
+        const [exerciseRes, mcqRes] = await Promise.allSettled([
+          api.get(exerciseEndpoint),
+          api.get(mcqEndpoint)
+        ]);
+
+        let combinedData: ProgressEntry[] = [];
+
+        // 3. Process Exercise Data
+        if (exerciseRes.status === "fulfilled") {
+          const json: ApiResponse = exerciseRes.value.data;
+          if (Array.isArray(json.data)) {
+            combinedData = [...json.data];
+          }
+        } else {
+          console.error("Failed to fetch exercises", exerciseRes.reason);
+        }
+
+        // 4. Process MCQ Data & Normalize to ProgressEntry format
+        if (mcqRes.status === "fulfilled") {
+          const json: McqApiResponse = mcqRes.value.data;
+          if (Array.isArray(json.results)) {
+            const normalizedMcqs: ProgressEntry[] = json.results.map((item) => ({
+              Date: item.date, // You might want to format this date string to match the other API
+              Exercise: "MCQ", // Requirement: Show "MCQ" instead of chapter name
+              Questions: item.total_questions,
+              Skipped: item.skipped_questions,
+              Correct_Attempts: item.correct_answers,
+              Incorrect_Attempts: item.wrong_answers,
+              Total_time: parseTimeStringToSeconds(item.total_time),
+            }));
+            combinedData = [...combinedData, ...normalizedMcqs];
+          }
+        } else {
+          console.error("Failed to fetch MCQ history", mcqRes.reason);
+        }
+
+        // 5. Sort by Date (Descending) so newest are top
+        combinedData.sort((a, b) => new Date(b.Date).getTime() - new Date(a.Date).getTime());
+
+        setProgress(combinedData);
       } catch (err) {
-        console.error("Failed to load progress data", err);
+        console.error("Unexpected error loading progress data", err);
       } finally {
         setLoading(false);
       }
     };
 
-    // Only run fetch if we know the user type (wait for auth to load)
     if (user) {
-        fetchProgress();
+      fetchProgress();
     }
-  }, [user, userId]); // Re-run if user or userId changes
+  }, [user, userId]);
 
-  // --- Helper: Format Seconds ---
+  // --- Helper: Format Seconds to Human Readable ---
   const formatTime = (seconds: number) => {
     if (!seconds) return "0s";
     const h = Math.floor(seconds / 3600);
     const m = Math.floor((seconds % 3600) / 60);
     const s = Math.floor(seconds % 60);
-    
+
     if (h > 0) return `${h}h ${m}m`;
     if (m > 0) return `${m}m ${s}s`;
     return `${s}s`;
@@ -84,24 +153,23 @@ export default function ExerciseProgressPage() {
     "Time",
   ];
 
-  // Helper for Back Link
-  const backLink = user?.type === "admin" && userId 
-    ? `/Progress?userId=${userId}` 
-    : "/Progress";
+  const backLink = user?.type === "admin" && userId ? `/Progress?userId=${userId}` : "/Progress";
 
   return (
-    <div className="min-h-screen bg-yellow-50 p-4 md:p-8 pt-24 font-sans">
-      
+    <div className="min-h-screen bg-yellow-50 p-4 md:p-8 pt-24 mt-24 font-sans">
       {/* --- Header --- */}
       <div className="max-w-4xl mx-auto mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className="text-3xl font-black text-black uppercase tracking-tighter flex items-center gap-2">
-            {user?.type === "admin" && userId ? `User ${userId} Exercise Log` : "Exercise Log"} 
-            <FaDumbbell className="text-blue-600"/>
+            {user?.type === "admin" && userId ? `User ${userId} Exercise Log` : "Exercise Log"}
+            <FaDumbbell className="text-blue-600" />
           </h1>
           <p className="text-gray-600 font-medium">Tracking daily practice details</p>
         </div>
-        <Link href={backLink} className="text-sm font-bold border-b-2 border-black hover:text-blue-600 transition-colors">
+        <Link
+          href={backLink}
+          className="text-sm font-bold border-b-2 border-black hover:text-blue-600 transition-colors"
+        >
           &larr; Back to Stats
         </Link>
       </div>
@@ -119,7 +187,7 @@ export default function ExerciseProgressPage() {
             {/* === MOBILE VIEW (Cards) === */}
             <div className="md:hidden space-y-4">
               {progress.map((entry, index) => (
-                <div 
+                <div
                   key={index}
                   className="bg-white border-4 border-black p-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex flex-col gap-3"
                 >
@@ -132,7 +200,8 @@ export default function ExerciseProgressPage() {
                       <span className="text-xs font-bold text-gray-400 flex items-center justify-end gap-1">
                         <FaCalendarAlt /> Date
                       </span>
-                      <div className="font-bold text-black">{entry.Date}</div>
+                      {/* Truncate date if it's long ISO string */}
+                      <div className="font-bold text-black">{new Date(entry.Date).toLocaleDateString()}</div>
                     </div>
                   </div>
 
@@ -152,7 +221,9 @@ export default function ExerciseProgressPage() {
                   </div>
 
                   <div className="flex justify-between items-center text-sm font-bold text-gray-500 pt-2">
-                    <span>Questions: {entry.Questions} (Skip: {entry.Skipped})</span>
+                    <span>
+                      Questions: {entry.Questions} (Skip: {entry.Skipped})
+                    </span>
                     <span className="flex items-center gap-1 bg-gray-100 px-2 py-1 rounded border border-gray-300 text-black">
                       <FaClock /> {formatTime(entry.Total_time)}
                     </span>
@@ -176,7 +247,10 @@ export default function ExerciseProgressPage() {
                 <tbody className="divide-y-2 divide-gray-200">
                   {progress.map((entry, index) => (
                     <tr key={index} className="hover:bg-yellow-50 transition-colors">
-                      <td className="px-6 py-4 font-bold whitespace-nowrap">{entry.Date}</td>
+                      <td className="px-6 py-4 font-bold whitespace-nowrap">
+                         {/* Simple formatting to handle mixed date strings */}
+                        {new Date(entry.Date).toLocaleDateString()} <span className="text-xs text-gray-400 block">{new Date(entry.Date).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                      </td>
                       <td className="px-6 py-4 font-black text-blue-600 uppercase">{entry.Exercise}</td>
                       <td className="px-6 py-4 font-medium">{entry.Questions}</td>
                       <td className="px-6 py-4 font-medium text-gray-400">{entry.Skipped}</td>
