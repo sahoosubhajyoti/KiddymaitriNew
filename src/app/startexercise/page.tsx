@@ -493,7 +493,7 @@ function StartExercise() {
         feedback === "error" ? "bg-red-100 border-2 border-red-500" :
         "bg-white"
       }`}>
-        <h1 className="text-2xl font-bold mb-4">{isMcqMode ? "Start MCQ Exercise" : "Start Exercise"}</h1>
+        <h1 className="text-2xl font-bold mb-4">{isMcqMode ? "MCQ Exercise" : "Exercise"}</h1>
 
         {loading && <p className="text-center py-10">Loading your session...</p>}
         {error && <p className="text-red-600 text-center py-10">{error}</p>}

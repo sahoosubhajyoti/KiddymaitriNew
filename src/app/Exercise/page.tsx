@@ -3,67 +3,68 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "../../context/Authcontext";
-import ExerciseCard from "../../components/ExerciseCard";
 import api from "../../utility/axiosInstance";
+import { IoMdClose, IoMdCheckmark } from "react-icons/io";
+import ExerciseCard from "@/components/ExerciseCard";
+
+// --- CONFIGURATION ---
+const CATEGORY_IMAGES: Record<string, string> = {
+  "Clock": "/icons/clock.png",
+  "Shape": "/icons/shapes.png",
+  "Counting": "/icons/counting.png",
+  "Fraction": "/icons/fraction.png",
+  "DataChart": "/icons/chart.png",
+  "Arith": "/icons/math.png",
+  "Compare": "/icons/compare.png", 
+  "Sequence": "/icons/sequence.png", // Added based on your screenshot
+  "MCQ Practice": "/icons/test.png",
+};
+
+const DEFAULT_IMAGE = "/icons/default-exercise.png";
+const MCQ_CATEGORY = "MCQ Practice";
 
 // --- Interfaces ---
-
-// 1. Existing Dashboard Data
 interface ApiData {
   exercises: {
     [key: string]: string[];
   };
 }
 
-// 2. New MCQ Class Data (From your JSON)
-interface McqClass {
-  id: number;
-  name: string;
-}
-
-interface McqClassResponse {
-  count: number;
-  results: McqClass[];
-}
-
-// 3. Interfaces for the dynamic dropdowns
-interface Subject {
-  id: number;
-  name: string;
-}
-
-interface Chapter {
-  id: number;
-  name: string;
-}
-
-const MCQ_CATEGORY = "MCQ Practice";
+interface McqClass { id: number; name: string; }
+interface McqClassResponse { count: number; results: McqClass[]; }
+interface Subject { id: number; name: string; }
+interface Chapter { id: number; name: string; }
 
 export default function ExercisePage() {
   const { user, loading } = useAuth();
   const router = useRouter();
 
-  // --- State ---
+  // --- Data State ---
   const [apiData, setApiData] = useState<ApiData | null>(null);
-  const [mcqClasses, setMcqClasses] = useState<McqClass[]>([]);
   
-  // Stores the selected item on the main dashboard
-  // For MCQ, 'sub' will store the Class Name (e.g., "6")
-  const [selections, setSelections] = useState<{ category: string; sub: string }[]>([]);
-
-  // Modal State
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  // MCQ Specific Data
+  const [mcqClasses, setMcqClasses] = useState<McqClass[]>([]);
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [chapters, setChapters] = useState<Chapter[]>([]);
+
+  // --- UI State ---
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [activeCategory, setActiveCategory] = useState<string | null>(null);
+
+  // --- Selection State ---
+  const [selectedSubExercises, setSelectedSubExercises] = useState<string[]>([]);
   
+  // For MCQ Exercises - IDs
+  const [modalStep, setModalStep] = useState<"CLASS" | "SUBJECT" | "CHAPTER">("CLASS");
+  const [selectedClassId, setSelectedClassId] = useState<string>("");
   const [selectedSubjectId, setSelectedSubjectId] = useState<string>("");
   const [selectedChapterId, setSelectedChapterId] = useState<string>("");
 
-  // Loading states for the modal dropdowns
+  // Loading States
   const [loadingSubjects, setLoadingSubjects] = useState(false);
   const [loadingChapters, setLoadingChapters] = useState(false);
 
-  // --- 1. Initial Fetch (Dashboard + Classes) ---
+  // --- 1. Initial Fetch ---
   useEffect(() => {
     const fetchInitialData = async () => {
       try {
@@ -71,247 +72,241 @@ export default function ExercisePage() {
           api.get('/dashboard/'),
           api.get<McqClassResponse>('/mcq/user/classes')
         ]);
-
         setApiData(dashboardRes.data);
-        // We use .results because your API returns { count: 1, results: [...] }
-        setMcqClasses(mcqRes.data.results || []); 
+        setMcqClasses(mcqRes.data.results || []);
       } catch (err) {
         console.error("Error fetching initial data:", err);
       }
     };
-
-    if (user) {
-      fetchInitialData();
-    }
+    if (user) fetchInitialData();
   }, [user]);
 
-  // --- 2. Fetch Subjects when Modal Opens (dependent on selected Class) ---
+  // --- 2. MCQ Fetchers ---
   useEffect(() => {
     const fetchSubjects = async () => {
-      // Only run if modal is open and we have a selected class
-      if (!isModalOpen || selections.length === 0 || selections[0].category !== MCQ_CATEGORY) return;
-      
-      // Find the ID of the selected class name
-      const className = selections[0].sub;
-      const classObj = mcqClasses.find(c => c.name === className);
-      if (!classObj) return;
-
+      if (!selectedClassId) return;
       setLoadingSubjects(true);
       try {
-        // ⚠️ REPLACE WITH YOUR ACTUAL SUBJECT ENDPOINT
-        // Example: /mcq/user/subjects?class_id=1
-        const res = await api.get(`/mcq/user/subjects?class_id=${classObj.id}`);
-        setSubjects(res.data.results || res.data); // Adjust based on actual response structure
-      } catch (err) {
-        console.error("Error fetching subjects", err);
-        // Fallback for testing UI if API fails
-        setSubjects([{ id: 101, name: "Math" }, { id: 102, name: "Science" }]); 
-      } finally {
-        setLoadingSubjects(false);
-      }
+        const res = await api.get(`/mcq/user/subjects?class_id=${selectedClassId}`);
+        setSubjects(res.data.results || res.data);
+      } catch (err) { console.error(err); setSubjects([]); } 
+      finally { setLoadingSubjects(false); }
     };
-
     fetchSubjects();
-  }, [isModalOpen, selections, mcqClasses]);
+  }, [selectedClassId]);
 
-  // --- 3. Fetch Chapters when Subject Selected ---
   useEffect(() => {
     const fetchChapters = async () => {
-      if (!selectedSubjectId) {
-        setChapters([]);
-        return;
-      }
-
+      if (!selectedSubjectId) { setChapters([]); return; }
       setLoadingChapters(true);
       try {
-        // ⚠️ REPLACE WITH YOUR ACTUAL CHAPTER ENDPOINT
-        // Example: /mcq/user/chapters?subject_id=101
         const res = await api.get(`/mcq/user/chapters?subject_id=${selectedSubjectId}`);
         setChapters(res.data.results || res.data);
-      } catch (err) {
-        console.error("Error fetching chapters", err);
-        // Fallback for testing UI
-        setChapters([{ id: 201, name: "Algebra" }, { id: 202, name: "Geometry" }]);
-      } finally {
-        setLoadingChapters(false);
-      }
+      } catch (err) { console.error(err); setChapters([]); } 
+      finally { setLoadingChapters(false); }
     };
-
     fetchChapters();
   }, [selectedSubjectId]);
 
-
   // --- Handlers ---
 
-  const handleSelection = (category: string, sub: string, isSelected: boolean) => {
-    setSelections((prev) => {
-      if (isSelected) {
-        // Reset list if switching categories
-        if (prev.length > 0 && prev[0].category !== category) {
-          return [{ category, sub }];
-        }
-        // For MCQ, enforce single selection
-        if (category === MCQ_CATEGORY) {
-            return [{ category, sub }];
-        }
-        return [...prev, { category, sub }];
-      } else {
-        return prev.filter(item => !(item.category === category && item.sub === sub));
-      }
-    });
+  const handleCardClick = (category: string) => {
+    setActiveCategory(category);
+    setIsModalOpen(true);
+    
+    // Reset States
+    setSelectedSubExercises([]);
+    setModalStep("CLASS");
+    setSelectedClassId("");
+    setSelectedSubjectId("");
+    setSelectedChapterId("");
   };
 
-  const handleStartButton = () => {
-    if (selections.length > 0 && selections[0].category === MCQ_CATEGORY) {
-      // Open Modal for MCQ
-      setIsModalOpen(true);
-      setSelectedSubjectId("");
-      setSelectedChapterId("");
-    } else {
-      // Normal routing for other cards
-      router.push(`/startexercise?data=${encodeURIComponent(JSON.stringify(selections))}`);
-    }
+  const toggleStandardSelection = (sub: string) => {
+    setSelectedSubExercises(prev => 
+      prev.includes(sub) ? prev.filter(s => s !== sub) : [...prev, sub]
+    );
   };
 
-  const handleMcqFinalStart = () => {
+  const startStandardGame = () => {
+    if (!activeCategory || selectedSubExercises.length === 0) return;
+    
+    const selectionData = selectedSubExercises.map(sub => ({
+        category: activeCategory,
+        sub: sub
+    }));
+
+    router.push(`/startexercise?data=${encodeURIComponent(JSON.stringify(selectionData))}`);
+  };
+
+  const startMcqGame = () => {
     if (!selectedChapterId) return;
-    // Navigate with the specific Chapter ID
-    router.push(`/startexercise?chapterId=${selectedChapterId}`);
+    router.push(`/startexercise?chapterId=${selectedChapterId}&mode=mcq`);
   };
 
-  if (loading) return <div className="p-10 text-center">Loading...</div>;
+  if (loading) return <div className="p-10 text-center text-xl font-bold text-blue-500 animate-pulse mt-20">Loading Fun...</div>;
 
-  // --- Data merging for display ---
-  const activeCategory = selections.length > 0 ? selections[0].category : null;
+  // Prepare Data
   const displayExercises = { ...apiData?.exercises };
-  
-  // Add MCQ card if we have classes
-  if (mcqClasses.length > 0) {
-    displayExercises[MCQ_CATEGORY] = mcqClasses.map(c => c.name);
-  }
+  if (!displayExercises[MCQ_CATEGORY]) displayExercises[MCQ_CATEGORY] = [];
 
   return (
-    <div className="min-h-screen mt-10 flex flex-col items-center bg-gray-50 p-6">
+    // UPDATED: Added pt-32 (padding-top: 8rem) to clear the top navbar
+    <div className="min-h-screen pt-32 pb-12 flex flex-col items-center bg-blue-50 px-6 font-sans relative">
       
-      {/* Header */}
-      <div className="w-full max-w-4xl mb-6 flex items-center justify-between">
-        <Link href="/Dashboard" className="text-gray-500 hover:text-gray-800 flex items-center gap-2">
-          &larr; Back to Dashboard
+      {/* --- HEADER --- */}
+      {/* UPDATED: Added mb-16 to create a clear gap between this header and the grid below */}
+      <div className="w-full max-w-6xl mb-16 flex flex-col md:flex-row items-center justify-between z-10 relative bg-white/60 backdrop-blur-md p-6 rounded-2xl shadow-sm border border-white/50">
+        <Link href="/UserDashboard" className="text-blue-600 hover:text-blue-800 font-extrabold text-lg flex items-center gap-2 transition-transform hover:-translate-x-1 mb-4 md:mb-0">
+          <span className="text-2xl bg-blue-100 rounded-full w-10 h-10 flex items-center justify-center pb-1">&larr;</span> Back
         </Link>
+        <h1 className="text-3xl md:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 tracking-tight text-center drop-shadow-sm">
+          Choose Your Game! 🎮
+        </h1>
+        <div className="w-24 hidden md:block"></div> {/* Spacer for alignment */}
       </div>
 
-      <div className="bg-white p-6 rounded-lg shadow-md w-full max-w-4xl text-center">
-        <h1 className="text-2xl font-bold mb-2">Select Your Exercises 📚</h1>
-        <p className="text-gray-600">Choose a category to begin.</p>
-      </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 mt-8 w-full max-w-5xl">
-        {Object.entries(displayExercises).map(([category, subExercises]) => {
-          
-          const selectedSubsForThisCard = selections
-            .filter((item) => item.category === category)
-            .map((item) => item.sub);
-
-          const isDimmed = activeCategory && activeCategory !== category;
+      {/* --- MAIN GRID (Clean, Image Only) --- */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8 w-full max-w-6xl z-10">
+        {Object.keys(displayExercises).map((category) => {
+          const imagePath = CATEGORY_IMAGES[category] || DEFAULT_IMAGE;
 
           return (
-            <div
+            <ExerciseCard
               key={category}
-              className={`flex flex-col items-center transition-opacity duration-300 ${
-                isDimmed ? "opacity-50 pointer-events-none" : "opacity-100"
-              }`}
-            >
-              <ExerciseCard
-                category={category}
-                subExercises={subExercises || []}
-                onSelect={handleSelection}
-                selectedSubExercises={selectedSubsForThisCard}
-              />
-
-              {activeCategory === category && (
-                <button
-                  onClick={handleStartButton}
-                  className="mt-4 px-8 py-3 bg-blue-600 text-white font-bold rounded-lg shadow-md hover:bg-blue-700 transition-colors animate-fade-in-up"
-                >
-                  {category === MCQ_CATEGORY ? "Configure Test" : "Start Practice"}
-                </button>
-              )}
-            </div>
+              category={category}
+              imageSrc={imagePath}
+              onClick={() => handleCardClick(category)} 
+            />
           );
         })}
       </div>
 
-      {/* --- MCQ MODAL --- */}
-      {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden animate-fade-in-up">
+      {/* --- UNIVERSAL MODAL --- */}
+      {isModalOpen && activeCategory && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black bg-opacity-60 backdrop-blur-sm p-4 animate-fade-in">
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[85vh] transform transition-all scale-100 border-4 border-white">
             
-            <div className="bg-blue-600 p-4">
-              <h2 className="text-white text-lg font-bold">Configure MCQ Test</h2>
-              <p className="text-blue-100 text-sm">Class: {selections[0]?.sub}</p>
+            {/* Modal Header */}
+            <div className="bg-gradient-to-r from-blue-600 to-blue-500 p-5 flex justify-between items-center shrink-0">
+              <div>
+                <h2 className="text-white text-2xl font-black uppercase tracking-wide">{activeCategory}</h2>
+                <p className="text-blue-100 text-sm font-medium opacity-90">
+                  {activeCategory === MCQ_CATEGORY 
+                    ? "Select your MCQ topic" 
+                    : "Select specific games"}
+                </p>
+              </div>
+              <button onClick={() => setIsModalOpen(false)} className="bg-white/20 hover:bg-white/30 text-white p-2 rounded-full transition backdrop-blur-sm">
+                <IoMdClose size={24} />
+              </button>
             </div>
-            
-            <div className="p-6 space-y-5">
+
+            {/* Modal Body */}
+            <div className="p-6 overflow-y-auto flex-grow bg-gray-50">
               
-              {/* Subject Dropdown */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Select Subject</label>
-                <select 
-                  value={selectedSubjectId}
-                  onChange={(e) => {
-                    setSelectedSubjectId(e.target.value);
-                    setSelectedChapterId(""); // Reset chapter
-                  }}
-                  disabled={loadingSubjects}
-                  className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 outline-none transition disabled:bg-gray-100"
-                >
-                  <option value="" disabled>
-                    {loadingSubjects ? "Loading Subjects..." : "-- Choose Subject --"}
-                  </option>
-                  {subjects.map((sub) => (
-                    <option key={sub.id} value={sub.id}>
-                      {sub.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              {/* === OPTION A: MCQ FLOW === */}
+              {activeCategory === MCQ_CATEGORY ? (
+                <div className="space-y-4">
+                  {/* Step Indicators */}
+                  <div className="flex justify-between mb-4 text-xs font-bold text-gray-400 uppercase tracking-widest px-2">
+                    <span className={modalStep === "CLASS" ? "text-blue-600 border-b-2 border-blue-600 pb-1" : ""}>1. Class</span>
+                    <span className={modalStep === "SUBJECT" ? "text-blue-600 border-b-2 border-blue-600 pb-1" : ""}>2. Subject</span>
+                    <span className={modalStep === "CHAPTER" ? "text-blue-600 border-b-2 border-blue-600 pb-1" : ""}>3. Chapter</span>
+                  </div>
 
-              {/* Chapter Dropdown */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Select Chapter</label>
-                <select 
-                  value={selectedChapterId}
-                  onChange={(e) => setSelectedChapterId(e.target.value)}
-                  disabled={!selectedSubjectId || loadingChapters}
-                  className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 outline-none transition disabled:bg-gray-100 disabled:text-gray-400"
-                >
-                  <option value="" disabled>
-                    {loadingChapters ? "Loading Chapters..." : "-- Choose Chapter --"}
-                  </option>
-                  {chapters.map((chap) => (
-                    <option key={chap.id} value={chap.id}>
-                      {chap.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
+                  {/* MCQ Content */}
+                  <div className="space-y-2">
+                    {modalStep === "CLASS" && mcqClasses.map(cls => (
+                      <button key={cls.id} onClick={() => { setSelectedClassId(cls.id.toString()); setModalStep("SUBJECT"); }}
+                        className="w-full text-left p-4 rounded-xl bg-white border-2 border-gray-100 shadow-sm hover:border-blue-400 hover:bg-blue-50 font-bold text-gray-700 transition-all flex justify-between items-center group">
+                        {cls.name} <span className="text-gray-300 group-hover:text-blue-400">➜</span>
+                      </button>
+                    ))}
 
-            {/* Footer Actions */}
-            <div className="p-4 border-t border-gray-100 flex justify-end gap-3 bg-gray-50">
-              <button 
-                onClick={() => setIsModalOpen(false)}
-                className="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium"
-              >
-                Cancel
-              </button>
-              <button 
-                onClick={handleMcqFinalStart}
-                disabled={!selectedChapterId}
-                className="px-6 py-2 bg-green-600 text-white rounded-lg font-semibold shadow hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
-              >
-                Start Test
-              </button>
+                    {modalStep === "SUBJECT" && (
+                       loadingSubjects ? <div className="p-8 text-center text-gray-500 font-bold">Loading Subjects...</div> : 
+                       subjects.map(sub => (
+                          <button key={sub.id} onClick={() => { setSelectedSubjectId(sub.id.toString()); setModalStep("CHAPTER"); }}
+                            className="w-full text-left p-4 rounded-xl bg-white border-2 border-gray-100 shadow-sm hover:border-purple-400 hover:bg-purple-50 font-bold text-gray-700 transition-all flex justify-between items-center group">
+                            {sub.name} <span className="text-gray-300 group-hover:text-purple-400">➜</span>
+                          </button>
+                       ))
+                    )}
+
+                    {modalStep === "CHAPTER" && (
+                       loadingChapters ? <div className="p-8 text-center text-gray-500 font-bold">Loading Chapters...</div> :
+                       chapters.map(chap => (
+                          <button key={chap.id} onClick={() => setSelectedChapterId(chap.id.toString())}
+                            className={`w-full text-left p-4 rounded-xl border-2 shadow-sm font-bold transition-all flex justify-between items-center ${
+                               selectedChapterId === chap.id.toString() 
+                               ? "bg-green-50 border-green-500 text-green-700" 
+                               : "bg-white border-gray-100 text-gray-700 hover:border-green-300"
+                            }`}>
+                            {chap.name}
+                            {selectedChapterId === chap.id.toString() && <IoMdCheckmark size={24} className="text-green-600" />}
+                          </button>
+                       ))
+                    )}
+                  </div>
+
+                  {/* MCQ Navigation */}
+                  <div className="flex justify-between pt-4 mt-6 border-t border-gray-200">
+                     {modalStep !== "CLASS" ? (
+                        <button onClick={() => setModalStep(modalStep === "CHAPTER" ? "SUBJECT" : "CLASS")} className="text-gray-500 hover:text-gray-800 font-bold text-sm px-4 py-2 mt-2">
+                           &larr; Back
+                        </button>
+                     ) : <div></div>}
+                     
+                     {modalStep === "CHAPTER" && (
+                        <button onClick={startMcqGame} disabled={!selectedChapterId}
+                          className="bg-green-500 text-white px-8 py-3 mt-2 rounded-xl font-black shadow-lg hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-105 transition flex items-center gap-2">
+                          START TEST <span className="text-xl">🚀</span>
+                        </button>
+                     )}
+                  </div>
+                </div>
+              ) : (
+                
+                /* === OPTION B: STANDARD EXERCISE FLOW === */
+                <div className="flex flex-col h-full">
+                  <div className="grid grid-cols-2 gap-3 mb-6">
+                    {displayExercises[activeCategory]?.length > 0 ? (
+                      displayExercises[activeCategory].map((sub) => {
+                        const isSelected = selectedSubExercises.includes(sub);
+                        return (
+                          <button
+                            key={sub}
+                            onClick={() => toggleStandardSelection(sub)}
+                            className={`p-3 rounded-xl border-2 font-bold text-sm md:text-base transition-all active:scale-95 flex flex-col items-center justify-center text-center h-24 ${
+                              isSelected
+                                ? "bg-blue-600 border-blue-600 text-white shadow-lg"
+                                : "bg-white border-gray-200 text-gray-600 hover:border-blue-300 hover:bg-blue-50"
+                            }`}
+                          >
+                            <span className="break-words w-full">{sub.replace(/_/g, " ")}</span>
+                            {isSelected && <IoMdCheckmark className="mt-1" />}
+                          </button>
+                        );
+                      })
+                    ) : (
+                      <div className="col-span-2 flex flex-col items-center justify-center py-10 text-gray-400">
+                        <span className="text-4xl mb-2">📭</span>
+                        <p className="font-bold">No games found here.</p>
+                      </div>
+                    )}
+                  </div>
+
+                  <button
+                    onClick={startStandardGame}
+                    disabled={selectedSubExercises.length === 0}
+                    className="w-full mt-auto bg-gradient-to-r from-orange-400 to-red-500 text-white text-lg font-black py-4 rounded-xl shadow-lg border-b-4 border-red-600 active:border-b-0 active:translate-y-1 hover:brightness-110 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:border-gray-300"
+                  >
+                    PLAY NOW! 🚀
+                  </button>
+                </div>
+              )}
+
             </div>
           </div>
         </div>

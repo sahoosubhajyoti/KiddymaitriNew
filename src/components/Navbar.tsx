@@ -6,7 +6,8 @@ import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "../context/Authcontext";
 import { useLocale, useTranslations } from "next-intl";
-
+import { LuLayoutDashboard } from "react-icons/lu"; // For User Dashboard
+import { MdAdminPanelSettings } from "react-icons/md"; // For Admin Dashboard
 // Icons
 import { RxHamburgerMenu, RxCross1, RxChevronDown } from "react-icons/rx";
 import { IoHome } from "react-icons/io5";
@@ -255,16 +256,7 @@ const Navbar = () => {
               </div>
             ) : (
               <div className="relative flex items-center gap-4" ref={menuRef}>
-                <div className="relative group cursor-pointer">
-                  <button
-                    type="button"
-                    onClick={() => router.push("/Dashboard")}
-                    className="transition duration-300 cursor-pointer"
-                  >
-                    {t("dashboard")}
-                  </button>
-                  <span className="absolute left-0 -bottom-1 w-0 h-0.5 bg-black transition-all duration-300 group-hover:w-full"></span>
-                </div>
+               
 
                 <div
                   className="flex items-center gap-2 cursor-pointer"
@@ -305,6 +297,22 @@ const Navbar = () => {
                             Add Exercise
                           </button>
                         </li>
+                        
+                        
+                      )}
+                        {user.type === "admin" && (
+                        <li
+                        className="flex items-center gap-3 px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                        onClick={() => {
+                          router.push("/Dashboard");
+                          setIsUserMenuOpen(false);
+                        }}
+                      >
+                       <MdAdminPanelSettings size={20} />
+                        <span>AdminDashboard</span>
+                      </li>
+                        
+                        
                       )}
                       <li
                         className="flex items-center gap-3 px-4 py-2 hover:bg-gray-100 cursor-pointer"
@@ -315,6 +323,16 @@ const Navbar = () => {
                       >
                         <GiProgression size={18} />
                         <span>Progress</span>
+                      </li>
+                      <li
+                        className="flex items-center gap-3 px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                        onClick={() => {
+                          router.push("/UserDashboard");
+                          setIsUserMenuOpen(false);
+                        }}
+                      >
+                        <LuLayoutDashboard size={18} className="text-gray-500" />
+                        <span>{user.type==="admin"?"UserDashboard":"Dashboard"}</span>
                       </li>
                       <li
                         className="flex items-center gap-3 px-4 py-2 hover:bg-gray-100 cursor-pointer"
@@ -458,13 +476,13 @@ const Navbar = () => {
                 <button
                   type="button"
                   onClick={() => {
-                    router.push("/Dashboard");
+                    router.push("/UserDashboard");
                     setSidebarOpen(false);
                   }}
                   className="flex items-center gap-3 text-left font-medium text-gray-700 hover:text-blue-600 transition"
                 >
                   <IoHome size={20} />
-                  <span>Dashboard</span>
+                  <span>{user.type==="admin"?"UserDashboard":"Dashboard"}</span>
                 </button>
 
                 {/* Admin Add (Matches Desktop Logic) */}
@@ -483,6 +501,19 @@ const Navbar = () => {
                     </span>
                     <span>Add Exercise</span>
                   </button>
+                )}
+                {user.type==="admin" && (
+                  <button
+                  type="button"
+                  onClick={() => {
+                    router.push("/Dashboard");
+                    setSidebarOpen(false);
+                  }}
+                  className="flex items-center gap-3 text-left font-medium text-gray-700 hover:text-blue-600 transition"
+                >
+                  <IoHome size={20} />
+                  <span>AdminDashboard</span>
+                </button>
                 )}
 
                 {/* Progress */}
