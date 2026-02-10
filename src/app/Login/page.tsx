@@ -52,7 +52,7 @@ export default function Login() {
         setUser(userData);
          router.refresh();
         // Redirect to dashboard
-        router.push("/Dashboard"); // Lowercase unless your folder is actually "Dashboard"
+        router.push("/UserDashboard"); // Lowercase unless your folder is actually "Dashboard"
       } else {
         alert(data?.message || "Login failed");
       }
