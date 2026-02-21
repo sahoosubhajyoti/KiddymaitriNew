@@ -32,7 +32,10 @@
 
     "cardColoringTitle": "रंग भरना",
   "cardColoringDesc": "रंगों के साथ अपनी रचनात्मकता को उजागर करें।",
-  "cardColoringBtn": "रंग भरना शुरू करें"
+  "cardColoringBtn": "रंग भरना शुरू करें",
+  "cardGameTitle": "खेल",
+    "cardGameDesc": "सीखते समय मजेदार खेल खेलें।",
+    "cardGameBtn": "अभी खेलें"
   },
   "Navbar": {
     "home": "होम",

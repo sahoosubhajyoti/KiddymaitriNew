@@ -199,7 +199,7 @@ const Navbar = () => {
             ))}
 
             {/* Language Dropdown */}
-            <div className="relative ml-4" ref={langMenuRef}>
+            {/* <div className="relative ml-4" ref={langMenuRef}>
               <button
                 onClick={() => setIsLangMenuOpen(!isLangMenuOpen)}
                 className={`flex items-center gap-1 px-3 py-1.5 rounded-full border transition-all duration-200 ${
@@ -236,7 +236,7 @@ const Navbar = () => {
                   ))}
                 </div>
               )}
-            </div>
+            </div> */}
 
             {/* User Auth Section */}
             {user?.type === undefined ? (
@@ -411,7 +411,7 @@ const Navbar = () => {
           <hr className="border-gray-200" />
 
           {/* Mobile Language Section */}
-          <div className="space-y-3">
+          {/* <div className="space-y-3">
             <h3 className="text-sm uppercase text-gray-400 font-bold tracking-wider flex items-center gap-2">
               <IoMdGlobe /> Language
             </h3>
@@ -431,7 +431,7 @@ const Navbar = () => {
                 </button>
               ))}
             </div>
-          </div>
+          </div> */}
 
           <hr className="border-gray-200" />
 

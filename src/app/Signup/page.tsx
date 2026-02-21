@@ -7,6 +7,9 @@ export default function Signup() {
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [confirmPassword, setConfirmPassword] = useState<string>("");
+  const [name, setName] = useState<string>("");
+  const [studentClass, setStudentClass] = useState<string>("");
+  const [medium, setMedium] = useState<string>("English"); // Default value
   const [error, setError] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [step, setStep] = useState<"signup" | "otp">("signup");
@@ -38,6 +41,12 @@ export default function Signup() {
     // Validation
     if (!validateEmail(email)) {
       setError("Please enter a valid email address.");
+      setIsSubmitting(false);
+      return;
+    }
+    // Validation
+    if (!name || !studentClass) {
+      setError("Please fill in all fields.");
       setIsSubmitting(false);
       return;
     }
@@ -117,7 +126,9 @@ export default function Signup() {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/verify-otp`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, otp , password }),
+        body: JSON.stringify({ email, otp , password,name, 
+            studentClass, 
+            medium }),
       });
 
       if (res.ok) {
@@ -209,6 +220,33 @@ export default function Signup() {
             className="border p-2 rounded"
           />
           <input
+            type="text"
+            required
+            placeholder="Full Name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            className="border p-2 rounded"
+          />
+          <div className="flex gap-2">
+          <input
+                type="text"
+                required
+                placeholder="Class"
+                value={studentClass}
+                onChange={(e) => setStudentClass(e.target.value)}
+                className="border p-2 rounded w-1/2"
+              />
+              <select
+                value={medium}
+                onChange={(e) => setMedium(e.target.value)}
+                className="border p-2 rounded w-1/2 bg-white"
+              >
+                <option value="English">English</option>
+                <option value="Hindi">Hindi</option>
+                <option value="Odia">Odia</option>
+              </select>
+              </div>
+          <input
             type="password"
             required
             placeholder="Password (min 6 characters)"
@@ -224,6 +262,9 @@ export default function Signup() {
             onChange={(e) => setConfirmPassword(e.target.value)}
             className="border p-2 rounded"
           />
+         
+             
+             
           {error && <p className="text-red-500 text-sm">{error}</p>}
           <button
             type="submit"
@@ -242,13 +283,13 @@ export default function Signup() {
           </Link>
         </p>
       </div>
-      <div className="absolute bottom-6 right-6 text-sm text-gray-700">
+      {/* <div className="absolute bottom-6 right-6 text-sm text-gray-700">
         If you are a test user,{" "}
         <Link href="/TestSignup" className="text-blue-600 hover:underline font-semibold">
           sign up here
         </Link>
         
-      </div>
+      </div> */}
     </div>
   );
 }

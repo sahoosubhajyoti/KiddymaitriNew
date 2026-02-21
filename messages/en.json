@@ -28,7 +28,10 @@
     "cardTestBtn": "Start Test",
     "cardColoringTitle": "Coloring",
   "cardColoringDesc": "Unleash your creativity with colors.",
-  "cardColoringBtn": "Start Coloring"
+  "cardColoringBtn": "Start Coloring",
+  "cardGameTitle": "Games",
+    "cardGameDesc": "Play fun games while learning.",
+    "cardGameBtn": "Play Now"
   },
   "Navbar": {
     "home": "Home",

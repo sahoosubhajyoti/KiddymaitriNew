@@ -146,11 +146,11 @@ export default function ExerciseProgressPage() {
   const headers = [
     "Date",
     "Exercise",
-    "Qns",
-    "Skip",
-    "Correct",
-    "Wrong",
-    "Time",
+    "Total Qns",
+    "Total Skip",
+    "Total Correct",
+    "Total Wrong",
+    "Total Time",
   ];
 
   const backLink = user?.type === "admin" && userId ? `/Progress?userId=${userId}` : "/Progress";

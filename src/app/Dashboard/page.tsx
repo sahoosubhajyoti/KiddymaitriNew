@@ -45,12 +45,7 @@ export default function Dashboard() {
           <h1 className="text-4xl font-bold text-gray-800 underline-offset-8 underline decoration-blue-600">
             {t('adminDashboard')}
           </h1>
-          <Link
-            href="/Dashboard/export"
-            className="mt-4 md:mt-0 bg-red-600 text-white px-6 py-3 rounded-lg hover:bg-red-700 shadow-md transition-transform transform hover:scale-105 font-semibold flex items-center gap-2"
-          >
-            {t('exportData')} 📤
-          </Link>
+          
         </div>
 
         {/* Grid Menu: Follows the same card style as User Dashboard */}
@@ -120,15 +115,37 @@ export default function Dashboard() {
   <span className="mt-4 text-teal-600 font-semibold group-hover:underline">View All &rarr;</span>
 </Link>
 <Link 
-              href="/AdminAdd" 
+              href="/AddExercise" 
               className="group bg-white border border-gray-200 rounded-xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 cursor-pointer flex flex-col items-center text-center"
             >
               <div className="w-14 h-14 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mb-4 text-2xl group-hover:bg-blue-600 group-hover:text-white transition-colors">
                 🗂️
               </div>
               <h2 className="text-xl font-bold text-gray-800 mb-2">Add Exercises</h2>
-              <p className="text-gray-500 text-sm">Add Exercises, Pictures, Mcq questions.</p>
+              <p className="text-gray-500 text-sm">Add Exercises.</p>
               <span className="mt-4 text-blue-600 font-semibold group-hover:underline">Add Exercises &rarr;</span>
+            </Link>
+            <Link 
+              href="/AddPictures" 
+              className="group bg-white border border-gray-200 rounded-xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 cursor-pointer flex flex-col items-center text-center"
+            >
+              <div className="w-14 h-14 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mb-4 text-2xl group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                🗂️
+              </div>
+              <h2 className="text-xl font-bold text-gray-800 mb-2">Add Pictures</h2>
+              <p className="text-gray-500 text-sm">Add Pictures.</p>
+              <span className="mt-4 text-blue-600 font-semibold group-hover:underline">Add Pictutes &rarr;</span>
+            </Link>
+            <Link 
+              href="/AddMcq" 
+              className="group bg-white border border-gray-200 rounded-xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 cursor-pointer flex flex-col items-center text-center"
+            >
+              <div className="w-14 h-14 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mb-4 text-2xl group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                🗂️
+              </div>
+              <h2 className="text-xl font-bold text-gray-800 mb-2">Add Mcq</h2>
+              <p className="text-gray-500 text-sm">Add Mcq.</p>
+              <span className="mt-4 text-blue-600 font-semibold group-hover:underline">Add Mcq &rarr;</span>
             </Link>
 
             {/* Card 5: Single User (Dropdown) */}
