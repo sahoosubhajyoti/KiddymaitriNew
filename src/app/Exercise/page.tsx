@@ -161,7 +161,7 @@ export default function ExercisePage() {
           <span className="text-2xl bg-blue-100 rounded-full w-10 h-10 flex items-center justify-center pb-1">&larr;</span> Back
         </Link>
         <h1 className="text-3xl md:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 tracking-tight text-center drop-shadow-sm">
-          Choose Your Game! 🎮
+          Choose Your Exercise! 
         </h1>
         <div className="w-24 hidden md:block"></div> {/* Spacer for alignment */}
       </div>

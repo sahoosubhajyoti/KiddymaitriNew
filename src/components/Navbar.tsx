@@ -37,12 +37,12 @@ const Navbar = () => {
   const [isPending, startTransition] = useTransition();
 
   // Simple Locale Change (No Backend Call)
-  const changeLocale = (newLocale: string) => {
-    document.cookie = `MYNEXTAPP_LOCALE=${newLocale}; path=/; max-age=31536000; SameSite=Lax`;
-    startTransition(() => {
-      router.refresh();
-    });
-  };
+  // const changeLocale = (newLocale: string) => {
+  //   document.cookie = `MYNEXTAPP_LOCALE=${newLocale}; path=/; max-age=31536000; SameSite=Lax`;
+  //   startTransition(() => {
+  //     router.refresh();
+  //   });
+  // };
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 50);

@@ -3,12 +3,30 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 
+// Define the class options based on your list
+const classOptions = [
+  "Pre School",
+  "LKG",
+  "UKG",
+  "Class 1",
+  "Class 2",
+  "Class 3",
+  "Class 4",
+  "Class 5",
+  "Class 6",
+  "Class 7",
+  "Class 8",
+  "Class 9",
+  "Class 10",
+  "Class 11",
+];
+
 export default function Signup() {
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [confirmPassword, setConfirmPassword] = useState<string>("");
   const [name, setName] = useState<string>("");
-  const [studentClass, setStudentClass] = useState<string>("");
+  const [studentClass, setStudentClass] = useState<string>(""); // Starts empty
   const [medium, setMedium] = useState<string>("English"); // Default value
   const [error, setError] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -16,7 +34,6 @@ export default function Signup() {
   const [otp, setOtp] = useState<string>("");
   const [resendTime, setResendTime] = useState(0);
   const [canResend, setCanResend] = useState(true);
- 
 
   // Countdown timer for resend button
   useEffect(() => {
@@ -44,7 +61,6 @@ export default function Signup() {
       setIsSubmitting(false);
       return;
     }
-    // Validation
     if (!name || !studentClass) {
       setError("Please fill in all fields.");
       setIsSubmitting(false);
@@ -68,12 +84,11 @@ export default function Signup() {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/send-otp`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email}),
+        body: JSON.stringify({ email }),
       });
 
       if (res.ok) {
         setStep("otp");
-        
         setCanResend(false);
         setResendTime(60);
       } else {
@@ -126,9 +141,14 @@ export default function Signup() {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/verify-otp`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, otp , password,name, 
-            studentClass, 
-            medium }),
+        body: JSON.stringify({
+          email,
+          otp,
+          password,
+          name,
+          studentClass,
+          medium,
+        }),
       });
 
       if (res.ok) {
@@ -165,7 +185,7 @@ export default function Signup() {
               onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
               className="border p-2 rounded text-center text-lg"
             />
-            
+
             <button
               onClick={handleVerifyOtp}
               disabled={isSubmitting}
@@ -193,10 +213,7 @@ export default function Signup() {
 
           <p className="mt-6 text-sm text-center">
             Want to change email?{" "}
-            <button 
-              onClick={() => setStep("signup")}
-              className="text-blue-600 hover:underline"
-            >
+            <button onClick={() => setStep("signup")} className="text-blue-600 hover:underline">
               Go back
             </button>
           </p>
@@ -228,24 +245,35 @@ export default function Signup() {
             className="border p-2 rounded"
           />
           <div className="flex gap-2">
-          <input
-                type="text"
-                required
-                placeholder="Class"
-                value={studentClass}
-                onChange={(e) => setStudentClass(e.target.value)}
-                className="border p-2 rounded w-1/2"
-              />
-              <select
-                value={medium}
-                onChange={(e) => setMedium(e.target.value)}
-                className="border p-2 rounded w-1/2 bg-white"
-              >
-                <option value="English">English</option>
-                <option value="Hindi">Hindi</option>
-                <option value="Odia">Odia</option>
-              </select>
-              </div>
+            {/* New Class Dropdown */}
+            <select
+              required
+              value={studentClass}
+              onChange={(e) => setStudentClass(e.target.value)}
+              className="border p-2 rounded w-1/2 bg-white text-gray-700"
+            >
+              <option value="" disabled>
+                Select Class
+              </option>
+              {classOptions.map((cls, index) => (
+                <option key={index} value={cls}>
+                  {cls}
+                </option>
+              ))}
+            </select>
+
+            {/* Medium Dropdown */}
+            <select
+              required
+              value={medium}
+              onChange={(e) => setMedium(e.target.value)}
+              className="border p-2 rounded w-1/2 bg-white text-gray-700"
+            >
+              <option value="English">English</option>
+              <option value="Hindi">Hindi</option>
+              <option value="Odia">Odia</option>
+            </select>
+          </div>
           <input
             type="password"
             required
@@ -262,9 +290,7 @@ export default function Signup() {
             onChange={(e) => setConfirmPassword(e.target.value)}
             className="border p-2 rounded"
           />
-         
-             
-             
+
           {error && <p className="text-red-500 text-sm">{error}</p>}
           <button
             type="submit"
@@ -283,13 +309,6 @@ export default function Signup() {
           </Link>
         </p>
       </div>
-      {/* <div className="absolute bottom-6 right-6 text-sm text-gray-700">
-        If you are a test user,{" "}
-        <Link href="/TestSignup" className="text-blue-600 hover:underline font-semibold">
-          sign up here
-        </Link>
-        
-      </div> */}
     </div>
   );
 }
