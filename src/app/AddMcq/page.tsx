@@ -1,6 +1,6 @@
 "use client";
 import { useState, ChangeEvent } from "react";
-import * as XLSX from "xlsx";
+import ExcelJS from "exceljs";
 import api from "../../utility/axiosInstance";
 import QuestionForm from "../../components/QuestionForm";
 
@@ -56,39 +56,47 @@ const AddQuestionsPage = () => {
   };
 
   // Typed File Upload Handler
-  const handleFileUpload = (e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]; // Optional chaining for safety
+ const handleFileUpload = async (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
     if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = (evt) => {
-      const bstr = evt.target?.result;
-      if (!bstr) return;
+    try {
+      const arrayBuffer = await file.arrayBuffer();
+      const workbook = new ExcelJS.Workbook();
+      await workbook.xlsx.load(arrayBuffer);
 
-      const workbook = XLSX.read(bstr, { type: "binary" });
-      const wsname = workbook.SheetNames[0];
-      const ws = workbook.Sheets[wsname];
+      // Get the first worksheet
+      const worksheet = workbook.getWorksheet(1); // ExcelJS is 1-indexed
+      if (!worksheet) return;
 
-      // Convert to JSON (Typing raw data as any[] to allow mapping)
-    // pass the interface as a generic to the function
-const data = XLSX.utils.sheet_to_json<ExcelRow>(ws);
+      const formattedQuestions: QuestionData[] = [];
 
-      // Map Excel headers to your state structure
-      const formattedQuestions: QuestionData[] = data.map((row) => ({
-        questionText: row.question || "",
-        options: {
-          A: row.optionA || "",
-          B: row.optionB || "",
-          C: row.optionC || "",
-          D: row.optionD || "",
-        },
-        correctAnswer: row.answer || "A",
-      }));
+      // Iterate through rows (starting from row 2 to skip headers)
+      worksheet.eachRow((row, rowNumber) => {
+        if (rowNumber === 1) return; // Skip header row
+
+        // Get values (using the column numbers corresponding to your Excel structure)
+        // 1: question, 2: optionA, 3: optionB, 4: optionC, 5: optionD, 6: answer
+        const rowValues = row.values as any[]; 
+        
+        formattedQuestions.push({
+          questionText: rowValues[1]?.toString() || "",
+          options: {
+            A: rowValues[2]?.toString() || "",
+            B: rowValues[3]?.toString() || "",
+            C: rowValues[4]?.toString() || "",
+            D: rowValues[5]?.toString() || "",
+          },
+          correctAnswer: rowValues[6]?.toString() || "A",
+        });
+      });
 
       setQuestions(formattedQuestions);
       setStep(3);
-    };
-    reader.readAsBinaryString(file);
+    } catch (error) {
+      console.error("Error reading excel file:", error);
+      alert("Failed to parse the Excel file. Please ensure it is a valid .xlsx file.");
+    }
   };
 
   // Typed Question Save

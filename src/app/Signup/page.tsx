@@ -3,22 +3,29 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 
-// Define the class options based on your list
+// Define the class options as key-value pairs
 const classOptions = [
-  "Pre School",
-  "LKG",
-  "UKG",
-  "Class 1",
-  "Class 2",
-  "Class 3",
-  "Class 4",
-  "Class 5",
-  "Class 6",
-  "Class 7",
-  "Class 8",
-  "Class 9",
-  "Class 10",
-  "Class 11",
+  { key: "0", label: "Pre School" },
+  { key: "1", label: "LKG" },
+  { key: "2", label: "UKG" },
+  { key: "3", label: "Class 1" },
+  { key: "4", label: "Class 2" },
+  { key: "5", label: "Class 3" },
+  { key: "6", label: "Class 4" },
+  { key: "7", label: "Class 5" },
+  { key: "8", label: "Class 6" },
+  { key: "9", label: "Class 7" },
+  { key: "10", label: "Class 8" },
+  { key: "11", label: "Class 9" },
+  { key: "12", label: "Class 10" },
+  { key: "13", label: "Class 11" },
+];
+
+// Define the medium options as key-value pairs
+const mediumOptions = [
+  { key: "ENGLISH", label: "English" },
+  { key: "HINDI", label: "हिन्दी" },
+  { key: "ODIA", label: "ଓଡ଼ିଆ" },
 ];
 
 export default function Signup() {
@@ -26,8 +33,8 @@ export default function Signup() {
   const [password, setPassword] = useState<string>("");
   const [confirmPassword, setConfirmPassword] = useState<string>("");
   const [name, setName] = useState<string>("");
-  const [studentClass, setStudentClass] = useState<string>(""); // Starts empty
-  const [medium, setMedium] = useState<string>("English"); // Default value
+  const [class_num, setClassNum] = useState<string>(""); // Starts empty
+  const [medium, setMedium] = useState<string>("ENGLISH"); // Default value updated to key
   const [error, setError] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [step, setStep] = useState<"signup" | "otp">("signup");
@@ -61,7 +68,7 @@ export default function Signup() {
       setIsSubmitting(false);
       return;
     }
-    if (!name || !studentClass) {
+    if (!name || !class_num) {
       setError("Please fill in all fields.");
       setIsSubmitting(false);
       return;
@@ -146,7 +153,7 @@ export default function Signup() {
           otp,
           password,
           name,
-          studentClass,
+          class_num: Number(class_num), // Converting string key "0" into integer 0 for the backend
           medium,
         }),
       });
@@ -245,33 +252,35 @@ export default function Signup() {
             className="border p-2 rounded"
           />
           <div className="flex gap-2">
-            {/* New Class Dropdown */}
+            {/* Dynamic Class Dropdown mapping */}
             <select
               required
-              value={studentClass}
-              onChange={(e) => setStudentClass(e.target.value)}
+              value={class_num}
+              onChange={(e) => setClassNum(e.target.value)}
               className="border p-2 rounded w-1/2 bg-white text-gray-700"
             >
               <option value="" disabled>
                 Select Class
               </option>
-              {classOptions.map((cls, index) => (
-                <option key={index} value={cls}>
-                  {cls}
+              {classOptions.map((cls) => (
+                <option key={cls.key} value={cls.key}>
+                  {cls.label}
                 </option>
               ))}
             </select>
 
-            {/* Medium Dropdown */}
+            {/* Dynamic Medium Dropdown mapping */}
             <select
               required
               value={medium}
               onChange={(e) => setMedium(e.target.value)}
               className="border p-2 rounded w-1/2 bg-white text-gray-700"
             >
-              <option value="English">English</option>
-              <option value="Hindi">Hindi</option>
-              <option value="Odia">Odia</option>
+              {mediumOptions.map((med) => (
+                <option key={med.key} value={med.key}>
+                  {med.label}
+                </option>
+              ))}
             </select>
           </div>
           <input

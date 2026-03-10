@@ -9,6 +9,7 @@ interface User {
   image?: string;
   type?: string;
   language?: string;
+  class_num?: string;
 }
 
 interface AuthContextType {
@@ -38,6 +39,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       try {
         const response = await api.get('/user');
         const userData = response.data;
+        console.log(userData);
         setUser(userData);
         localStorage.setItem("user", JSON.stringify(userData));
 
