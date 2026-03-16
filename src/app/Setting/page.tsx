@@ -16,22 +16,11 @@ const languages = [
   { code: "odi", label: "ଓଡିଆ", short: "OD", backendValue: "ODIA" },
 ];
 
-const classOptions = [
-  { key: "0", label: "Pre School" },
-  { key: "1", label: "LKG" },
-  { key: "2", label: "UKG" },
-  { key: "3", label: "Class 1" },
-  { key: "4", label: "Class 2" },
-  { key: "5", label: "Class 3" },
-  { key: "6", label: "Class 4" },
-  { key: "7", label: "Class 5" },
-  { key: "8", label: "Class 6" },
-  { key: "9", label: "Class 7" },
-  { key: "10", label: "Class 8" },
-  { key: "11", label: "Class 9" },
-  { key: "12", label: "Class 10" },
-  { key: "13", label: "Class 11" },
-];
+// Define the expected structure from your API
+interface ClassOption {
+  id: string | number;
+  name: string;
+}
 
 interface UserSettings {
   email_notifications: boolean;
@@ -41,6 +30,10 @@ interface UserSettings {
 export default function SettingsPage() {
   const { user, setUser } = useAuth(); // ✅ Get user and setUser from Context
   const [dbSettings, setDbSettings] = useState<UserSettings | null>(null);
+  
+  // ✅ New state to hold fetched classes
+  const [classes, setClasses] = useState<ClassOption[]>([]);
+  
   const router = useRouter();
   const locale = useLocale();
   const [isPending, startTransition] = useTransition();
@@ -86,6 +79,33 @@ export default function SettingsPage() {
     }
   };
 
+  // ✅ Fetch dynamic classes from API on mount
+  useEffect(() => {
+  const fetchClasses = async () => {
+    try {
+      console.log("1. Starting to fetch classes...");
+      
+      // Using your Axios instance (recommended)
+      const res = await api.get('/mcq/user/classes/');
+      
+      console.log("2. API Response Data:", res.data);
+
+      // Check if results exist
+      if (res.data && Array.isArray(res.data.results)) {
+        console.log("3. Setting classes to:", res.data.results);
+        setClasses(res.data.results);
+      } else {
+        console.error("❌ 'results' array is missing from the response!", res.data);
+      }
+    } catch (err) {
+      console.error("❌ Error fetching classes:", err);
+    }
+  };
+
+    fetchClasses();
+  }, []);
+
+  // Fetch user settings
   useEffect(() => {
     const fetchDbSettings = async () => {
       try {
@@ -135,7 +155,8 @@ export default function SettingsPage() {
               </div>
             </div>
 
-            <select
+            {/* ✅ Dynamic Class Dropdown mapped from API state */}
+           <select
               value={user?.class_num || ""}
               onChange={(e) => changeClassNum(e.target.value)}
               className={`bg-gray-50 border text-sm rounded-lg p-2.5 outline-none transition-all ${
@@ -143,9 +164,16 @@ export default function SettingsPage() {
               }`}
             >
               <option value="" disabled>Select Class</option>
-              {classOptions.map((cls) => (
-                <option key={cls.key} value={cls.key}>{cls.label}</option>
-              ))}
+              
+              {/* Show loading state if array is empty */}
+              {classes.length === 0 ? (
+                <option value="" disabled>Loading classes...</option>
+              ) : (
+                /* Map over the results */
+                classes.map((cls) => (
+                  <option key={cls.id} value={cls.id}>{cls.name}</option>
+                ))
+              )}
             </select>
           </div>
 

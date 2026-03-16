@@ -3,24 +3,6 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 
-// Define the class options as key-value pairs
-const classOptions = [
-  { key: "0", label: "Pre School" },
-  { key: "1", label: "LKG" },
-  { key: "2", label: "UKG" },
-  { key: "3", label: "Class 1" },
-  { key: "4", label: "Class 2" },
-  { key: "5", label: "Class 3" },
-  { key: "6", label: "Class 4" },
-  { key: "7", label: "Class 5" },
-  { key: "8", label: "Class 6" },
-  { key: "9", label: "Class 7" },
-  { key: "10", label: "Class 8" },
-  { key: "11", label: "Class 9" },
-  { key: "12", label: "Class 10" },
-  { key: "13", label: "Class 11" },
-];
-
 // Define the medium options as key-value pairs
 const mediumOptions = [
   { key: "ENGLISH", label: "English" },
@@ -28,19 +10,49 @@ const mediumOptions = [
   { key: "ODIA", label: "ଓଡ଼ିଆ" },
 ];
 
+// Define the expected structure from your API
+// Adjust 'id' and 'name' if your API uses different keys (e.g., '_id', 'className')
+interface ClassOption {
+  id: string | number;
+  name: string;
+}
+
 export default function Signup() {
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [confirmPassword, setConfirmPassword] = useState<string>("");
   const [name, setName] = useState<string>("");
-  const [class_num, setClassNum] = useState<string>(""); // Starts empty
-  const [medium, setMedium] = useState<string>("ENGLISH"); // Default value updated to key
+  const [class_num, setClassNum] = useState<string>(""); 
+  const [medium, setMedium] = useState<string>("ENGLISH"); 
   const [error, setError] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [step, setStep] = useState<"signup" | "otp">("signup");
   const [otp, setOtp] = useState<string>("");
   const [resendTime, setResendTime] = useState(0);
   const [canResend, setCanResend] = useState(true);
+
+  // State to hold the fetched classes
+  const [classes, setClasses] = useState<ClassOption[]>([]);
+
+  // Fetch classes on component mount
+  useEffect(() => {
+    const fetchClasses = async () => {
+      try {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/mcq/user/classes/`);
+        if (res.ok) {
+          const data = await res.json();
+          // Adjust 'data' if your API wraps the array (e.g., data.data or data.classes)
+          setClasses(Array.isArray(data) ? data : data.classes || []);
+        } else {
+          console.error("Failed to fetch classes, status:", res.status);
+        }
+      } catch (err) {
+        console.error("Error fetching classes:", err);
+      }
+    };
+
+    fetchClasses();
+  }, []);
 
   // Countdown timer for resend button
   useEffect(() => {
@@ -153,7 +165,7 @@ export default function Signup() {
           otp,
           password,
           name,
-          class_num: Number(class_num), // Converting string key "0" into integer 0 for the backend
+          class_num: Number(class_num), // Keep this if backend explicitly needs a number
           medium,
         }),
       });
@@ -252,7 +264,8 @@ export default function Signup() {
             className="border p-2 rounded"
           />
           <div className="flex gap-2">
-            {/* Dynamic Class Dropdown mapping */}
+            
+            {/* Dynamic Class Dropdown mapped from API state */}
             <select
               required
               value={class_num}
@@ -262,14 +275,14 @@ export default function Signup() {
               <option value="" disabled>
                 Select Class
               </option>
-              {classOptions.map((cls) => (
-                <option key={cls.key} value={cls.key}>
-                  {cls.label}
+              {classes.map((cls) => (
+                <option key={cls.id} value={cls.id}>
+                  {cls.name}
                 </option>
               ))}
             </select>
 
-            {/* Dynamic Medium Dropdown mapping */}
+            {/* Medium Dropdown */}
             <select
               required
               value={medium}
