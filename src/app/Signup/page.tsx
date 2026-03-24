@@ -42,7 +42,7 @@ export default function Signup() {
         if (res.ok) {
           const data = await res.json();
           // Adjust 'data' if your API wraps the array (e.g., data.data or data.classes)
-          setClasses(Array.isArray(data) ? data : data.classes || []);
+          setClasses(Array.isArray(data) ? data : data.results || []);
         } else {
           console.error("Failed to fetch classes, status:", res.status);
         }
