@@ -77,7 +77,8 @@ const AddQuestionsPage = () => {
 
         // Get values (using the column numbers corresponding to your Excel structure)
         // 1: question, 2: optionA, 3: optionB, 4: optionC, 5: optionD, 6: answer
-        const rowValues = row.values as any[]; 
+       // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const rowValues = row.values as any[];
         
         formattedQuestions.push({
           questionText: rowValues[1]?.toString() || "",
