@@ -7,7 +7,7 @@ import api from "../../utility/axiosInstance";
 import { IoMdClose, IoMdCheckmark } from "react-icons/io";
 import ExerciseCard from "@/components/ExerciseCard";
 
-// --- CONFIGURATION ---
+// --- CONFIGURATION ---ok
 const CATEGORY_IMAGES: Record<string, string> = {
   "Clock": "/icons/clock.png",
   "Shape": "/icons/shapes.png",
