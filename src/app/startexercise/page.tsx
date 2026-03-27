@@ -71,7 +71,8 @@ function StartExercise() {
   const [isMcqMode, setIsMcqMode] = useState(false);
   const [sessionId, setSessionId] = useState<number | string | null>(null);
 
-  const [timer, setTimer] = useState(0);
+  // ✅ Timer starts at 60 seconds
+  const [timer, setTimer] = useState(60);
   const [isPaused, setIsPaused] = useState(false);
   
   const [answer, setAnswer] = useState(""); 
@@ -83,8 +84,8 @@ function StartExercise() {
   
   useEffect(() => {
     if (feedback) {
-      const timer = setTimeout(() => setFeedback(null), 1000);
-      return () => clearTimeout(timer);
+      const fbTimer = setTimeout(() => setFeedback(null), 1000);
+      return () => clearTimeout(fbTimer);
     }
   }, [feedback]);
 
@@ -96,10 +97,11 @@ function StartExercise() {
       .padStart(2, "0")}`;
   };
 
+  // ✅ Countdown Logic
   const startTimer = () => {
     if (intervalRef.current) clearInterval(intervalRef.current);
     intervalRef.current = setInterval(() => {
-      setTimer((prev) => prev + 1);
+      setTimer((prev) => (prev > 0 ? prev - 1 : 0));
     }, 1000);
   };
 
@@ -112,6 +114,14 @@ function StartExercise() {
     else pauseTimer();
     return pauseTimer;
   }, [isPaused, loading, error]);
+
+  // ✅ Auto-skip when timer reaches 0
+  useEffect(() => {
+    if (timer === 0 && !loading && !isPaused && question) {
+      handleSkip();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [timer]);
 
   // --- HELPER: Map API MCQ format to Frontend Key-Value format ---
   const mapMcqToQuestion = (apiData: McqApiResponse): Question => {
@@ -129,15 +139,9 @@ function StartExercise() {
     };
   };
 
- const normalizeOptions = (data: Question | { options?: (string | OptionItem)[] }) => {
-    // Check if options exists, is an array, and the first item is a string
+  const normalizeOptions = (data: Question | { options?: (string | OptionItem)[] }) => {
     if (data.options && Array.isArray(data.options) && typeof data.options[0] === 'string') {
-        
-        // 1. Cast 'data.options' to string[] for the mapping (Right hand side)
         const stringOptions = data.options as string[];
-        
-        // 2. Cast 'data' to an object that EXPECTS OptionItem[] (Left hand side)
-        // This removes 'any' while telling TypeScript: "I am about to put OptionItem[] into this object"
         (data as { options: OptionItem[] }).options = stringOptions.map((str) => ({ 
             key: str, 
             value: str 
@@ -145,6 +149,7 @@ function StartExercise() {
     }
     return data as Question;
   };
+
   const generateClockOptions = (correctTime: string): OptionItem[] => {
     const parts = correctTime.split(":");
     if (parts.length < 2) return []; 
@@ -194,6 +199,7 @@ function StartExercise() {
              if (res.data.question) {
                 const formattedQuestion = mapMcqToQuestion(res.data.question);
                 setQuestion(formattedQuestion);
+                setTimer(60); // ✅ Reset Timer
              } else {
                 setError("No questions found in this chapter.");
              }
@@ -253,6 +259,7 @@ function StartExercise() {
       setQuestion(data);
       setGroupName(group_name || null);
       setAnswer("");
+      setTimer(60); // ✅ Reset Timer
       setIsPaused(false);
       setLoading(false);
       setTimeout(() => inputRef.current?.focus(), 100);
@@ -288,7 +295,6 @@ function StartExercise() {
         
         data = response.data;
         
-        // Map the NEXT question if it exists
         if (data.question && data.question.question_text) {
              const mappedQ = mapMcqToQuestion(data.question);
              data = { ...data, ...mappedQ }; 
@@ -301,8 +307,6 @@ function StartExercise() {
         data = response.data;
       }
 
-      // --- 1. CHECK FOR BOTH SUCCESS KEYS ---
-      // Standard uses 'result', MCQ uses 'prev_qn_status'
       const isCorrect = data.result === "correct" || data.prev_qn_status === "correct";
 
       if (isCorrect) {
@@ -310,12 +314,10 @@ function StartExercise() {
       } else {
         setFeedback("error");
         setTimeout(() => inputRef.current?.focus(), 100);
-        // Important: Return here to stop loading next question on error (if that is desired behavior)
-        // If you want next question even on wrong answer, remove this return.
         return; 
       }
 
-      // --- 2. PREPARE NEXT QUESTION ---
+      // PREPARE NEXT QUESTION
       if (!isMcqMode && groupName?.toLowerCase() === "clock" && typeof data.question === "string") {
         data.options = generateClockOptions(data.question);
       } else {
@@ -332,6 +334,7 @@ function StartExercise() {
       });
       
       setAnswer(""); 
+      setTimer(60); // ✅ Reset Timer
       setIsPaused(false);
       setTimeout(() => inputRef.current?.focus(), 100);
 
@@ -380,6 +383,7 @@ function StartExercise() {
 
       setQuestion(data);
       setAnswer("");
+      setTimer(60); // ✅ Reset Timer
       setIsPaused(false);
       setTimeout(() => inputRef.current?.focus(), 100);
     } catch (err) {
@@ -463,9 +467,9 @@ function StartExercise() {
           <div className="my-6 flex justify-center items-center w-full">
              <DataChart 
               data={question?.question as {
-  data_values: Record<string, number | string>;
-  find_type: string;
-}} 
+                data_values: Record<string, number | string>;
+                find_type: string;
+              }} 
             />
           </div>
         );
@@ -500,7 +504,11 @@ function StartExercise() {
 
         {!loading && !error && question && (
           <div className="space-y-4">
-            <div className="text-right text-sm text-gray-600 font-mono">
+            
+            {/* ✅ Timer with conditional red/pulsing styling when <= 10 seconds */}
+            <div className={`text-right text-sm font-mono transition-colors duration-300 ${
+              timer <= 10 ? 'text-red-600 font-bold animate-pulse' : 'text-gray-600'
+            }`}>
               ⏱ {formatTime(timer)}
             </div>
 
@@ -518,7 +526,6 @@ function StartExercise() {
                     onClick={() => {
                       setAnswer(opt.key); 
                       
-                      // 3. UPDATED: Auto-submit for BOTH Clock AND MCQ
                       if (groupName?.toLowerCase() === "clock" || isMcqMode) {
                         handleSubmit(opt.key);
                       }
@@ -555,7 +562,6 @@ function StartExercise() {
               {isPaused ? (
                 <p className="text-gray-500 font-semibold">Please resume to continue</p>
               ) : (
-                // 4. UPDATED: Hide Submit button for MCQ as well
                 (groupName?.toLowerCase() !== "clock" && !isMcqMode) && (
                   <button
                     onClick={() => handleSubmit()}
