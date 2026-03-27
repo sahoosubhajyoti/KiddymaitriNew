@@ -16,9 +16,9 @@ jobs:
         with:
           node-version: 18
 
-      - name: Build frontend
+      - name: Build app
         run: |
-          cd frontend
+          cd kiddycombine
           npm install
           npm run build
 
@@ -28,8 +28,8 @@ jobs:
           host: 168.231.103.156
           username: km_webapp
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          source: "frontend/.next,frontend/public,frontend/package.json"
-          target: "/home/km_webapp/kiddymaitri-new"
+          source: "kiddycombine/.next,kiddycombine/public,kiddycombine/package.json"
+          target: "/home/km_webapp/kiddymaitri-new/frontend"
 
       - name: Restart app
         uses: appleboy/ssh-action@v0.1.10
@@ -40,4 +40,4 @@ jobs:
           script: |
             cd /home/km_webapp/kiddymaitri-new/frontend
             npm install --production
-            pm2 restart kiddymaitri-frontend
+            pm2 restart kiddymaitri-frontend || pm2 start ecosystem.config.js
