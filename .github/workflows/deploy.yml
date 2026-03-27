@@ -27,7 +27,7 @@ jobs:
           host: 168.231.103.156
           username: km_webapp
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          source: "kiddycombine/.next,kiddycombine/public,kiddycombine/package.json"
+          source: ".next,public,package.json"
           target: "/home/km_webapp/kiddymaitri-new/frontend"
 
       - name: Restart app
