@@ -18,7 +18,6 @@ jobs:
 
       - name: Build app
         run: |
-          cd kiddycombine
           npm install
           npm run build
 
