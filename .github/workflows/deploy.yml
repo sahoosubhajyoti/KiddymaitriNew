@@ -16,18 +16,23 @@ jobs:
         with:
           node-version: 18
 
+      # --- CHANGE 1: Inject Environment Variables here ---
       - name: Build app
+        env:
+          NEXT_PUBLIC_API_BASE_URL: ${{ secrets.NEXT_PUBLIC_API_BASE_URL }}
         run: |
+          echo "NEXT_PUBLIC_API_BASE_URL=$NEXT_PUBLIC_API_BASE_URL" >> .env
           npm install
           npm run build
 
+      # --- CHANGE 2: Add .env to the source list ---
       - name: Copy files to server
         uses: appleboy/scp-action@v0.1.7
         with:
           host: 168.231.103.156
           username: km_webapp
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          source: ".next,public,package.json"
+          source: ".next,public,package.json,.env" 
           target: "/home/km_webapp/kiddymaitri-new/frontend"
 
       - name: Restart app
@@ -37,8 +42,7 @@ jobs:
           username: km_webapp
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            cd /home/km_webapp/kiddymaitri-new
-            cd frontend
+            cd /home/km_webapp/kiddymaitri-new/frontend
             npm install --production
 
             cd ..
