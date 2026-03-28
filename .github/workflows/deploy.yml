@@ -37,6 +37,9 @@ jobs:
           username: km_webapp
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            cd /home/km_webapp/kiddymaitri-new/frontend
+            cd /home/km_webapp/kiddymaitri-new
+            cd frontend
             npm install --production
-            pm2 restart kiddymaitri-frontend || pm2 start ecosystem.config.js
+
+            cd ..
+            pm2 start ecosystem.config.js || pm2 restart kiddymaitri-frontend
